@@ -1,4 +1,8 @@
 set PREVIEW_MODE "GM9FULLSCRIPT \nInitialising, please wait..."
+if chk $[RDTYPE] "devkit"
+echo "Console is a developer unit. \nScript is intended to run on stock units only. \nAborting."
+goto mm_Exit
+end
 if chk $[GM9VER] "v2.0.0"
 goto beginning 
 end
@@ -322,13 +326,16 @@ goto mm_NAND_Management_Options
 
 @a_Check_EMMC_Status
 set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nCheck EMMC Status"
-if not ask "!!!!WARNING!!!! \nThis function will test the EMMC status to see \nif it has hardware problems. \nThis operation has a chance of bricking the NAND chip. \nProceed at your own risk. \nPlease run this only if these operations \nhaven't fixed your console: \nsysNAND Full Restore; CTRTransfer; \nCTRTransfer D9 Type"
+if not ask "!!!!WARNING!!!! \nThis function will test the EMMC status to see \nif it has hardware problems. \nThis operation has a chance of bricking the NAND chip. \nProceed at your own risk. \nPlease run this only if these operations \nhaven't fixed your console: \nsysNAND Full Restore; CTRTransfer; \nCTRTransfer D9 Type \nProceed?"
 echo "User aborted"
 goto mm_NAND_Management_Options
 end
-echo "Please do not use this is the console is fine."
-echo "NEVER TURN OFF THE CONSOLE DURING THIS PROCESS!"
-echo "Plug the AC charger for extra security"
+echo "~ INFORMATIONS ~\n1. DO NOT use this if the 2DS/3DS is perfectly fine.\n2. DO NOT use this while the battery life is low.\n3. Plug in the AC charger for extra safety precaution.\n4. Leave undisturbed. Allow ~30 minutes to complete.\n5. In the event of an emergency situation such as the\nbattery is about to die, press the (B) button to\nabort and cancel the test early."
+echo "6. If the 3DS softbricks due to an unexpected crash,\nrestore the firmware with the 'nand_minsize.bin'.\nThis image can be found backed up at '0:/gm9/out'.\n7. For 'bootrom 8046' (Blue Screens of Death), launch\nGodMode9 with a ntrboot compatible DS flashcart.\nhttps://3ds.hacks.guide/ntrboot"
+label -k -o -s  "Select what to do." EMMC02_*
+@EMMC02_B_Return_Back
+goto mm_NAND_Management_Options
+@EMMC02_START_Continue
 if not allow S:/nand.bin
 echo "Permissions denied! Aborting."
 goto mm_NAND_Management_Options
@@ -1016,41 +1023,19 @@ if not cp -w -n $[SECTOR] S:/sector0x96.bin
 goto b9sinstall_sector_fail
 end
 @b9sinstall_good
-if chk $[RDTYPE] "devkit"
-fset S:/firm0.bin@100 88697CDCA9D1EA318256FCD9CED42964C1E98ABC6486B2F128EC02E71C5AE35D63D3BF1246134081AF68754787FCB922571D7F61A30DE4FCFA8293A9DA512396F1319A364968464CA9806E0A52567486754CDDD4C3A62BDCE255E0DEEC230129C1BAE1AE95D786865637C1E65FAE83EDF8E7B07D17C0AADA8F055B640D45AB0B
-fset S:/firm0.bin@180 AC76FF7B3439F5A4BFE8F7E0E103BCE995FAD913FB729D3D030B2644EC48396424E0563A1B3E6A1F680B39FC1461886FA7A60B6B56C5A846554AE648FC46E30E24678FAF1DC3CEB10C2A950F4FFA2083234ED8DCC3587A6D751A7E9AFA06156955084FF2725B698EB17454D9B02B6B76BE47ABBE206294366987A4CAB42CBD0B
-else
 fset S:/firm0.bin@100 B6724531C448657A2A2EE306457E350A10D544B42859B0E5B0BED27534CCCC2A4D47EDEA60A7DD99939950A6357B1E35DFC7FAC773B7E12E7C1481234AF141B31CF08E9F62293AA6BAAE246C15095F8B78402A684D852C680549FA5B3F14D9E838A2FB9C09A15ABB40DCA25E40A3DDC1F58E79CEC901974363A946E99B4346E8
 fset S:/firm0.bin@180 A372B6CD55A707E1EAB9BEC0200B5BA0B661236A8708D704517F43C6C38EE9560111E1405E5E8ED356C49C4FF6823D1219AFAEEB3DF3C36B62BBA88FC15BA8648F9333FD9FC092B8146C3D908F73155D48BE89D72612E18E4AA8EB9B7FD2A5F7328C4ECBFB0083833CBD5C983A25CEB8B941CC68EB017CE87F5D793ACA09ACF7
-end
 inject -n S:/firm0.bin@100:100 S:/firm1.bin@100
-imgmount S:/firm0.bin
-if not sha G:/header.bin 7C2E1DC860858BF9C7285915957FE64AF3B1B812C57FCB2C417881D31EE4246C
-imgumount
-
+if not sha S:/firm0.bin A7FB4D394743399DE16960D0675C1E7E85EFBBCE0988B1AE900DA0148C78310A
 goto b9sinstall_emergency_routine
 end
-imgumount
-
-imgmount S:/firm1.bin
-
-if not sha G:/header.bin 7C2E1DC860858BF9C7285915957FE64AF3B1B812C57FCB2C417881D31EE4246C
-imgumount
-
+if not sha S:/firm1.bin A7FB4D394743399DE16960D0675C1E7E85EFBBCE0988B1AE900DA0148C78310A
 goto b9sinstall_emergency_routine
 end
-imgumount
 if not sha S:/sector0x96.bin 82F2730D2C2DA3F30165F987FDCCAC5CBAB24B4E5F65C981CD7BE6F438E6D9D3
 goto b9sinstall_sector_fail2
 end
 @b9sinstall_well
-cp -s -o -w 0:/boot.firm 1:/boot.firm
-
-cp -s -o -w 0:/luma/ 1:/rw/luma
-
-mkdir -s -o 1:/gm9
-
-cp -s -o -w 0:/gm9/support 1:/gm9/support
 
 echo "Boot9Strap Install success!"
 goto mm_Boot9Strap_Options
@@ -1101,10 +1086,9 @@ dumptxt -p $[INST] "4 Press Y to paste the file"
 dumptxt -p $[INST] "5 Press A to inject the backup to nand_minsize.bin"
 dumptxt -p $[INST] "6 Unlock the NAND if needed"
 dumptxt -p $[INST] "7 When done, press A to relock the NAND"
-dumptxt -p $[INST] "8 Pray"
-dumptxt -p $[INST] "9 Press START to reboot the console"
-dumptxt -p $[INST] "10 If everything was successfull, you will have booted into the home menu"
-dumptxt -p $[INST] "11 Note that, if the NAND backup didn't have Boot9Strap, the console doesn't have Boot9Strap"
+dumptxt -p $[INST] "8 Press START to reboot the console"
+dumptxt -p $[INST] "9 If everything was successfull, you will have booted into the home menu"
+dumptxt -p $[INST] "10 Note that, if the NAND backup didn't have Boot9Strap, the console won't have Boot9Strap"
 echo "Boot9Strap Install failed!!! \nThis really should not have happenend :/."
 echo "If you turn off or reboot the console, \nyou'll BRICK, so DO NOT."
 echo "A guide on how to \nsave the console has been written to \n$[INST]"
@@ -5920,6 +5904,1174 @@ if findnot "1:/boot.firm" NULL
 inject -o -s -n "$[CURRDIR]/Gm9FullScript.gm9@4DE00:35A00" "1:/boot.firm@000" 
 end
 
+cons_Rebuild_3DS_Database
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nRebuild 3DS Database"
+labelsel -o -s "Rebuild 3DS Database Options\nPress (B) to return to Menu Options." DATABASE_OPTIONS_*
+goto mm_Console_Options
+@DATABASE_OPTIONS_(A)_Quick
+if not allow -a "0:/Nintendo 3DS"
+echo "[0:] SDCARD ()/Nintendo 3DS\nAccess denied."
+goto CHOICE_Rebuild_3DS_Database
+end
+echo "Option (A): Rebuild 3DS Database (Quick)\nThis fixes the SD card's 'title.db' and 'import.db' by\ngenerating stripped down CIAs. The 'title' folder is\nmoved to 'title_<ID0>', and the 'ticket.db' in CTRNAND\nis backed up. After installing the dummy CIAs, the\n'ticket.db' is restored to maintain legit tickets for\nNintendo eShop purchases and updates. The folder\n`cias (dummy)_<ID0>' is deleted to prevent accidental\nreinstallations. Titles in 'title_<ID0>' are moved"
+echo "Back to 'title' with their .cmd CMACs corrected. This\nmethod is the fastest of the three, but the sizes and\nblocks in 'FBI' & 'System Settings > Data Management`\nwill show up wrong (very small). Using this method is\nreversibly by restoring the files in 'dbs_cmd_<ID0>';\ndelete the .db and .cmd's in 'title' before replacing.\nNOTE: Fake DLCs are the slowest to create and install.
+labelsel -o -s "Rebuild 3DS Database (Quick)\nPress (B) to return to Database Options." DATABASE_QUICK_*
+goto CHOICE_Rebuild_3DS_Database
+@DATABASE_OPTIONS_(B)_Full
+if not allow -a "0:/Nintendo 3DS"
+echo "[0:] SDCARD ()/Nintendo 3DS\nAccess denied."
+goto CHOICE_Rebuild_3DS_Database
+end
+echo "Option (B): Rebuild 3DS Database (Full)\nThis fixes the SD card's 'title.db' and 'import.db' by\nbacking up the 'ticket.db' from CTRNAND, CIAs for all\nthe 3DS titles, and their decrypted saves. Titles that\nare successfully made into CIAs are then deleted from\nthe 'title' folder. This is to maintain card storage\nwithout running out of free space. External files and\ntitles not made into CIAs are moved to 'title_<ID0>'."
+echo "After installing the CIAs from 'cias (proper)_<ID0>',\nthe 'ticket.db' is restored to maintain legit tickets\nfor Nintendo eShop purchases and updates. Saves are\nindividually restored by verifying their presences for\neach installed title (ie, not "mass dumped"). 4 GB of\nfree space is required. NOTE: To prevent unintentional\nmisuse, the user is tasked in removing 'import.db' &\n'title.db' from '0:/Nintendo 3DS/<ID0>/<ID1>/dbs'."
+labelsel -o -s "Rebuild 3DS Database (Full)\nPress (B) to return to Database Options." DATABASE_FULL_*
+goto CHOICE_Rebuild_3DS_Database 
+@DATABASE_OPTIONS_(C)_Manual
+if not allow -a "0:/Nintendo 3DS"
+echo "[0:] SDCARD ()/Nintendo 3DS\nAccess denied."
+goto CHOICE_Rebuild_3DS_Database
+end
+echo "Option (C): Rebuild 3DS Database (Manual)\nThis fixes the SD card's 'title.db' and 'import.db' by\nbacking up the 'ticket.db' from CTRNAND, extracting\nthe decrypted saves for game titles, and recording the\nTitleIDs for everything in the 'title' folder. Titles\nare sorted by storing them in 'title_<ID0>' and then\nmoving them back to 'title'. This method is suited for\nthose who already have their collection previously\nbacked up as CIAs or don't have the free space to use"
+echo "Option (B). The user's responsibility is to manually\nprovide or produce CIAs for all titles found in '0:/\nNintendo 3DS/<ID0>/<ID1>/title'. After installing the\nCIAs, the 'ticket.db' is restored to maintain legit\ntickets for Nintendo eShop purchases & updates. Saves\nare individually restored by verifying their presences\nfor each installed title (ie, not "mass dump")."
+labelsel -o -s "Rebuild 3DS Database (Manual)\nPress (B) to return to Database Options." DATABASE_MANUAL_*
+goto CHOICE_Rebuild_3DS_Database
+@DATABASE_QUICK_(1a)_Generate_Dummy_CIAs
+echo "~ INSTRUCTIONS ~ Rebuild 3DS Database (Quick) ~\n1. Plug in the AC charger to keep the system charged.\n2. Set the volume slider to lowest screen brightness.\n3. Wait for 'Storage test success.' and press (A).\n4. Fold it closed if system has a clam shell design.\n5. DO NOT PRESS (B) AT ANY MOMENT! This interrupts the\nCIA building process. The system will shut off when\ndone. If an error occurs, see 'missing_titles.txt'.\n6. FBI > 'cias (dummy)_<ID0>' > 'Install all CIAs'\n7. Do not remove the 'cias (dummy)_<ID0>' folder.\n8. Run the '(2a) Restore Setup' option to complete.\n9. faketik - Restore tickets for nonlegit titles.\n10. Cthulhu - Unwrap all HOME Menu gift icons.\n11. Checkpoint/JKSM - Backup all saves + extdata. This\nbypasses anti-cheat save protection for certain games."
+if not ask "Continue with generating dummy CIAs?\nPress (B) to cancel attempt."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+if not allow -a "A:/"
+echo "[A:] SYSNAND SD\nAccess denied."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+if findnot "0:/Nintendo 3DS" NULL
+echo "0:/Nintendo 3DS\n \nDirectory not found."
+goto DATABASE_OPTIONS_(A)_Quick
+elif findnot "0:/Nintendo 3DS/$[SYSID0]" NULL
+echo "0:/Nintendo 3DS/\n$[SYSID0]\n \nDirectory not found."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+set SYSID1_FORWARD ""
+if find -f "0:/Nintendo 3DS/$[SYSID0]/*" SYSID1_FORWARD
+strsplit SYSID1_FORWARD "$[SYSID1_FORWARD]" "/"
+else
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n \nNo entry within directory."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+set SYSID1_BACKWARD ""
+if find "0:/Nintendo 3DS/$[SYSID0]/*" SYSID1_BACKWARD
+strsplit SYSID1_BACKWARD "$[SYSID1_BACKWARD]" "/"
+end
+set SYSID1 ""
+if chk "$[SYSID1_FORWARD]" "$[SYSID1_BACKWARD]"
+set SYSID1 "$[SYSID1_FORWARD]"
+set SYSID1_FORWARD ""
+set SYSID1_BACKWARD ""
+else
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n \nMore than one <ID1> folder found.\n \n$[SYSID1_FORWARD]\n \n$[SYSID1_BACKWARD]"
+set SYSID1 ""
+set SYSID1_FORWARD ""
+set SYSID1_BACKWARD ""
+goto DATABASE_OPTIONS_(A)_Quick
+end
+set LITMUS_FILE ""
+if findnot "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/dummy_???.bin" LITMUS_FILE
+strsplit LITMUS_FILE "$[LITMUS_FILE]" "/"
+end
+if not fdummy "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]" "00"
+end
+if find "A:/$[LITMUS_FILE]" NULL
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]"
+else
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]"
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n<ID1>\n \nCould not determine '<ID1>' folder."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+if find "A:/$[LITMUS_FILE]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n<ID1>\n \nCould not determine '<ID1>' folder."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+if find "A:/title_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle_$[SYSID0]\n \nDetected 'title_<ID0>' folder.\nConflict with '(2a) Restore Setup' option."
+goto DATABASE_OPTIONS_(A)_Quick
+elif find "$[GM9OUT]/cias (dummy)_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\ncias (dummy)_$[SYSID0]\n \nDetected 'cias (dummy)_<ID0>' folder.\nConflict with '(2a) Restore Setup' option."
+goto DATABASE_OPTIONS_(A)_Quick	
+elif find "$[GM9OUT]/dbs_cmd_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\ndbs_cmd_$[SYSID0]\n \nDetected 'dbs_cmd_<ID0>' folder.\nResolve previous run with '(1a) Generate Dummy CIAs'."
+goto DATABASE_OPTIONS_(A)_Quick
+elif find "$[GM9OUT]/cias (proper)_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\ncias (proper)_$[SYSID0]\n \nDetected 'cias (proper)_<ID0>' folder.\nConflict with 'Rebuild 3DS Database (Full)'."
+goto DATABASE_OPTIONS_(A)_Quick
+elif find "$[GM9OUT]/saves_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\nsaves_$[SYSID0]\n \nDetected 'saves_<ID0>' folder.\nConflict with 'Rebuild 3DS Database (Full)'\nor 'Rebuild 3DS Database (Manual)'."
+goto DATABASE_OPTIONS_(A)_Quick
+elif find "$[GM9OUT]/title_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\ntitle_$[SYSID0]\n \nDetected 'title_<ID0>' folder.\nConflict with 'Rebuild 3DS Database (Full)'."
+goto DATABASE_OPTIONS_(A)_Quick
+elif findnot "A:/title" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle\n \nThe 'title' folder is missing."
+goto DATABASE_OPTIONS_(A)_Quick
+elif not find -f "A:/title/*" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle/<TID_HIGH>\n \nNo usable '<TID_HIGH>' entry."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+echo "Testing the SD card for enough memory."
+fdummy "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]" "10000000"
+if fget "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]@FFFFFFF:01" NULL
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]"
+echo "Storage test success."
+else
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]"
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "Insufficient memory.\n256 MB of free space is required."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+set GM9OUT_TEMP_DIR ""
+findnot "0:/gm9/out_temp_???" GM9OUT_TEMP_DIR
+@FIX_GM9OUT_TEMP_DIR_QUICK
+if not mkdir "$[GM9OUT_TEMP_DIR]"
+end
+if find "$[GM9OUT_TEMP_DIR]" NULL
+rm -o -s "$[GM9OUT_TEMP_DIR]"
+else
+findnot "0:/gm9/out_temp_????" GM9OUT_TEMP_DIR
+goto FIX_GM9OUT_TEMP_DIR_QUICK
+end
+mv -o -s -n -w "$[GM9OUT]" "$[GM9OUT_TEMP_DIR]"
+mkdir "$[GM9OUT]"
+mkdir "$[GM9OUT]/cias (dummy)_$[SYSID0]"
+mkdir "$[GM9OUT]/dbs_cmd_$[SYSID0]"
+fdummy "$[GM9OUT]/cias (dummy)_$[SYSID0]/missing_titles.txt" "00"
+cp -o -s -n "1:/dbs/ticket.db" "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]/$[SERIAL]_ticket.db"
+cp -o -s -n "1:/dbs/ticket.db" "$[GM9OUT]/dbs_cmd_$[SYSID0]/$[SERIAL]_ticket.db"
+cp -o -s -n "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/dbs" "$[GM9OUT]/dbs_cmd_$[SYSID0]/[0] SDCARD (encrypted)/dbs"
+cp -o -s -n "A:/dbs" "$[GM9OUT]/dbs_cmd_$[SYSID0]/[A] SYSNAND SD (decrypted)/dbs"
+@FIND_NEXT_3DS_TITLE_QUICK
+set TID_HIGH ""
+set TID_LOW ""
+set TMD_FILE ""
+set TMD_DIR ""
+set TMDCHUNKS_SHA ""
+set CMD_FILE ""
+set APP_FILE ""
+set APP_FILE_SHA ""
+set APP_DIR ""
+set TMD_BLOCK_0x204-B03_SHA ""
+set SAVE_SIZE ""
+set CIA_FILE ""
+if find -f "A:/title/*" TID_HIGH
+strsplit TID_HIGH "$[TID_HIGH]" "/"
+else
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title" "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]"
+mkdir "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title"
+mv -o -s -n -w "$[GM9OUT_TEMP_DIR]" "$[GM9OUT]"
+set SYSID1 ""
+set LITMUS_FILE ""
+set GM9OUT_TEMP_DIR ""
+set TID_HIGH ""
+set TID_LOW ""
+set TMD_FILE ""
+set TMD_DIR ""
+set TMDCHUNKS_SHA ""
+set CMD_FILE ""
+set APP_FILE ""
+set APP_FILE_SHA ""
+set APP_DIR ""
+set TMD_BLOCK_0x204-B03_SHA ""
+set SAVE_SIZE ""
+set CIA_FILE ""		
+if fget "$[GM9OUT]/cias (dummy)_$[SYSID0]/missing_titles.txt@00:01" NULL
+echo "$[GM9OUT]/\ncias (dummy)_$[SYSID0]/\nmissing_titles.txt\n \nBuild error(s) encountered."
+textview "$[GM9OUT]/cias (dummy)_$[SYSID0]/missing_titles.txt"
+else
+rm -o -s "$[GM9OUT]/cias (dummy)_$[SYSID0]/missing_titles.txt"
+poweroff
+end
+echo "Generated dummy CIAs success."
+goto DATABASE_OPTIONS_(A)_Quick		
+end
+if find -f "A:/title/$[TID_HIGH]/*" TID_LOW
+strsplit TID_LOW "$[TID_LOW]" "/"
+else
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]" "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]/$[TID_HIGH]"
+goto FIND_NEXT_3DS_TITLE_QUICK
+end
+if find -f "A:/title/$[TID_HIGH]/$[TID_LOW]/content/cmd/*.cmd" CMD_FILE
+strsplit CMD_FILE "$[CMD_FILE]" "/"
+cp -o -s -n "A:/title/$[TID_HIGH]/$[TID_LOW]/content/cmd/$[CMD_FILE]" "$[GM9OUT]/dbs_cmd_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]/content/cmd/$[CMD_FILE]"
+cp -o -s -n "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]/$[TID_LOW]/content/cmd/$[CMD_FILE]" "$[GM9OUT]/dbs_cmd_$[SYSID0]/[0] SDCARD (encrypted)/title/$[TID_HIGH]/$[TID_LOW]/content/cmd/$[CMD_FILE]"
+end
+if find -f "A:/title/$[TID_HIGH]/$[TID_LOW]/content/*.tmd" TMD_FILE
+strsplit TMD_FILE "$[TMD_FILE]" "/"
+else
+# ERROR 01: MISSING TMD FILE
+dumptxt -p "$[GM9OUT]/cias (dummy)_$[SYSID0]/missing_titles.txt" "$[TID_HIGH]$[TID_LOW] - TMD is missing."
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]/$[TID_LOW]" "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]/$[TID_HIGH]/$[TID_LOW]"
+goto FIND_NEXT_3DS_TITLE_QUICK
+end
+cp -o -s -n "A:/title/$[TID_HIGH]/$[TID_LOW]/content/$[TMD_FILE]" "$[GM9OUT]/$[TMD_FILE]"
+inject -n "$[GM9OUT]/$[TMD_FILE]@B04" "$[GM9OUT]/tmdchunks.bin"
+fdummy "$[GM9OUT]/tmdchunks_updated.bin" "00"
+mkdir "$[GM9OUT]/00000000"
+@FIND_NEXT_APP_FILE
+set APP_DIR ""
+set APP_FILE ""
+fget "$[GM9OUT]/tmdchunks.bin@00:04" APP_FILE
+set APP_FILE "$[APP_FILE].app"
+if chk "$[TID_HIGH]" "00040000" # Games
+set APP_DIR "A:/title/$[TID_HIGH]/$[TID_LOW]/content/$[APP_FILE]"
+elif chk "$[TID_HIGH]" "0004000e" # Updates
+set APP_DIR "A:/title/$[TID_HIGH]/$[TID_LOW]/content/$[APP_FILE]"
+elif chk "$[TID_HIGH]" "0004008c" # DLCs
+set APP_DIR "A:/title/$[TID_HIGH]/$[TID_LOW]/content/00000000/$[APP_FILE]"
+else
+# ERROR 02: UNKNOWN TID HIGH
+dumptxt -p "$[GM9OUT]/cias (dummy)_$[SYSID0]/missing_titles.txt" "$[TID_HIGH]$[TID_LOW] - Unknown <TID_HIGH> ($[TID_HIGH])."
+goto FINALIZE_3DS_TITLE_QUICK
+end
+if findnot "$[APP_DIR]" NULL
+goto MISSING_APP_FILE_QUICK
+else
+goto EXTRACT_APP_FILE_QUICK
+end
+@MISSING_APP_FILE_QUICK
+if chk "$[TID_HIGH]" "0004008c" # DLCs
+goto SKIP_APP_FILE
+else
+# ERROR 03: MISSING APP FILE
+dumptxt -p "$[GM9OUT]/cias (dummy)_$[SYSID0]/missing_titles.txt" "$[TID_HIGH]$[TID_LOW] - APP is missing. ($[APP_FILE])"
+goto FINALIZE_3DS_TITLE_QUICK
+end
+@EXTRACT_APP_FILE_QUICK
+if not inject -n "$[APP_DIR]@000:A00" "$[GM9OUT]/00000000/$[APP_FILE]"
+# ERROR 04: APP COPY FAILURE
+dumptxt -p "$[GM9OUT]/cias (dummy)_$[SYSID0]/missing_titles.txt" "$[TID_HIGH]$[TID_LOW] - Failed to copy APP. ($[APP_FILE])"
+goto FINALIZE_3DS_TITLE_QUICK
+end
+fset "$[GM9OUT]/00000000/$[APP_FILE]@104" "05000000"
+fill -n "$[GM9OUT]/00000000/$[APP_FILE]@120:30" "00"
+fill -n "$[GM9OUT]/00000000/$[APP_FILE]@190:70" "00"
+@SHAGET_APP_FILE
+set APP_FILE_SHA ""
+if not shaget "$[GM9OUT]/00000000/$[APP_FILE]" APP_FILE_SHA
+goto SHAGET_APP_FILE
+end
+fset "$[GM9OUT]/tmdchunks.bin@10" "$[APP_FILE_SHA]"
+@SKIP_APP_FILE
+fset "$[GM9OUT]/tmdchunks.bin@08" "0000000000000A00"
+inject -n "$[GM9OUT]/tmdchunks.bin@00:30" "$[GM9OUT]/contentinfo.bin"
+cp -o -s -n -p "$[GM9OUT]/contentinfo.bin" "$[GM9OUT]/tmdchunks_updated.bin"
+rm -o -s "$[GM9OUT]/contentinfo.bin"
+if fget "$[GM9OUT]/tmdchunks.bin@30:01" NULL
+inject -n "$[GM9OUT]/tmdchunks.bin@30" "$[GM9OUT]/tmdchunks_temp.bin"
+mv -o -s -n -w "$[GM9OUT]/tmdchunks_temp.bin" "$[GM9OUT]/tmdchunks.bin"
+goto FIND_NEXT_APP_FILE
+end
+@SHAGET_TMDCHUNKS
+set TMDCHUNKS_SHA ""
+if not shaget "$[GM9OUT]/tmdchunks_updated.bin" TMDCHUNKS_SHA
+goto SHAGET_TMDCHUNKS
+end
+fset "$[GM9OUT]/$[TMD_FILE]@208" "$[TMDCHUNKS_SHA]"
+inject -n "$[GM9OUT]/tmdchunks_updated.bin" "$[GM9OUT]/$[TMD_FILE]@B04"
+@SHAGET_BLOCK_0x204-B03
+set TMD_BLOCK_0x204-B03_SHA ""
+if not shaget "$[GM9OUT]/$[TMD_FILE]@204:900" TMD_BLOCK_0x204-B03_SHA
+goto SHAGET_BLOCK_0x204-B03
+end
+fset "$[GM9OUT]/$[TMD_FILE]@1E4" "$[TMD_BLOCK_0x204-B03_SHA]"
+if chk "$[TID_HIGH]" "00040000" # Game
+set SAVE_SIZE ""
+fget "$[GM9OUT]/$[TMD_FILE]@19A:04" SAVE_SIZE
+if not chk "$[SAVE_SIZE]" "00000000"
+fset "$[GM9OUT]/$[TMD_FILE]@19A" "00000200"
+end
+end
+if chk "$[TID_HIGH]" "0004008c" # DLC
+set TMD_DIR "$[GM9OUT]/$[TMD_FILE]"
+else
+mv -o -s -n -w "$[GM9OUT]/$[TMD_FILE]" "$[GM9OUT]/00000000/$[TMD_FILE]"
+set TMD_DIR "$[GM9OUT]/00000000/$[TMD_FILE]"
+end
+if buildcia -o -s "$[TMD_DIR]"
+rm -o -s "$[TMD_DIR]"
+else
+rm -o -s "$[TMD_DIR]"
+# ERROR 05: CIA BUILD FAILED
+dumptxt -p "$[GM9OUT]/cias (dummy)_$[SYSID0]/missing_titles.txt" "$[TID_HIGH]$[TID_LOW] - Failed to build CIA."
+end
+@FINALIZE_3DS_TITLE_QUICK
+set CIA_FILE ""
+if find -f "$[GM9OUT]/*.cia" CIA_FILE
+strsplit CIA_FILE "$[CIA_FILE]" "/"
+mv -o -s -n -w "$[GM9OUT]/$[CIA_FILE]" "$[GM9OUT]/cias (dummy)_$[SYSID0]/$[TID_HIGH]$[TID_LOW].cia"
+end
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]/$[TID_LOW]" "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]/$[TID_HIGH]/$[TID_LOW]"
+rm -o -s "$[GM9OUT]/$[TMD_FILE]"
+rm -o -s "$[GM9OUT]/tmdchunks.bin"
+rm -o -s "$[GM9OUT]/tmdchunks_temp.bin"
+rm -o -s "$[GM9OUT]/tmdchunks_updated.bin"
+rm -o -s "$[GM9OUT]/contentinfo.bin"
+rm -o -s "$[GM9OUT]/00000000"
+goto FIND_NEXT_3DS_TITLE_QUICK
+@DATABASE_QUICK_(2a)_Restore_Setup
+if not ask "Continue with finalizing restoration?\nPress (B) to cancel attempt."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+if not allow "1:/dbs/ticket.db"
+echo "[1:] SYSNAND CTRNAND/dbs/ticket.db\nAccess denied."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+if findnot "0:/Nintendo 3DS" NULL
+echo "0:/Nintendo 3DS\n \nDirectory not found."
+goto DATABASE_OPTIONS_(A)_Quick
+elif findnot "0:/Nintendo 3DS/$[SYSID0]" NULL
+echo "0:/Nintendo 3DS/\n$[SYSID0]\n \nDirectory not found."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+set SYSID1_FORWARD ""
+if find -f "0:/Nintendo 3DS/$[SYSID0]/*" SYSID1_FORWARD
+strsplit SYSID1_FORWARD "$[SYSID1_FORWARD]" "/"
+else
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n \nNo entry within directory."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+set SYSID1_BACKWARD ""
+if find "0:/Nintendo 3DS/$[SYSID0]/*" SYSID1_BACKWARD
+strsplit SYSID1_BACKWARD "$[SYSID1_BACKWARD]" "/"
+end
+set SYSID1 ""
+if chk "$[SYSID1_FORWARD]" "$[SYSID1_BACKWARD]"
+set SYSID1 "$[SYSID1_FORWARD]"
+set SYSID1_FORWARD ""
+set SYSID1_BACKWARD ""
+else
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n \nMore than one <ID1> folder found.\n \n$[SYSID1_FORWARD]\n \n$[SYSID1_BACKWARD]"
+set SYSID1 ""
+set SYSID1_FORWARD ""
+set SYSID1_BACKWARD ""
+goto DATABASE_OPTIONS_(A)_Quick
+end
+set LITMUS_FILE ""
+if findnot "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/dummy_???.bin" LITMUS_FILE
+strsplit LITMUS_FILE "$[LITMUS_FILE]" "/"
+end
+if not fdummy "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]" "00"
+end
+if find "A:/$[LITMUS_FILE]" NULL
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]"
+else
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]"
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n<ID1>\n \nCould not determine '<ID1>' folder."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+if find "A:/$[LITMUS_FILE]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n<ID1>\n \nCould not determine '<ID1>' folder."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+if findnot "A:/title_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle_$[SYSID0]\n \nThe 'title_<ID0>' folder is missing."
+goto DATABASE_OPTIONS_(A)_Quick
+elif findnot "$[GM9OUT]/cias (dummy)_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\ncias (dummy)_$[SYSID0]\n \nThe 'cias (dummy)_<ID0>' folder is missing."
+goto DATABASE_OPTIONS_(A)_Quick
+elif find "$[GM9OUT]/cias (proper)_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\ncias (proper)_$[SYSID0]\n \nDetected 'cias (proper)_<ID0>' folder.\nConflict with 'Rebuild 3DS Database (Full)'."
+goto DATABASE_OPTIONS_(A)_Quick
+elif find "$[GM9OUT]/saves_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\nsaves_$[SYSID0]\n \nDetected 'saves_<ID0>' folder.\nConflict with 'Rebuild 3DS Database (Full)'\nor 'Rebuild 3DS Database (Manual)'."
+goto DATABASE_OPTIONS_(A)_Quick
+elif find "$[GM9OUT]/title_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\ntitle_$[SYSID0]\n \nDetected 'title_<ID0>' folder.\nConflict with 'Rebuild 3DS Database (Full)'."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+if not find -f "A:/title/*" NULL
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]/$[SERIAL]_ticket.db" "1:/dbs/ticket.db"
+fixcmac -o -s "1:/dbs/ticket.db"
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]" "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title"
+rm -o -s "$[GM9OUT]/cias (dummy)_$[SYSID0]"
+fixcmac -o -s "A:"
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "Finalized restore success."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+rm -o -s "$[GM9OUT]/cias (dummy)_$[SYSID0]"
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]/$[SERIAL]_ticket.db" "1:/dbs/ticket.db"
+fixcmac -o -s "1:/dbs/ticket.db"
+rm -o -s "1:/data/$[SYSID0]/sysdata/00010011"
+set GM9OUT_TEMP_DIR ""
+findnot "0:/gm9/out_temp_???" GM9OUT_TEMP_DIR
+@FIX_GM9OUT_TEMP_DIR_3DS_TITLE_REVERSE
+if not mkdir "$[GM9OUT_TEMP_DIR]"
+end
+if find "$[GM9OUT_TEMP_DIR]" NULL
+rm -o -s "$[GM9OUT_TEMP_DIR]"
+else
+findnot "0:/gm9/out_temp_????" GM9OUT_TEMP_DIR
+goto FIX_GM9OUT_TEMP_DIR_3DS_TITLE_REVERSE
+end
+mv -o -s -n -w "$[GM9OUT]" "$[GM9OUT_TEMP_DIR]"
+mkdir "$[GM9OUT]"
+@FIND_NEXT_3DS_TITLE_REVERSE
+set TID_HIGH ""
+set TID_LOW ""
+set TMD_DIR ""
+set CMD_FILE ""
+set CMD_DIR ""
+set CMD_CMAC_BLOCK_0x00-1F ""
+if find -f "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]/*" TID_HIGH
+strsplit TID_HIGH "$[TID_HIGH]" "/"
+else
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]" "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title"
+mv -o -s -n -w "$[GM9OUT_TEMP_DIR]" "$[GM9OUT]"
+fixcmac -o -s "A:"
+set SYSID1 ""
+set LITMUS_FILE ""
+set GM9OUT_TEMP_DIR ""
+set TID_HIGH ""
+set TID_LOW ""
+set TMD_DIR ""
+set CMD_FILE ""
+set CMD_DIR ""
+set CMD_CMAC_BLOCK_0x00-1F ""
+echo "Finalized restore success."
+goto DATABASE_OPTIONS_(A)_Quick
+end
+if find -f "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]/$[TID_HIGH]/*" TID_LOW
+strsplit TID_LOW "$[TID_LOW]" "/"
+else
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]/$[TID_HIGH]" "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]"
+goto FIND_NEXT_3DS_TITLE_REVERSE
+end
+if find -f "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]/$[TID_LOW]/content/*.tmd" TMD_DIR
+rm -o -s "$[TMD_DIR]"
+end
+if find -f "A:/title/$[TID_HIGH]/$[TID_LOW]/content/cmd/*.cmd" CMD_FILE
+strsplit CMD_FILE "$[CMD_FILE]" "/"
+fget "A:/title/$[TID_HIGH]/$[TID_LOW]/content/cmd/$[CMD_FILE]@00:20" CMD_CMAC_BLOCK_0x00-1F
+rm -o -s "A:/title/$[TID_HIGH]/$[TID_LOW]/content/cmd/$[CMD_FILE]"
+end
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]/$[TID_HIGH]/$[TID_LOW]" "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]/$[TID_LOW]"
+if not chk "$[CMD_FILE]" ""
+if find -f "A:/title/$[TID_HIGH]/$[TID_LOW]/content/cmd/*.cmd" CMD_DIR
+cp -o -s -n "$[CMD_DIR]" "$[GM9OUT]/$[CMD_FILE]"
+rm -o -s "$[CMD_DIR]"
+cp -o -s -n "$[GM9OUT]/$[CMD_FILE]" "A:/title/$[TID_HIGH]/$[TID_LOW]/content/cmd/$[CMD_FILE]"
+rm -o -s "$[GM9OUT]/$[CMD_FILE]"
+fset "A:/title/$[TID_HIGH]/$[TID_LOW]/content/cmd/$[CMD_FILE]@00" "$[CMD_CMAC_BLOCK_0x00-1F]"
+end
+end
+goto FIND_NEXT_3DS_TITLE_REVERSE
+@DATABASE_FULL_(1b)_Backup_CIAs_&_Saves
+echo "~ INSTRUCTIONS ~ Rebuild 3DS Database (Full) ~\n1. Plug in the AC charger to keep the system charged.\n2. Set the volume slider to lowest screen brightness.\n3. Wait for 'Storage test success.' and press (A).\n4. Fold it closed if system has a clam shell design.\n5. DO NOT PRESS (B) AT ANY MOMENT! This interrupts the\nCIA & SAV processes. The system will shut off when\ndone. If an error occurs, see 'missing_titles.txt'.\n6. FBI > 'cias (proper)_<ID0>' > 'Install all CIAs' or\n'Install and delete all CIAs' for limited SD space.\n7. Run the '(2b) Restore Saves' option to complete.\n8. faketik - Restore tickets for nonlegit titles.\n9. Cthulhu - Unwrap all HOME Menu software gift icons.\n10. Checkpoint/JKSM - Backup all saves + extdata. This\nbypasses anti-cheat save protection for certain games."
+if not ask "Continue with backing up CIAs and saves?\nPress (B) to cancel attempt."
+goto DATABASE_OPTIONS_(B)_Full
+end
+if not allow -a "A:/"
+echo "[A:] SYSNAND SD\nAccess denied."
+goto DATABASE_OPTIONS_(B)_Full
+end
+if find "A:/dbs/import.db" NULL
+echo "Backup run cancelled.\nPlease read the option description."
+goto DATABASE_OPTIONS_(B)_Full
+elif find "A:/dbs/title.db" NULL
+echo "Backup run cancelled.\nPlease read the option description."
+goto DATABASE_OPTIONS_(B)_Full
+end
+if findnot "0:/Nintendo 3DS" NULL
+echo "0:/Nintendo 3DS\n \nDirectory not found."
+goto DATABASE_OPTIONS_(B)_Full
+elif findnot "0:/Nintendo 3DS/$[SYSID0]" NULL
+echo "0:/Nintendo 3DS/\n$[SYSID0]\n \nDirectory not found."
+goto DATABASE_OPTIONS_(B)_Full
+end
+set SYSID1_FORWARD ""
+if find -f "0:/Nintendo 3DS/$[SYSID0]/*" SYSID1_FORWARD
+strsplit SYSID1_FORWARD "$[SYSID1_FORWARD]" "/"
+else
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n \nNo entry within directory."
+goto DATABASE_OPTIONS_(B)_Full
+end
+set SYSID1_BACKWARD ""
+if find "0:/Nintendo 3DS/$[SYSID0]/*" SYSID1_BACKWARD
+strsplit SYSID1_BACKWARD "$[SYSID1_BACKWARD]" "/"
+end
+set SYSID1 ""
+if chk "$[SYSID1_FORWARD]" "$[SYSID1_BACKWARD]"
+set SYSID1 "$[SYSID1_FORWARD]"
+set SYSID1_FORWARD ""
+set SYSID1_BACKWARD ""
+else
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n \nMore than one <ID1> folder found.\n \n$[SYSID1_FORWARD]\n \n$[SYSID1_BACKWARD]"
+set SYSID1 ""
+set SYSID1_FORWARD ""
+set SYSID1_BACKWARD ""
+goto DATABASE_OPTIONS_(B)_Full
+end
+set LITMUS_FILE ""
+if findnot "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/dummy_???.bin" LITMUS_FILE
+strsplit LITMUS_FILE "$[LITMUS_FILE]" "/"
+end
+if not fdummy "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]" "00"
+end
+if find "A:/$[LITMUS_FILE]" NULL
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]"
+else
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]"
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n<ID1>\n \nCould not determine '<ID1>' folder."
+goto DATABASE_OPTIONS_(B)_Full
+end
+if find "A:/$[LITMUS_FILE]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n<ID1>\n \nCould not determine '<ID1>' folder."
+goto DATABASE_OPTIONS_(B)_Full
+end
+if find "A:/title_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle_$[SYSID0]\n \nDetected 'title_<ID0>' folder.\nConflict with 'Rebuild 3DS Datebase (Quick)'."
+goto DATABASE_OPTIONS_(B)_Full
+elif find "$[GM9OUT]/cias (dummy)_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\ncias (dummy)_$[SYSID0]\n \nDetected 'cias (dummy)_<ID0>' folder.\nConflict with 'Rebuild 3DS Datebase (Quick)'."
+goto DATABASE_OPTIONS_(B)_Full
+elif find "$[GM9OUT]/title_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\ntitle_$[SYSID0]\n \nDetected 'title_<ID0>' folder.\nResolve previous run with '(1b) Backup CIAs & Saves'."
+goto DATABASE_OPTIONS_(B)_Full
+elif find "$[GM9OUT]/cias (proper)_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\ncias (proper)_$[SYSID0]\n \nDetected 'cias (proper)_<ID0>' folder.\nConflict with '(2b) Restore Saves' option."
+goto DATABASE_OPTIONS_(B)_Full
+elif find "$[GM9OUT]/saves_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\nsaves_$[SYSID0]\n \nDetected 'saves_<ID0>' folder.\nConflict with '(2b) Restore Saves' option\nor 'Rebuild 3DS Database (Manual)'."
+goto DATABASE_OPTIONS_(B)_Full
+elif findnot "A:/title" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle\n \nThe 'title' folder is missing."
+goto DATABASE_OPTIONS_(B)_Full
+elif not find -f "A:/title/*" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle/<TID_HIGH>\n \nNo usable '<TID_HIGH>' entry."
+goto DATABASE_OPTIONS_(B)_Full
+end
+fdummy "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]" "FFFFFFFF"
+if fget "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]@FFFFFFFE:01" NULL
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]"
+echo "Storage test success."
+else
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]"
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "Insufficient memory.\n4 GB of free space is required."
+goto DATABASE_OPTIONS_(B)_Full
+end
+set GM9OUT_TEMP_DIR ""
+findnot "0:/gm9/out_temp_???" GM9OUT_TEMP_DIR
+@FIX_GM9OUT_TEMP_DIR_FULL
+if not mkdir "$[GM9OUT_TEMP_DIR]"
+end
+if find "$[GM9OUT_TEMP_DIR]" NULL
+rm -o -s "$[GM9OUT_TEMP_DIR]"
+else
+findnot "0:/gm9/out_temp_????" GM9OUT_TEMP_DIR
+goto FIX_GM9OUT_TEMP_DIR_FULL
+end
+mv -o -s -n -w "$[GM9OUT]" "$[GM9OUT_TEMP_DIR]"
+mkdir "$[GM9OUT]"
+mkdir "$[GM9OUT]/cias (proper)_$[SYSID0]"
+fdummy "$[GM9OUT]/cias (proper)_$[SYSID0]/missing_titles.txt" "00"
+mkdir "$[GM9OUT]/title_$[SYSID0]"
+mkdir "$[GM9OUT]/saves_$[SYSID0]"
+cp -o -s -n -w "1:/dbs/ticket.db" "$[GM9OUT]/saves_$[SYSID0]/$[SERIAL]_ticket.db"
+@FIND_NEXT_3DS_TITLE_FULL
+set TID_HIGH ""
+set TID_LOW ""
+set TMD_FILE ""
+set CIA_FILE ""
+if find -f "A:/title/*" TID_HIGH
+strsplit TID_HIGH "$[TID_HIGH]" "/"
+else
+mv -o -s -n -w "$[GM9OUT_TEMP_DIR]" "$[GM9OUT]"	
+set SYSID1 ""
+set LITMUS_FILE ""
+set GM9OUT_TEMP_DIR ""
+set TID_HIGH ""
+set TID_LOW ""
+set TMD_FILE ""
+set CIA_FILE ""
+if not find -f "$[GM9OUT]/title_$[SYSID0]/*" NULL
+rm -o -s "$[GM9OUT]/title_$[SYSID0]"
+end
+if fget "$[GM9OUT]/cias (proper)_$[SYSID0]/missing_titles.txt@00:01" NULL
+echo "$[GM9OUT]/\ncias (proper)_$[SYSID0]/\nmissing_titles.txt\n \nBuild error(s) encountered."
+textview "$[GM9OUT]/cias (proper)_$[SYSID0]/missing_titles.txt"
+else
+rm -o -s "$[GM9OUT]/cias (proper)_$[SYSID0]/missing_titles.txt"
+poweroff
+end	
+echo "Backed up CIAs & saves success."
+goto DATABASE_OPTIONS_(B)_Full
+end
+if chk "$[TID_HIGH]" "00040000" # Game
+elif chk "$[TID_HIGH]" "0004000e" # Update
+elif chk "$[TID_HIGH]" "0004008c" # DLC
+else
+# ERROR 02: UNKNOWN TID HIGH
+dumptxt -p "$[GM9OUT]/cias (proper)_$[SYSID0]/missing_titles.txt" "$[TID_HIGH]$[TID_LOW] - Unknown <TID_HIGH> ($[TID_HIGH])."
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]" "$[GM9OUT]/title_$[SYSID0]/[0] SDCARD (encrypted)/title/$[TID_HIGH]"
+goto FIND_NEXT_3DS_TITLE_FULL
+end
+if find -f "A:/title/$[TID_HIGH]/*" TID_LOW
+strsplit TID_LOW "$[TID_LOW]" "/"
+else
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]"
+goto FIND_NEXT_3DS_TITLE_FULL
+end
+if find -f "A:/title/$[TID_HIGH]/$[TID_LOW]/content/*.tmd" TMD_FILE
+strsplit TMD_FILE "$[TMD_FILE]" "/"
+else
+# ERROR 01: MISSING TMD FILE
+dumptxt -p "$[GM9OUT]/cias (proper)_$[SYSID0]/missing_titles.txt" "$[TID_HIGH]$[TID_LOW] - TMD is missing."
+if find "A:/title/$[TID_HIGH]/$[TID_LOW]/data" NULL
+cp -o -s -n -w "A:/title/$[TID_HIGH]/$[TID_LOW]/data" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]/data"
+rm -o -s "A:/title/$[TID_HIGH]/$[TID_LOW]/data"
+end		
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]/$[TID_LOW]" "$[GM9OUT]/title_$[SYSID0]/[0] SDCARD (encrypted)/title/$[TID_HIGH]/$[TID_LOW]"
+goto FIND_NEXT_3DS_TITLE_FULL
+end
+if not buildcia -o -s "A:/title/$[TID_HIGH]/$[TID_LOW]/content/$[TMD_FILE]"
+# ERROR 05: CIA BUILD FAILED
+dumptxt -p "$[GM9OUT]/cias (proper)_$[SYSID0]/missing_titles.txt" "$[TID_HIGH]$[TID_LOW] - Failed to build CIA."
+if find "A:/title/$[TID_HIGH]/$[TID_LOW]/data" NULL
+cp -o -s -n -w "A:/title/$[TID_HIGH]/$[TID_LOW]/data" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]/data"
+rm -o -s "A:/title/$[TID_HIGH]/$[TID_LOW]/data"
+end
+cp -o -s -n -w "A:/title/$[TID_HIGH]/$[TID_LOW]" "$[GM9OUT]/title_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]"
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]/$[TID_LOW]"
+goto FIND_NEXT_3DS_TITLE_FULL
+end
+set CIA_FILE ""
+if find -f "$[GM9OUT]/*.cia" CIA_FILE
+strsplit CIA_FILE "$[CIA_FILE]" "/"
+mv -o -s -n -w "$[GM9OUT]/$[CIA_FILE]" "$[GM9OUT]/cias (proper)_$[SYSID0]/$[CIA_FILE]"
+end
+if find "A:/title/$[TID_HIGH]/$[TID_LOW]/data" NULL
+cp -o -s -n "A:/title/$[TID_HIGH]/$[TID_LOW]/data" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]/data"
+end
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]/$[TID_LOW]"
+goto FIND_NEXT_3DS_TITLE_FULL
+@DATABASE_FULL_(2b)_Restore_Saves
+if not ask "Continue with restoring saves?\nPress (B) to cancel attempt."
+goto DATABASE_OPTIONS_(B)_Full
+end
+if not allow "1:/dbs/ticket.db"
+echo "[1:] SYSNAND CTRNAND/dbs/ticket.db\nAccess denied."
+goto DATABASE_OPTIONS_(B)_Full
+end
+if findnot "$[GM9OUT]/saves_$[SYSID0]" NULL
+echo "0:/gm9/out/\nsaves_$[SYSID0]\n \nThe 'saves_<ID0>' folder is missing."
+goto DATABASE_OPTIONS_(B)_Full
+elif findnot "$[GM9OUT]/cias (proper)_$[SYSID0]" NULL
+echo "0:/gm9/out/\ncias (proper)_$[SYSID0]\n \nThe 'cias (proper)_<ID0>' folder is missing.\nConflict with 'Rebuild 3DS Database (Manual)'."
+goto DATABASE_OPTIONS_(B)_Full
+elif find "$[GM9OUT]/cias (dummy)_$[SYSID0]" NULL
+echo "0:/gm9/out/\ncias (dummy)_$[SYSID0]\n \nDetected 'cias (dummy)_<ID0>' folder.\nConflict with 'Rebuild 3DS Database (Quick)'."
+goto DATABASE_OPTIONS_(B)_Full
+elif find "A:/title_$[SYSID0]" NULL
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle_$[SYSID0]\n \nDetected 'title_<ID0>' folder.\nConflict with 'Rebuild 3DS Database (Quick)'."
+goto DATABASE_OPTIONS_(B)_Full
+elif findnot "A:/title" NULL
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle\n \nThe 'title' folder is missing."
+goto DATABASE_OPTIONS_(B)_Full
+elif findnot "A:/title/00040000" NULL
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle/00040000\n \nThe '<TID_HIGH>' folder (00040000) is missing."
+goto DATABASE_OPTIONS_(B)_Full
+elif not find -f "A:/title/00040000/*" NULL
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle/00040000/<TID_LOW>\n \nNo usable '<TID_LOW>' entry."
+goto DATABASE_OPTIONS_(B)_Full
+end
+cp -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/$[SERIAL]_ticket.db" "1:/dbs/ticket.db"
+fixcmac -o -s "1:/dbs/ticket.db"
+rm -o -s "1:/data/$[SYSID0]/sysdata/00010011"
+if find "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt" NULL
+findnot "$[GM9OUT]/saves_$[SYSID0]/save_restore_error_???.txt" TEMP_FILE
+mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt" "$[TEMP_FILE]"
+set TEMP_FILE ""
+end
+@FIND_NEXT_3DS_SAVE_FULL
+set TID_HIGH ""
+set TID_LOW ""
+if find -f "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/*" TID_HIGH
+strsplit TID_HIGH "$[TID_HIGH]" "/"
+else
+mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title_temp" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title" 
+set TID_HIGH ""
+set TID_LOW ""
+fixcmac -o -s "A:"
+if fget "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt@00:01" NULL
+dumptxt -p "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt" "DATE [YYMMDD]: $[DATESTAMP]"
+dumptxt -p "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt" "TIME [HHMMSS]: $[TIMESTAMP]"
+echo "$[GM9OUT]/\nsaves_$[SYSID0]/\nsave_restore_error.txt\n \nRestore error(s) encountered."
+textview "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt"
+else
+rm -o -s "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt"
+end
+echo "Restore saves success."
+goto DATABASE_OPTIONS_(B)_Full
+end
+if find -f "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/*" TID_LOW
+strsplit TID_LOW "$[TID_LOW]" "/"
+else
+mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title_temp/$[TID_HIGH]"
+goto FIND_NEXT_3DS_SAVE_FULL
+end
+if find -f "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]/data/*.sav" NULL
+else
+dumptxt -p "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt" "$[TID_HIGH]$[TID_LOW] - Backed up SAV file is missing."
+mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title_temp/$[TID_HIGH]/$[TID_LOW]"
+goto FIND_NEXT_3DS_SAVE_FULL
+end
+if findnot "A:/title/$[TID_HIGH]/$[TID_LOW]" NULL
+dumptxt -p "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt" "$[TID_HIGH]$[TID_LOW] - Game not installed."
+mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title_temp/$[TID_HIGH]/$[TID_LOW]"
+goto FIND_NEXT_3DS_SAVE_FULL
+end
+if find -f "A:/title/$[TID_HIGH]/$[TID_LOW]/data/*.sav" NULL
+cp -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]/data" "A:/title/$[TID_HIGH]/$[TID_LOW]/data"
+mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title_temp/$[TID_HIGH]/$[TID_LOW]"
+goto FIND_NEXT_3DS_SAVE_FULL
+else
+dumptxt -p "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt" "$[TID_HIGH]$[TID_LOW] - Installed game's SAV file is missing."
+mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title_temp/$[TID_HIGH]/$[TID_LOW]"
+goto FIND_NEXT_3DS_SAVE_FULL
+end
+@DATABASE_MANUAL_(1c)_Backup_Saves
+echo "~ INSTRUCTIONS ~ Rebuild 3DS Database (Manual) ~\n1. Plug in the AC charger to keep the system charged.\n2. Set the volume slider to lowest screen brightness.\n3. Wait for 'Storage test success.' and press (A).\n4. After the saves are extracted, look for the log\ndump file called 'installed_titles_list.txt'.\n5. Dump/supply/collect all the CIAs as per titleIDs.\nDO NOT REMOVE OR ADD ADDITIONAL TITLES! The CIAs\nmust match 1-to-1 with those in the 'Nintendo 3DS'.\n6. FBI - Install the CIAs (no more, no less).\n7. Run the '(2c) Restore Saves' option to complete.\n8. faketik - Restore tickets for nonlegit titles.\n9. Cthulhu - Unwrap all HOME Menu software gift icons.\n10. Checkpoint/JKSM - Backup all saves + extdata. This\nbypasses anti-cheat save protection for certain games."
+if not ask "Continue with backing up saves?\nPress (B) to cancel attempt."
+goto DATABASE_OPTIONS_(C)_Manual
+end
+if not allow -a "A:/"
+echo "[A:] SYSNAND SD\nAccess denied."
+goto DATABASE_OPTIONS_(C)_Manual
+end
+if findnot "0:/Nintendo 3DS" NULL
+echo "0:/Nintendo 3DS\n \nDirectory not found."
+goto DATABASE_OPTIONS_(C)_Manual
+elif findnot "0:/Nintendo 3DS/$[SYSID0]" NULL
+echo "0:/Nintendo 3DS/\n$[SYSID0]\n \nDirectory not found."
+goto DATABASE_OPTIONS_(C)_Manual
+end
+set SYSID1_FORWARD ""
+if find -f "0:/Nintendo 3DS/$[SYSID0]/*" SYSID1_FORWARD
+strsplit SYSID1_FORWARD "$[SYSID1_FORWARD]" "/"
+else
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n \nNo entry within directory."
+goto DATABASE_OPTIONS_(C)_Manual
+end
+set SYSID1_BACKWARD ""
+if find "0:/Nintendo 3DS/$[SYSID0]/*" SYSID1_BACKWARD
+strsplit SYSID1_BACKWARD "$[SYSID1_BACKWARD]" "/"
+end
+set SYSID1 ""
+if chk "$[SYSID1_FORWARD]" "$[SYSID1_BACKWARD]"
+set SYSID1 "$[SYSID1_FORWARD]"
+set SYSID1_FORWARD ""
+set SYSID1_BACKWARD ""
+else
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n \nMore than one <ID1> folder found.\n \n$[SYSID1_FORWARD]\n \n$[SYSID1_BACKWARD]"
+set SYSID1 ""
+set SYSID1_FORWARD ""
+set SYSID1_BACKWARD ""
+goto DATABASE_OPTIONS_(C)_Manual
+end
+set LITMUS_FILE ""
+if findnot "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/dummy_???.bin" LITMUS_FILE
+strsplit LITMUS_FILE "$[LITMUS_FILE]" "/"
+end
+if not fdummy "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]" "00"
+end
+if find "A:/$[LITMUS_FILE]" NULL
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]"
+else
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]"
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n<ID1>\n \nCould not determine '<ID1>' folder."
+goto DATABASE_OPTIONS_(C)_Manual
+end
+if find "A:/$[LITMUS_FILE]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/\n$[SYSID0]/\n<ID1>\n \nCould not determine '<ID1>' folder."
+goto DATABASE_OPTIONS_(C)_Manual
+end
+if find "A:/title_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle_$[SYSID0]\n \nDetected 'title_<ID0>' folder.\nConflict with 'Rebuild 3DS Datebase (Quick)'."
+goto DATABASE_OPTIONS_(C)_Manual
+elif find "$[GM9OUT]/cias (dummy)_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\ncias (dummy)_$[SYSID0]\n \nDetected 'cias (dummy)_<ID0>' folder.\nConflict with 'Rebuild 3DS Datebase (Quick)'."
+goto DATABASE_OPTIONS_(C)_Manual
+elif find "$[GM9OUT]/title_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\ntitle_$[SYSID0]\n \nDetected 'title_<ID0>' folder.\nConflict with 'Rebuild 3DS Database (Full)'."
+goto DATABASE_OPTIONS_(C)_Manual
+elif find "$[GM9OUT]/cias (proper)_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\ncias (proper)_$[SYSID0]\n \nDetected 'cias (proper)_<ID0>' folder.\nConflict with 'Rebuild 3DS Database (Full)'."
+goto DATABASE_OPTIONS_(C)_Manual
+elif find "$[GM9OUT]/saves_$[SYSID0]" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/gm9/out/\nsaves_$[SYSID0]\n \nDetected 'saves_<ID0>' folder.\nConflict with '(2c) Restore Saves' option\nor 'Rebuild 3DS Database (Full)'."
+goto DATABASE_OPTIONS_(C)_Manual
+elif findnot "A:/title" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle\n \nThe 'title' folder is missing."
+goto DATABASE_OPTIONS_(C)_Manual
+elif not find -f "A:/title/*" NULL
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle/<TID_HIGH>\n \nNo usable '<TID_HIGH>' entry."
+goto DATABASE_OPTIONS_(C)_Manual
+end
+fdummy "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]" "20000000"
+if fget "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]@1FFFFFFF:01" NULL
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]"
+else
+rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/$[LITMUS_FILE]"
+set SYSID1 ""
+set LITMUS_FILE ""
+echo "Insufficient memory.\n512 MB of free space is required."
+goto DATABASE_OPTIONS_(C)_Manual
+end
+set GM9OUT_TEMP_DIR ""
+findnot "0:/gm9/out_temp_???" GM9OUT_TEMP_DIR
+@FIX_GM9OUT_TEMP_DIR_MANUAL
+if not mkdir "$[GM9OUT_TEMP_DIR]"
+end
+if find "$[GM9OUT_TEMP_DIR]" NULL
+rm -o -s "$[GM9OUT_TEMP_DIR]"
+else
+findnot "0:/gm9/out_temp_????" GM9OUT_TEMP_DIR
+goto FIX_GM9OUT_TEMP_DIR_MANUAL
+end
+mv -o -s -n -w "$[GM9OUT]" "$[GM9OUT_TEMP_DIR]"
+mkdir "$[GM9OUT]/saves_$[SYSID0]"
+fdummy "$[GM9OUT]/saves_$[SYSID0]/installed_titles_list.txt" "00"
+cp -o -s -n -w "1:/dbs/ticket.db" "$[GM9OUT]/saves_$[SYSID0]/$[SERIAL]_ticket.db"
+@FIND_NEXT_3DS_TITLE_MANUAL
+set TID_HIGH ""
+set TID_LOW ""
+set APP_FILE ""
+set TMD_FILE ""
+set TMD_DIR ""
+set TMD_BLOCK_0xB04-B33_SHA ""
+set TMD_BLOCK_0x204-B03_SHA ""
+set ICON_FILE_SHA ""
+set LOOP_BREAK ""
+set CIA_FILE ""
+if find -f "A:/title/*" TID_HIGH
+strsplit TID_HIGH "$[TID_HIGH]" "/"
+else
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]" "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title"
+mv -o -s -n -w "$[GM9OUT_TEMP_DIR]" "$[GM9OUT]"	
+set SYSID1 ""
+set LITMUS_FILE ""
+set GM9OUT_TEMP_DIR ""
+set TID_HIGH ""
+set TID_LOW ""
+set APP_FILE ""
+set TMD_FILE ""
+set TMD_DIR ""
+set TMD_BLOCK_0xB04-B33_SHA ""
+set TMD_BLOCK_0x204-B03_SHA ""
+set ICON_FILE_SHA ""
+set LOOP_BREAK ""
+set CIA_FILE ""
+if fget "$[GM9OUT]/saves_$[SYSID0]/installed_titles_list.txt@00:01" NULL
+echo "$[GM9OUT]/\nsaves_$[SYSID0]/\ninstalled_titles_list.txt\n \nList of title(s) found."
+textview "$[GM9OUT]/saves_$[SYSID0]/installed_titles_list.txt"
+else
+rm -o -s "$[GM9OUT]/saves_$[SYSID0]/installed_titles_list.txt"
+end		
+echo "Backed up saves success."
+goto DATABASE_OPTIONS_(C)_Manual
+end
+if chk "$[TID_HIGH]" "00040000" # Game
+elif chk "$[TID_HIGH]" "0004000e" # Update
+elif chk "$[TID_HIGH]" "0004008c" # DLC
+else
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]" "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]/$[TID_HIGH]"
+goto FIND_NEXT_3DS_TITLE_MANUAL
+end
+if find -f "A:/title/$[TID_HIGH]/*" TID_LOW
+strsplit TID_LOW "$[TID_LOW]" "/"
+else
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]" "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]/$[TID_HIGH]"
+goto FIND_NEXT_3DS_TITLE_MANUAL
+end
+if find "A:/title/$[TID_HIGH]/$[TID_LOW]/data" NULL
+cp -o -s -n "A:/title/$[TID_HIGH]/$[TID_LOW]/data" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]/data"
+end
+if find -f "A:/title/$[TID_HIGH]/$[TID_LOW]/content/*.tmd" TMD_FILE
+strsplit TMD_FILE "$[TMD_FILE]" "/"
+else
+goto SKIP_FINDING_TITLE_INFO_MANUAL
+end
+if not inject -n "A:/title/$[TID_HIGH]/$[TID_LOW]/content/$[TMD_FILE]@000:B34" "$[GM9OUT]/$[TMD_FILE]"
+goto SKIP_FINDING_TITLE_INFO_MANUAL 
+end
+if fget "$[GM9OUT]/$[TMD_FILE]@B04:04" APP_FILE
+set APP_FILE "$[APP_FILE].app"
+else
+goto SKIP_FINDING_TITLE_INFO_MANUAL
+end
+if chk "$[TID_HIGH]" "0004008c" # DLC
+set APP_DIR "A:/title/$[TID_HIGH]/$[TID_LOW]/content/00000000/$[APP_FILE]"
+else
+set APP_DIR "A:/title/$[TID_HIGH]/$[TID_LOW]/content/$[APP_FILE]"
+end
+if findnot "$[APP_DIR]" NULL
+goto SKIP_FINDING_TITLE_INFO_MANUAL
+end
+if not imgmount "$[APP_DIR]"
+imgumount
+goto SKIP_FINDING_TITLE_INFO_MANUAL
+end
+if findnot "G:/ncch.bin" NULL
+imgumount
+goto SKIP_FINDING_TITLE_INFO_MANUAL
+end
+if not cp -o -s -n -p "G:/ncch.bin" "$[GM9OUT]/00000000/$[APP_FILE]"
+imgumount
+goto SKIP_FINDING_TITLE_INFO_MANUAL
+end
+fill -n "$[GM9OUT]/00000000/$[APP_FILE]@200:200" "00"
+if findnot "G:/exefs/icon" NULL
+imgumount
+goto SKIP_FINDING_TITLE_INFO_MANUAL
+end
+if cp -o -s -n -p "G:/exefs/icon" "$[GM9OUT]/00000000/$[APP_FILE]"
+imgumount
+else
+imgumount
+goto SKIP_FINDING_TITLE_INFO_MANUAL
+end
+fill -n "$[GM9OUT]/00000000/$[APP_FILE]@3AC0:140" "00"
+fset "$[GM9OUT]/00000000/$[APP_FILE]@104" "1E000000"
+fill -n "$[GM9OUT]/00000000/$[APP_FILE]@130:20" "00"
+fill -n "$[GM9OUT]/00000000/$[APP_FILE]@180:08" "00"
+fill -n "$[GM9OUT]/00000000/$[APP_FILE]@190:10" "00"
+fset "$[GM9OUT]/00000000/$[APP_FILE]@1A0" "010000001D000000"
+fill -n "$[GM9OUT]/00000000/$[APP_FILE]@1B0:10" "00"
+fill -n "$[GM9OUT]/00000000/$[APP_FILE]@1E0:20" "00"
+fset "$[GM9OUT]/00000000/$[APP_FILE]@220" "69636F6E0000000000000000C0360000"
+@SHAGET_ICON_MANUAL
+if shaget "$[GM9OUT]/00000000/$[APP_FILE]@400:36C0" ICON_FILE_SHA
+fset "$[GM9OUT]/00000000/$[APP_FILE]@3A0" "$[ICON_FILE_SHA]"
+else
+goto SHAGET_ICON_MANUAL
+end
+@SHAGET_APP_MANUAL
+if shaget "$[GM9OUT]/00000000/$[APP_FILE]" APP_FILE_SHA
+fset "$[GM9OUT]/$[TMD_FILE]@B14" "$[APP_FILE_SHA]"
+else
+goto SHAGET_APP_MANUAL
+end
+fset "$[GM9OUT]/$[TMD_FILE]@B0C" "0000000000003C00"
+fset "$[GM9OUT]/$[TMD_FILE]@1DF" "01"
+fset "$[GM9OUT]/$[TMD_FILE]@204" "00000001"
+@SHAGET_BLOCK_0xB04-B33_MANUAL
+if shaget "$[GM9OUT]/$[TMD_FILE]@B04:30" TMD_BLOCK_0xB04-B33_SHA
+fset "$[GM9OUT]/$[TMD_FILE]@208" "$[TMD_BLOCK_0xB04-B33_SHA]"
+else
+goto SHAGET_BLOCK_0xB04-B33_MANUAL
+end
+@SHAGET_BLOCK_0x204-B03_MANUAL
+if shaget "$[GM9OUT]/$[TMD_FILE]@204:900" TMD_BLOCK_0x204-B03_SHA
+fset "$[GM9OUT]/$[TMD_FILE]@1E4" "$[TMD_BLOCK_0x204-B03_SHA]"
+else
+goto SHAGET_BLOCK_0x204-B03_MANUAL
+end
+if chk "$[TID_HIGH]" "0004008c" # DLC
+set TMD_DIR "$[GM9OUT]/$[TMD_FILE]"
+else
+mv -o -s -n -w "$[GM9OUT]/$[TMD_FILE]" "$[GM9OUT]/00000000/$[TMD_FILE]"
+set TMD_DIR "$[GM9OUT]/00000000/$[TMD_FILE]"
+end
+set LOOP_BREAK "NO_1"
+@BUILDCIA_TRY_AGAIN_MANUAL
+if chk "$[LOOP_BREAK]" "NO_1"
+set LOOP_BREAK "NO_2"
+elif chk "$[LOOP_BREAK]" "NO_2"
+set "LOOP_BREAK "YES"
+elif chk "$[LOOP_BREAK]" "YES"
+goto SKIP_FINDING_TITLE_INFO_MANUAL
+end
+if not buildcia -o -s "$[TMD_DIR]"
+goto BUILDCIA_TRY_AGAIN_MANUAL
+end
+@SKIP_FINDING_TITLE_INFO_MANUAL
+if find -f "$[GM9OUT]/*.cia" CIA_FILE
+strsplit CIA_FILE "$[CIA_FILE]" "/"
+strsplit -b CIA_FILE "$[CIA_FILE]" "."
+dumptxt -p "$[GM9OUT]/saves_$[SYSID0]/installed_titles_list.txt" "$[CIA_FILE]"
+fset "$[GM9OUT]/saves_$[SYSID0]/temp.bin@00" "0D0A"
+cp -o -s -n -p "$[GM9OUT]/saves_$[SYSID0]/temp.bin" "$[GM9OUT]/saves_$[SYSID0]/installed_titles_list.txt"
+rm -o -s "$[GM9OUT]/saves_$[SYSID0]/temp.bin"
+else
+dumptxt -p "$[GM9OUT]/saves_$[SYSID0]/installed_titles_list.txt" "$[TID_HIGH]$[TID_LOW]"
+fset "$[GM9OUT]/saves_$[SYSID0]/temp.bin@00" "0D0A"
+cp -o -s -n -p "$[GM9OUT]/saves_$[SYSID0]/temp.bin" "$[GM9OUT]/saves_$[SYSID0]/installed_titles_list.txt"
+rm -o -s "$[GM9OUT]/saves_$[SYSID0]/temp.bin"
+end
+rm -o -s "$[GM9OUT]/$[TMD_FILE]"
+rm -o -s "$[GM9OUT]/$[CIA_FILE].cia"
+rm -o -s "$[TMD_DIR]"
+rm -o -s "$[GM9OUT]/00000000"
+mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]/$[TID_LOW]" "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]/$[TID_HIGH]/$[TID_LOW]" 
+goto FIND_NEXT_3DS_TITLE_MANUAL
+@DATABASE_MANUAL_(2c)_Restore_Saves
+if not ask "Continue with restoring saves?\nPress (B) to cancel attempt."
+goto DATABASE_OPTIONS_(C)_Manual
+end
+if not allow "1:/dbs/ticket.db"
+echo "[1:] SYSNAND CTRNAND/dbs/ticket.db\nAccess denied."
+goto DATABASE_OPTIONS_(C)_Manual
+end
+if findnot "$[GM9OUT]/saves_$[SYSID0]" NULL
+echo "0:/gm9/out/\nsaves_$[SYSID0]\n \nThe 'saves_<ID0>' folder is missing."
+goto DATABASE_OPTIONS_(C)_Manual
+elif find "$[GM9OUT]/cias (proper)_$[SYSID0]" NULL
+echo "0:/gm9/out/\ncias (proper)_$[SYSID0]\n \nDetected 'cias (proper)_<ID0>' folder.\nConflict with 'Rebuild 3DS Database (Full)'."
+goto DATABASE_OPTIONS_(C)_Manual
+elif find "$[GM9OUT]/cias (dummy)_$[SYSID0]" NULL
+echo "0:/gm9/out/\ncias (dummy)_$[SYSID0]\n \nDetected 'cias (dummy)_<ID0>' folder.\nConflict with 'Rebuild 3DS Database (Quick)'."
+goto DATABASE_OPTIONS_(C)_Manual
+elif find "A:/title_$[SYSID0]" NULL
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle_$[SYSID0]\n \nDetected 'title_<ID0>' folder.\nConflict with 'Rebuild 3DS Database (Quick)'."
+goto DATABASE_OPTIONS_(C)_Manual
+elif findnot "A:/title" NULL
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle\n \nThe 'title' folder is missing."
+goto DATABASE_OPTIONS_(C)_Manual
+elif findnot "A:/title/00040000" NULL
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle/00040000\n \nThe '<TID_HIGH>' folder (00040000) is missing."
+goto DATABASE_OPTIONS_(C)_Manual
+elif not find -f "A:/title/00040000/*" NULL
+echo "0:/Nintendo 3DS/<ID0>/<ID1>/\ntitle/00040000/<TID_LOW>\n \nNo usable '<TID_LOW>' entry."
+goto DATABASE_OPTIONS_(C)_Manual
+end
+cp -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/$[SERIAL]_ticket.db" "1:/dbs/ticket.db"
+fixcmac -o -s "1:/dbs/ticket.db"
+rm -o -s "1:/data/$[SYSID0]/sysdata/00010011"
+if find "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt" NULL
+findnot "$[GM9OUT]/saves_$[SYSID0]/save_restore_error_???.txt" TEMP_FILE
+mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt" "$[TEMP_FILE]"
+set TEMP_FILE ""
+end
+@FIND_NEXT_3DS_SAVE_MANUAL
+set TID_HIGH ""
+set TID_LOW ""
+if find -f "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/*" TID_HIGH
+strsplit TID_HIGH "$[TID_HIGH]" "/"
+else
+mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title_temp" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title" 
+set TID_HIGH ""
+set TID_LOW ""
+fixcmac -o -s "A:"
+if fget "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt@00:01" NULL
+dumptxt -p "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt" "DATE [YYMMDD]: $[DATESTAMP]"
+dumptxt -p "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt" "TIME [HHMMSS]: $[TIMESTAMP]"
+echo "$[GM9OUT]/\nsaves_$[SYSID0]/\nsave_restore_error.txt\n \nRestore error(s) encountered."
+textview "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt"
+else
+rm -o -s "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt"
+end	
+echo "Restore saves success."
+goto DATABASE_OPTIONS_(C)_Manual
+end
+if find -f "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/*" TID_LOW
+strsplit TID_LOW "$[TID_LOW]" "/"
+else
+mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title_temp/$[TID_HIGH]"
+goto FIND_NEXT_3DS_SAVE_MANUAL
+end
+if find -f "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]/data/*.sav" NULL
+else
+dumptxt -p "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt" "$[TID_HIGH]$[TID_LOW] - Backed up SAV file is missing."
+mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title_temp/$[TID_HIGH]/$[TID_LOW]"
+goto FIND_NEXT_3DS_SAVE_MANUAL
+end
+if findnot "A:/title/$[TID_HIGH]/$[TID_LOW]" NULL
+dumptxt -p "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt" "$[TID_HIGH]$[TID_LOW] - Game not installed."
+mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title_temp/$[TID_HIGH]/$[TID_LOW]"
+goto FIND_NEXT_3DS_SAVE_MANUAL
+end
+if find -f "A:/title/$[TID_HIGH]/$[TID_LOW]/data/*.sav" NULL
+cp -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]/data" "A:/title/$[TID_HIGH]/$[TID_LOW]/data"
+mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title_temp/$[TID_HIGH]/$[TID_LOW]"
+goto FIND_NEXT_3DS_SAVE_MANUAL
+else
+dumptxt -p "$[GM9OUT]/saves_$[SYSID0]/save_restore_error.txt" "$[TID_HIGH]$[TID_LOW] - Installed game's SAV file is missing."
+mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID_HIGH]/$[TID_LOW]" "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title_temp/$[TID_HIGH]/$[TID_LOW]"
+goto FIND_NEXT_3DS_SAVE_MANUAL
+end
+
 @mm_Miscellaneous_Options
 
 set PREVIEW_MODE "GM9FULLSCRIPT \nMisellaneous Options"
@@ -5929,12 +7081,158 @@ goto beginning
 
 
 
+@misc_Remap_Rosalina_Combo
+if findnot "0:/luma/config.bin" NULL
+echo "0:/luma/config.bin\nis missing."
+goto mm_Miscellaneous_Options
+end
+set MAGIC_CHECK ""
+fget "0:/luma/config.bin@00:04" MAGIC_CHECK
+if not chk "$[MAGIC_CHECK]" "434F4E46" # 'CONF'
+echo "0:/luma/config.bin\n'CONF' header not found."
+goto mm_Miscellaneous_Options
+elif fget "0:/luma/config.bin@1F:01" NULL
+else
+echo "0:/luma/config.bin\nFile is smaller than 32 bytes.\n \nIf this is Luma3DS v7.1, please update."
+goto mm_Miscellaneous_Options
+end
+echo "Reassign the button for 'Rosalina menu' if the default\ncombo can't be used due to broken buttons.\nDefault: (L)-shoulder + (DOWN) d-pad + (SELECT)\n'Miscellaneous options...' > 'Change the menu combo' > \ninput combo preference > 'Save settings'
+labelsel -k -o -s "Remap Rosalina combo\nPress (B) to return to Menu Options." BUTTON_*
+goto CANCEL_REMAP_BUTTON
+@BUTTON_L
+fset "0:/luma/config.bin@1C" "0002"
+echo "Rosalina combo set to (L)."
+goto CANCEL_REMAP_BUTTON
+@BUTTON_R
+fset "0:/luma/config.bin@1C" "0001"
+echo "Rosalina combo set to (R)."
+goto CANCEL_REMAP_BUTTON
+@BUTTON_START
+fset "0:/luma/config.bin@1C" "0800"
+echo "Rosalina combo set to (START)."
+goto CANCEL_REMAP_BUTTON
+@BUTTON_SELECT
+fset "0:/luma/config.bin@1C" "0400"
+echo "Rosalina combo set to (SELECT)."
+goto CANCEL_REMAP_BUTTON
+@BUTTON_Y
+fset "0:/luma/config.bin@1C" "0008"
+echo "Rosalina combo set to (Y)."
+goto CANCEL_REMAP_BUTTON
+@BUTTON_X
+fset "0:/luma/config.bin@1C" "0004"
+echo "Rosalina combo set to (X)."
+goto CANCEL_REMAP_BUTTON
+@BUTTON_UP
+fset "0:/luma/config.bin@1C" "4000"
+echo "Rosalina combo set to (UP)."
+goto CANCEL_REMAP_BUTTON
+@BUTTON_DOWN
+fset "0:/luma/config.bin@1C" "8000"
+echo "Rosalina combo set to (DOWN)."
+goto CANCEL_REMAP_BUTTON
+@CANCEL_REMAP_BUTTON
+goto mm_Miscellaneous_Options
+
+@misc_Inject_HBL_to_Camera
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nInject HBL to Camera"
+echo "If region changing or tickets for system titles were\nalready missing before the CTRTransfer, replacement\nTIK files borrowed from the donor CTRNAND image will\nrequire manually (re-)installing with FBI.\nWhen region changing, the disappearance of system\ntitles occurs because the user's original 'ticket.db`\nwas retained.\nOut-of-region titles have different \nTitle IDs, including system titles."
+echo "Keeping the original\n`ticket.db' maintains dumpability of the user's\nunique legit tickets such as purchased eShop titles.\nIn order to access FBI to install the system tickets,\n'Homebrew Launcher' can be opened from 'Nintendo 3DS\nCamera' even if it is missing in HOME Menu."
+echo "~ HOME MENU ~\n1. Press (L)+(R) buttons to access the camera applet.\n2. Click on the bottom screen's 'Nintendo 3DS Camera'.\n3. If injected, this should open 'Homebrew Launcher'.\n4. FBI - Install all DSiWare CIAs & system tickets.\n5. faketik - Restore tickets for nonlegit titles.\n6. Cthulhu - Unwrap all HOME Menu software.\n7. TWLFix-CFW - Delete all TWL system titles."
+echo "~ GODMODE9 ~\n8. Restore the DSiWare saves with this script.\n\n~ RECOVERY MODE or SYSTEM SETTINGS ~\n9. Update to the latest 3DS firmware to fix DS mode."
+if not ask "Rosalina inject 'Homebrew Launcher' \nto 'Nintendo 3DS Camera'?\n \nSee above for additonal instructions."
+goto CANCEL_HBL_INJECTION
+end
+if findnot "0:/luma/config.bin" NULL
+echo "0:/luma/config.bin\nis missing."
+goto CANCEL_HBL_INJECTION
+end
+set MAGIC_CHECK ""
+fget "0:/luma/config.bin@00:04" MAGIC_CHECK
+if not chk "$[MAGIC_CHECK]" "434F4E46" # 'CONF'
+echo "0:/luma/config.bin\n'CONF' header not found."
+goto CANCEL_HBL_INJECTION
+elif fget "0:/luma/config.bin@1F:01" NULL
+else
+echo "0:/luma/config.bin\nFile is smaller than 32 bytes.\n \nIf this is Luma3DS v7.1, please update."
+goto CANCEL_HBL_INJECTION
+end
+if find "C:/*.3ds" TITLE_ID
+strsplit TITLE_ID "$[TITLE_ID]" "/"
+strsplit -o -s -b -f TITLE_ID "$[TITLE_ID]" "."
+strsplit -o -s -b -f TITLE_ID "$[TITLE_ID]" "_"
+else
+goto CONTINUE_TO_CAMERA
+end
+echo "Alternative to 'Nintendo 3DS Camera'. If the shoulder\nbuttons or cameras are broken, and all system titles\nare missing on 'HOME Menu' due to region changing the\n3DS firmware, one can still access 'Homebrew Launcher'\nby Rosalina injecting 'boot.3dsx' to a 3DS game cart."
+@REPEAT_CART_QUESTION
+label -o -s -k "Rosalina inject 'Homebrew Launcher' \nto Cart TitleID: $[TITLE_ID] ?" CART_*
+goto REPEAT_CART_QUESTION
+@CART_A_Inject_to_camera.
+goto CONTINUE_TO_CAMERA
+@CART_START_Inject_to_cart.
+fset -e "0:/luma/config.bin@14" "$[TITLE_ID]"
+echo "Cart TitleID: $[TITLE_ID]\nRosalina injection success."
+goto CANCEL_HBL_INJECTION
+@CONTINUE_TO_CAMERA
+set SECINFO_REGION ""
+set SECINFO_X ""
+if find "1:/rw/sys/SecureInfo_C" NULL
+set SECINFO_X "SecureInfo_C"
+elif find "1:/rw/sys/SecureInfo_B" NULL
+set SECINFO_X "SecureInfo_B"
+elif find "1:/rw/sys/SecureInfo_A" NULL
+set SECINFO_X "SecureInfo_A"
+else
+echo "SecureInfo_A|B|C is missing.\nRegion is unknown."
+goto CANCEL_HBL_INJECTION
+end
+if not fget "1:/rw/sys/$[SECINFO_X]@100:01" SECINFO_REGION
+set SECINFO_REGION "FF"
+end
+set SYSTEM_REGION ""
+if chk "$[SECINFO_REGION]" "00"
+set SYSTEM_REGION "JPN"
+fset -e "0:/luma/config.bin@14" "0004001000020400"
+elif chk "$[SECINFO_REGION]" "01"
+set SYSTEM_REGION "USA"
+fset -e "0:/luma/config.bin@14" "0004001000021400"
+elif chk "$[SECINFO_REGION]" "02"
+set SYSTEM_REGION "EUR"
+fset -e "0:/luma/config.bin@14" "0004001000022400"
+elif chk "$[SECINFO_REGION]" "03"
+set SYSTEM_REGION "AUS"
+fset -e "0:/luma/config.bin@14" "0004001000022400"
+elif chk "$[SECINFO_REGION]" "04"
+set SYSTEM_REGION "CHN"
+fset -e "0:/luma/config.bin@14" "0004001000026400"
+elif chk "$[SECINFO_REGION]" "05"
+set SYSTEM_REGION "KOR"
+fset -e "0:/luma/config.bin@14" "0004001000027400"
+elif chk "$[SECINFO_REGION]" "06"
+set SYSTEM_REGION "TWN"
+fset -e "0:/luma/config.bin@14" "0004001000028400"
+else
+echo "$[SECINFO_X] region is indeterminate."
+goto CANCEL_HBL_INJECTION
+end
+echo "Nintendo 3DS Camera ($[SYSTEM_REGION])\nRosalina injection success."
+@CANCEL_HBL_INJECTION
+set MAGIC_CHECK ""
+set TITLE_ID ""
+set SECINFO_REGION ""
+set SECINFO_X ""
+goto mm_Miscellaneous_Options
+
 @misc_Reset_NVRAM_Image
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nReset NVRAM Image"
+echo "~ INSTRUCTIONS ~\n1. HOME Menu > Homebrew Launcher > 3DS_NVRAMtool.\n2. Press the (B) button once to 'write 00000000'.\n3. Exit the app. Check if DS or DSiWare games work.\n4. System Settings > Other Settings. Change these:\n- Profile: User Name, Birthday, Region Settings\n- Date & Time: Today's Date, Current Time\n5. Nintendo DS Profile: change the Message and Color."
+echo "~ DESCRIPTION ~\nThis creates a system reformatted 'nvram.bin' image.\nFlash this with '3DS_NVRAMtool' to fix a softbricked\nDS(i) mode caused by corrupt settings in the NVRAM.\nwww.github.com/zoogie/Stuff/tree/master/3DS_NVRAMtool\nhttps://3ds.hacks.guide/troubleshooting\nhttps://quantumcat1.github.io/troubleshooting"
 label -o -s -k "Create a new 'nvram.bin' image?" NVRAM_*
 goto NVRAM_B_Return_to_Menu_Options
 @NVRAM_A_NVRAM_Reset_Instructions
-goto CHOICE_Reset_NVRAM_image
-@NVRAM_B_Return_to_Menu_Options
+goto misc_Reset_NVRAM_image
+@NVRAM_B_Return_to_Miscellaneous_Options
 goto mm_Miscellaneous_Options
 @NVRAM_START_Continue
 imgumount
