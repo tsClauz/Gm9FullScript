@@ -1,0 +1,5976 @@
+set PREVIEW_MODE "GM9FULLSCRIPT \nInitialising, please wait..."
+if chk $[GM9VER] "v2.0.0"
+goto beginning 
+end
+if chk $[GM9VER] "v1.9.3"
+goto beginning 
+end
+if chk $[GM9VER] "v1.9.2"
+goto beginning 
+end
+if chk $[GM9VER] "v1.9.1"
+goto beginning 
+end
+if chk $[GM9VER] "v1.9.0"
+goto gm9ver 
+end
+if chk $[GM9VER] "v1.8.0"
+goto gm9ver 
+end
+if chk $[GM9VER] "v1.7.1"
+goto gm9ver 
+end
+if chk $[GM9VER] "v1.7.0"
+goto gm9ver 
+end
+if chk $[GM9VER] "v1.6.3"
+goto gm9ver 
+end
+if chk $[GM9VER] "v1.6.2"
+goto gm9ver 
+end
+if chk $[GM9VER] "v1.6.1"
+goto gm9ver 
+end
+if chk $[GM9VER] "v1.6.0"
+goto gm9ver 
+end
+if chk $[GM9VER] ""
+goto gm9ver 
+end
+goto beginning
+
+@gm9ver
+echo "GodMode9 1.9.1 or higher is required. For safety reasons,\nif the running GodMode9 version is lower than 1.9.1, \nthe script will prevent himself from running \nto avoid unexptected errors due to missing commands. \nPlease download the latest GodMode9 version to use this script."
+echo "HOW TO UPDATE GODMODE9: \nDownload the latest GodMode9 version at \nhttps://github.com/d0k3/GodMode9/releases/latest \nOpen the archive and extract \nthe gm9 folder \nto the SDCARD root, replacing existing files. \nEntre folder Luma/payloads on SDCARD and extract here the \nGodMode9.firm file. \nInsert the SDCARD into the console and boot up GodMode9. \nYou won't see this error message anymore."
+goto mm_Exit
+
+@beginning
+
+set PREVIEW_MODE "GM9FULLSCRIPT"
+labelsel -s "Select an option." mm_*
+goto bebinning
+
+@mm_NAND_Management_Options
+
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options"
+labelsel -s -o "Select on option" a_*
+goto beginning
+
+
+@a_Backup_Options
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nBackup Options."
+labelsel -s -o "Select an option." bo_*
+goto mm_NAND_Management_Options
+
+
+@bo_SysNAND_Backup
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nBackup options \nSysNAND Backup" 
+if not ask "Backup sysNAND to $[GM9OUT]?"
+echo "User aborted."
+goto mm_NAND_Management_Options
+end
+if cp -w -h S:/nand_minsize.bin 0:/gm9/out/$[DATESTAMP]_$[SERIAL]_sysnand_00.bin
+echo "SysNAND backup success!"
+goto mm_NAND_Management_Options
+end
+echo "SysNAND backup failed!"
+goto mm_NAND_Management_Options
+
+@bo_EmuNAND_Backup
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nBackup options \nEmuNAND Backup" 
+if not ask "Backup emuNAND to $[GM9OUT]?"
+echo "User aborted."
+goto mm_NAND_Management_Options
+end
+if cp -w -h E:/nand_minsize.bin 0:/gm9/out/$[DATESTAMP]_$[SERIAL]_emunand_00.bin
+echo "EmuNAND backup success!"
+goto mm_NAND_Management_Options
+end
+echo "EmuNAND backup failed!"
+goto mm_NAND_Management_Options
+
+
+@a_Restore_Options
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nRestore Options" 
+labelsel -s -o "Select an option" ro_*
+goto mm_NAND_Management_Options
+
+@ro_Safe_SysNAND_Restore
+
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nRestore Options \nSafe SysNAND Restore"
+
+if chk $[HAX] ""
+echo "Console is not exploited. /nAborting to avoid a brick"
+goto a_Restore_Options
+end
+if chk $[HAX] "ntrboot"
+echo "Ntrboot detected. \nAborting to avoid a brick."
+goto a_Restore_Options
+
+end
+if not filesel "Choose a NAND Backup." $[GM9OUT]/*nand_??.bin BACK
+echo "User aborted."
+goto a_Restore_Options
+end
+if not ask "Safe restore \n$[BACK] \nto sysNAND?"
+goto a_Restore_Options
+end
+if not allow 1:/private/movable.sed
+echo "Permissions denied, aborting."
+goto a_Restore_Options
+end
+imgmount $[BACK]
+shaget -s -o S:/nand_hdr.bin LOCALNCSD
+if not shaget I:/nand_hdr.bin IMAGENCSD
+echo "NAND Backup is corrupted! \nAborting to avoid a brick."
+goto a_Restore_Options
+end
+if not chk $[LOCALNCSD] $[IMAGENCSD]
+echo "WARNING: \nNCSD differs beetwen image and local! \nElevated permissions required. \nProoceed at your own risk"
+if not allow S:/nand_hdr.bin
+echo "Permissions denied. Aborting!"
+inject -n I:/nand_hdr.bin S:/nand_hdr.bin
+end
+end
+if not cp -w I:/ctrnand_full.bin S:/ctrnand_full.bin
+imgumount
+echo "Safe sysNAND restore failed!"
+goto a_Restore_Options
+end
+if not cp -w I:/twln.bin S:/twln.bin
+imgumount
+echo "Safe sysNAND restore failed!"
+goto a_Restore_Options
+end
+if not cp -w I:/twlp.bin S:/twlp.bin
+imgumount
+echo "Safe sysNAND restore failed!"
+goto a_Restore_Options
+end
+cp -w -s -o I:/bonus.bin S:/bonus.bin
+cp -w -s -o I:/agbsave.bin S:/agbsave.bin
+imgumount
+echo "Safe sysNAND restore success!"
+goto @a_Restore_Options 
+
+@ro_Full_sysNAND_Restore
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nRestore Options \nFull SysNAND Restore"
+
+if not ask "WARNING: \nsystem exploit will not be protected. \nProoced at your own risk."
+echo "User aborted."
+goto a_Restore_Options
+end
+if not chk $[HAX] "ntrboot"
+echo "WARNING: \nNtrboot not detected. In case of a brick, \nyou won't be able to restore your console. \nNever use this with an emuNAND image.\nYou may brick your device."
+end
+if not filesel "Choose a NAND Backup." $[GM9OUT]/*nand_??.bin BACK
+echo "User aborted."
+goto a_Restore_Options
+end
+if not verify $[BACK]
+echo "NAND verification failed! \nAborting to avoid a brick."
+goto a_Restore_Options
+end
+if not ask "Full restore \n$[BACK]\nto sysNAND?"
+echo "User aborted"
+goto a_Restore_Options
+end
+if not allow S:/nand.bin
+echo "Permissions denied. Aborting!"
+goto a_Restore_Options
+end
+imgmount $[BACK]
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nFull sysNAND Restore \nPlease do not turn off the console"
+if not inject -n I:/nand_minsize.bin S:/nand.bin
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nFull sysNAND Restore"
+imgumount
+
+echo "Full sysNAND restore failed!"
+goto a_Restore_Options
+end
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nFull sysNAND Restore"
+imgumount
+
+echo "Full sysNAND restore success!"
+goto a_Restore_Options
+
+@ro_EmuNAND_Restore
+
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nRestore Options \nEmuNAND Restore"
+
+if not find E:/nand.bin EMU
+
+echo "EmuNAND not found. Aborting!"
+
+goto a_Restore_Options
+
+end
+
+if not filesel "Choose a NAND Backup." $[GM9OUT]/*nand_??.bin BACK
+
+echo "User Aborted."
+
+goto a_Restore_Options
+
+end
+
+if not ask "Restore \n$[BACK]\nto emuNAND?"
+
+echo "User aborted."
+
+goto a_Restore_Options
+
+end
+
+if not allow E:/nand.bin
+
+echo "Permissions denied. Aborting!"
+
+goto a_Restore_Options
+
+end
+
+imgmount $[BACK]
+
+if not find I:/nand_minsize.bin EMURES
+
+echo "Backup is incomplete! Aborting!"
+
+goto a_Restore_Options
+
+end
+
+if not inject $[EMURES] E:/nand.bin
+
+imgumount
+
+echo "EmuNAND Restore failed!"
+
+goto a_Restore_Options
+
+end
+
+imgumount
+
+echo "EmuNAND Restore success!"
+
+goto a_Restore_Options
+
+
+
+@a_Transfer_sysNAND_to_emuNAND
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nTransfer sysNAND to emuNAND"
+if not ask "This will copy your sysNAND content to emuNAND. \nProceed?"
+echo "User aborted."
+goto mm_NAND_Management_Options
+end
+if not find E:/nand.bin NULL
+echo "EmuNAND not found! Aborting!"
+goto mm_NAND_Management_Options
+end
+if not allow E:/nand.bin
+echo "Permissions denied. Aborting!"
+goto mm_NAND_Management_Options
+end
+if not inject -n S:/nand_minsize.bin E:/nand.bin
+echo "Transfer failed!"
+goto mm_NAND_Management_Options
+end
+echo "Transfer success"
+goto mm_NAND_Management_Options
+
+@a_Transfer_emuNAND_to_sysNAND
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nTransfer emuNAND to sysNAND"
+if chk $[HAX] ""
+echo "Console is not exploited. \nAborting to avoid a brick!"
+goto mm_NAND_Management_Options
+end
+if chk $[HAX] "ntrboot"
+
+echo "Ntrboot detected! \nAborting to avoid a brick!"
+
+goto mm_NAND_Management_Options
+
+end
+
+if not ask "WARNING: \nYou are going to copy your emuNAND content to sysNAND. \nNEVER use this if emuNAND is not perfectly fine! \nProceed?"
+echo "User aborted."
+goto mm_NAND_Management_Options
+end
+if not find E:/nand_minsize.bin EMU
+echo "EmuNAND not found. Aborting!"
+goto mm_NAND_Management_Options
+end
+if not verify E:/nand_minsize.bin
+echo "EmuNAND verification failed! \nAborting to avoid a brick"
+goto mm_NAND_Management_Options
+end
+if not allow S:/nand.bin
+echo "Permissions denied. Aborting!"
+goto mm_NAND_Management_Options
+end
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nTransfer emuNAND to sysNAND \nPlease do not turn off the console"
+if not inject -n E:/nand_minsize.bin S:/nand.bin
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nTransfer emuNAND to sysNAND"
+echo "Transfer failed!"
+goto mm_NAND_Management_Options
+end
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nTransfer emuNAND to sysNAND"
+echo "Transfer success!"
+goto mm_NAND_Management_Options
+
+@a_Check_EMMC_Status
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nCheck EMMC Status"
+if not ask "!!!!WARNING!!!! \nThis function will test the EMMC status to see \nif it has hardware problems. \nThis operation has a chance of bricking the NAND chip. \nProceed at your own risk. \nPlease run this only if these operations \nhaven't fixed your console: \nsysNAND Full Restore; CTRTransfer; \nCTRTransfer D9 Type"
+echo "User aborted"
+goto mm_NAND_Management_Options
+end
+echo "Please do not use this is the console is fine."
+echo "NEVER TURN OFF THE CONSOLE DURING THIS PROCESS!"
+echo "Plug the AC charger for extra security"
+if not allow S:/nand.bin
+echo "Permissions denied! Aborting."
+goto mm_NAND_Management_Options
+end
+@SECURITY_CODE_01
+set PREVIEW_MODE "UP UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A"
+labelsel -k -o -s "Enter the Security Code." INPUT01_*
+goto CANCEL_EMMC_TEST
+@INPUT01_UP_
+goto SECURITY_CODE_02
+@INPUT01_DOWN_
+@INPUT01_LEFT_
+@INPUT01_RIGHT_
+@INPUT01_B_
+@INPUT01_A_
+goto CANCEL_EMMC_TEST
+@SECURITY_CODE_02
+set PREVIEW_MODE "<UP> UP DOWN DOWN LEFT RIGHT LEFT RIGHT B A"
+labelsel -k -o -s "Enter the Security Code." INPUT02_*
+goto CANCEL_EMMC_TEST
+@INPUT02_UP_
+goto SECURITY_CODE_03
+@INPUT02_DOWN_
+@INPUT02_LEFT_
+@INPUT02_RIGHT_
+@INPUT02_B_
+@INPUT02_A_
+goto CANCEL_EMMC_TEST
+@SECURITY_CODE_03
+set PREVIEW_MODE "<UP><UP> DOWN DOWN LEFT RIGHT LEFT RIGHT B A"
+labelsel -k -o -s "Enter the Security Code." INPUT03_*
+@INPUT03_UP_
+goto CANCEL_EMMC_TEST
+@INPUT03_DOWN_
+goto SECURITY_CODE_04
+@INPUT03_LEFT_
+@INPUT03_RIGHT_
+@INPUT03_B_
+@INPUT03_A_
+goto CANCEL_EMMC_TEST
+@SECURITY_CODE_04
+set PREVIEW_MODE "<UP><UP><DOWN> DOWN LEFT RIGHT LEFT RIGHT B A"
+labelsel -k -o -s "Enter the Security Code." INPUT04_*
+@INPUT04_UP_
+goto CANCEL_EMMC_TEST
+@INPUT04_DOWN_
+goto SECURITY_CODE_05
+@INPUT04_LEFT_
+@INPUT04_RIGHT_
+@INPUT04_B_
+@INPUT04_A_
+goto CANCEL_EMMC_TEST
+@SECURITY_CODE_05
+set PREVIEW_MODE "<UP><UP><DOWN><DOWN> LEFT RIGHT LEFT RIGHT B A"
+labelsel -k -o -s "Enter the Security Code." INPUT05_*
+@INPUT05_UP_
+@INPUT05_DOWN_
+goto CANCEL_EMMC_TEST
+@INPUT05_LEFT_
+goto SECURITY_CODE_06
+@INPUT05_RIGHT_
+@INPUT05_B_
+@INPUT05_A_
+goto CANCEL_EMMC_TEST
+@SECURITY_CODE_06
+set PREVIEW_MODE "<UP><UP><DOWN><DOWN><LEFT> RIGHT LEFT RIGHT B A"
+labelsel -k -o -s "Enter the Security Code." INPUT06_*
+@INPUT06_UP_
+@INPUT06_DOWN_
+@INPUT06_LEFT_
+goto CANCEL_EMMC_TEST
+@INPUT06_RIGHT_
+goto SECURITY_CODE_07
+@INPUT06_B_
+@INPUT06_A_
+goto CANCEL_EMMC_TEST
+@SECURITY_CODE_07
+set PREVIEW_MODE "<UP><UP><DOWN><DOWN><LEFT><RIGHT> LEFT RIGHT B A"
+labelsel -k -o -s "Enter the Security Code." INPUT07_*
+@INPUT07_UP_
+@INPUT07_DOWN_
+goto CANCEL_EMMC_TEST
+@INPUT07_LEFT_
+goto SECURITY_CODE_08
+@INPUT07_RIGHT_
+@INPUT07_B_
+@INPUT07_A_
+goto CANCEL_EMMC_TEST
+@SECURITY_CODE_08
+set PREVIEW_MODE "<UP><UP><DOWN><DOWN><LEFT><RIGHT><LEFT> RIGHT B A"
+labelsel -k -o -s "Enter the Security Code." INPUT08_*
+@INPUT08_UP_
+@INPUT08_DOWN_
+@INPUT08_LEFT_
+goto CANCEL_EMMC_TEST
+@INPUT08_RIGHT_
+goto SECURITY_CODE_09
+@INPUT08_B_
+@INPUT08_A_
+goto CANCEL_EMMC_TEST
+@SECURITY_CODE_09
+set PREVIEW_MODE "<UP><UP><DOWN><DOWN><LEFT><RIGHT><LEFT><RIGHT> B A"
+labelsel -k -o -s "Enter the Security Code." INPUT09_*
+goto INPUT09_B_
+@INPUT09_UP_
+@INPUT09_DOWN_
+@INPUT09_LEFT_
+@INPUT09_RIGHT_
+goto CANCEL_EMMC_TEST
+@INPUT09_B_
+goto SECURITY_CODE_10
+@INPUT09_A_
+goto CANCEL_EMMC_TEST
+@SECURITY_CODE_10
+set PREVIEW_MODE "<UP><UP><DOWN><DOWN><LEFT><RIGHT><LEFT><RIGHT><B> A"
+labelsel -k -o -s "Enter the Security Code." INPUT10_*
+@INPUT10_UP_
+@INPUT10_DOWN_
+@INPUT10_LEFT_
+@INPUT10_RIGHT_
+@INPUT10_B_
+goto CANCEL_EMMC_TEST
+@INPUT10_A_
+set PREVIEW_MODE "<UP><UP><DOWN><DOWN><LEFT><RIGHT><LEFT><RIGHT><B><A>"
+labelsel -k -o -s "Press start to begin to process." INPUT11_*
+@INPUT11_B_Cancel
+goto CANCEL_EMMC_TEST
+@INPUT11_START_Begin
+set PREVIEW_MODE "FULL"
+goto BEGIN_EMMC_TEST
+@CANCEL_EMMC_TEST
+set PREVIEW_MODE "Operation cancelled."
+echo "Operation cancelled."
+goto mm_NAND_Management_Options
+@BEGIN_EMMC_TEST
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nCheck EMMC Status \n \nDO NOT TURN OFF THE POWER NOW"
+set NAND_EMMC_SHA ""
+set NAND_SDMC_SHA ""
+set LITMUS_FILE ""
+set TEMP_FILE ""
+if chk "$[ONTYPE]" "O3DS"
+set GB_SIZE "1"
+set LITMUS_SIZE "40000000"
+set LITMUS_OFFSET "3FFFFFFF"
+set NAND_MINSIZE "3AF00000"
+set NAND_OFFSET "3AEFFFFF"
+set NAND_00_SHA "E614FDDA995EF907927BC6F86496421059A8C00F6EB7D34FEF06D883360AA5E8"
+set NAND_FF_SHA "60807B02874FED8B6C1703F93F29AF66B6871826AE410838BA3F2A3FDE5C7DC8"
+elif chk "$[ONTYPE]" "N3DS"
+set GB_SIZE "1.25"
+set LITMUS_SIZE "50000000"
+set LITMUS_OFFSET "4FFFFFFF"
+set NAND_MINSIZE "4D800000"
+set NAND_OFFSET "4D7FFFFF"
+set NAND_00_SHA "9E4433D2AAFA19A5E9491349092FA81C2F59CB76CF9E14FD26DBBC723A3E9C4C"
+set NAND_FF_SHA "1A1448A15E350F702A023FB5F7F5D3D8ADFB8715725F1480B8CB6C40BCF53D0C"
+end
+set E "9:/eMMC_test_report.txt"
+dumptxt -p "$[E]" "TEST STARTS"
+dumptxt -p "$[E]" "DATE [YYMMDD]: $[DATESTAMP]"
+dumptxt -p "$[E]" "TIME [HHMMSS]: $[TIMESTAMP]"
+dumptxt -p "$[E]" ""
+if find "$[GM9OUT]/eMMC_test_report.txt" NULL
+findnot "$[GM9OUT]/eMMC_test_report_???.txt" LITMUS_FILE
+mv -o -s -n "$[GM9OUT]/eMMC_test_report.txt" "$[LITMUS_FILE]"
+end
+if find "$[GM9OUT]/nand_minsize.bin" NULL
+findnot "$[GM9OUT]/nand_minsize_???.bin" TEMP_FILE
+mv -o -s -n "$[GM9OUT]/nand_minsize.bin" "$[TEMP_FILE]"
+end
+if find "$[GM9OUT]/eMMC_test_report.txt" NULL
+dumptxt -p "$[E]" "SD card error. Could not make this file name available."
+dumptxt -p "$[E]" "$[GM9OUT]/eMMC_test_report.txt"
+dumptxt -p "$[E]" ""
+goto SKIP_NAND_RESTORE
+elif find "$[GM9OUT]/nand_minsize.bin" NULL
+dumptxt -p "$[E]" "SD card error. Could not make this file name available."
+dumptxt -p "$[E]" "$[GM9OUT]/nand_minsize.bin"
+dumptxt -p "$[E]" ""
+goto SKIP_NAND_RESTORE
+end
+if findnot "S:/nand.bin" NULL
+dumptxt -p "$[E]" "[S:] SYSNAND VIRTUAL/nand.bin"
+dumptxt -p "$[E]" "NAND partition is missing."
+dumptxt -p "$[E]" ""
+goto SKIP_NAND_RESTORE
+end
+if not fget "S:/nand.bin@$[NAND_OFFSET]:01" NULL
+dumptxt -p "$[E]" "[S:] SYSNAND VIRTUAL/nand.bin"
+dumptxt -p "$[E]" "Nonstandard partition. The size is too small."
+dumptxt -p "$[E]" ""
+goto SKIP_NAND_RESTORE
+end
+if findnot "$[GM9OUT]" NULL
+mkdir "$[GM9OUT]"
+end
+findnot "$[GM9OUT]/dummy_???.bin" LITMUS_FILE
+fdummy "$[LITMUS_FILE]" "$[LITMUS_SIZE]"
+if fget "$[LITMUS_FILE]@$[LITMUS_OFFSET]:01" NULL
+rm -o -s "$[LITMUS_FILE]"
+else
+rm -o -s "$[LITMUS_FILE]"
+dumptxt -p "$[E]" "Insufficient memory. $[GB_SIZE] GB of free space is required."
+dumptxt -p "$[E]" ""
+goto SKIP_NAND_RESTORE
+end
+cp -o -s -n "S:/nand_hdr.bin" "9:/nand_hdr.bin"
+cp -o -s -n "S:/twlmbr.bin" "9:/twlmbr.bin"
+cp -o -s -n "S:/sector0x96.bin" "9:/sector0x96.bin"
+cp -o -s -n "S:/firm0.bin" "9:/firm0.bin"
+cp -o -s -n "S:/firm1.bin" "9:/firm1.bin"
+if shaget "S:/nand.bin@000:$[NAND_MINSIZE]" NAND_EMMC_SHA
+dumptxt -p "$[E]" "S:/nand_minsize.bin"
+dumptxt -p "$[E]" "SHA-256: $[NAND_EMMC_SHA]"
+dumptxt -p "$[E]" ""
+else
+dumptxt -p "$[E]" "S:/nand_minsize.bin"
+dumptxt -p "$[E]" "SHA-256: could not calculate hash"
+dumptxt -p "$[E]" ""
+goto ABORT_EMMC_TEST
+end
+if inject "S:/nand.bin@000:$[NAND_MINSIZE]" "$[GM9OUT]/nand_minsize.bin@000"
+dumptxt -p "$[E]" "$[GM9OUT]/nand_minsize.bin , backup: PASSED"
+dumptxt -p "$[E]" ""
+else
+dumptxt -p "$[E]" "$[GM9OUT]/nand_minsize.bin , backup: FAILED"
+dumptxt -p "$[E]" ""
+rm -o -s "$[GM9OUT]/nand_minsize.bin"
+goto ABORT_EMMC_TEST
+end
+if shaget "$[GM9OUT]/nand_minsize.bin" NAND_SDMC_SHA
+dumptxt -p "$[E]" "$[GM9OUT]/nand_minsize.bin"
+dumptxt -p "$[E]" "SHA-256: $[NAND_SDMC_SHA]"
+dumptxt -p "$[E]" ""
+else
+dumptxt -p "$[E]" "$[GM9OUT]/nand_minsize.bin"
+dumptxt -p "$[E]" "SHA-256: could not calculate hash"
+dumptxt -p "$[E]" ""
+rm -o -s "$[GM9OUT]/nand_minsize.bin"
+goto ABORT_EMMC_TEST
+end
+if chk "$[NAND_EMMC_SHA]" "$[NAND_SDMC_SHA]"
+dumptxt -p "$[E]" "S:/nand_minsize.bin & $[GM9OUT]/nand_minsize.bin"
+dumptxt -p "$[E]" "hash match: PASSED"
+dumptxt -p "$[E]" ""
+else
+dumptxt -p "$[E]" "S:/nand_minsize.bin & $[GM9OUT]/nand_minsize.bin""
+dumptxt -p "$[E]" "hash match: FAILED"
+dumptxt -p "$[E]" ""
+dumptxt -p "$[E]" "Test run aborted. Please empty out, reformat, and check this SD card for hardware problems."
+dumptxt -p "$[E]" "https://3ds.hacks.guide/h2testw-(windows).html"
+dumptxt -p "$[E]" ""
+rm -o -s "$[GM9OUT]/nand_minsize.bin"
+goto ABORT_EMMC_TEST
+end
+if fill "S:/nand.bin@000:$[NAND_MINSIZE]" "00"
+dumptxt -p "$[E]" "1st Write Test (00): PASSED"
+else
+dumptxt -p "$[E]" "1st Write Test (00): FAILED"
+dumptxt -p "$[E]" ""
+goto FINISH_EMMC_TEST
+end
+if sha "S:/nand.bin@000:$[NAND_MINSIZE]" "$[NAND_00_SHA]"
+dumptxt -p "$[E]" "1st Hash Test (00): PASSED"
+dumptxt -p "$[E]" ""
+else
+dumptxt -p "$[E]" "1st Hash Test (00): FAILED"
+dumptxt -p "$[E]" ""
+goto FINISH_EMMC_TEST
+end
+if fill "S:/nand.bin@000:$[NAND_MINSIZE]" "FF"
+dumptxt -p "$[E]" "2nd Write Test (FF): PASSED"
+else
+dumptxt -p "$[E]" "2nd Write Test (FF): FAILED"
+dumptxt -p "$[E]" ""
+goto FINISH_EMMC_TEST
+end
+if sha "S:/nand.bin@000:$[NAND_MINSIZE]" "$[NAND_FF_SHA]"
+dumptxt -p "$[E]" "2nd Hash Test (FF): PASSED"
+dumptxt -p "$[E]" ""
+else
+dumptxt -p "$[E]" "2nd Hash Test (FF): FAILED"
+dumptxt -p "$[E]" ""
+goto FINISH_EMMC_TEST
+end
+@FINISH_EMMC_TEST
+inject -o -s -n "9:/nand_hdr.bin@000" "S:/nand.bin@000"
+cp -o -s -n "9:/twlmbr.bin" "S:/twlmbr.bin"
+cp -o -s -n "9:/sector0x96.bin" "S:/sector0x96.bin"
+cp -o -s -n "9:/firm0.bin" "S:/firm0.bin"
+cp -o -s -n "9:/firm1.bin" "S:/firm1.bin"
+@ABORT_EMMC_TEST
+rm -o -s "9:/nand_hdr.bin"
+rm -o -s "9:/twlmbr.bin" 
+rm -o -s "9:/sector0x96.bin"
+rm -o -s "9:/firm0.bin"
+rm -o -s "9:/firm1.bin"
+if findnot "$[GM9OUT]/nand_minsize.bin" NULL
+goto SKIP_NAND_RESTORE
+end 
+if inject -o -s -n "$[GM9OUT]/nand_minsize.bin@000" "S:/nand.bin@000" 
+dumptxt -p "$[E]" "3rd Write Test (restore): PASSED"
+else
+dumptxt -p "$[E]" "3rd Write Test (restore): FAILED"
+dumptxt -p "$[E]" ""
+goto SKIP_NAND_RESTORE
+end
+if sha "S:/nand.bin@000:$[NAND_MINSIZE]" "$[NAND_EMMC_SHA]"
+dumptxt -p "$[E]" "3rd Hash Test (restore): PASSED"
+dumptxt -p "$[E]" ""
+rm -o -s "$[GM9OUT]/nand_minsize.bin"
+else
+dumptxt -p "$[E]" "3rd Hash Test (restore): FAILED"
+dumptxt -p "$[E]" ""
+end
+@SKIP_NAND_RESTORE
+if findnot "$[GM9OUT]/nand_minsize.bin" NULL
+if find "$[TEMP_FILE]" NULL
+mv -o -s -n "$[TEMP_FILE]" "$[GM9OUT]/nand_minsize.bin"
+end
+end
+dumptxt -p "$[E]" "TEST ENDS"
+dumptxt -p "$[E]" "DATE [YYMMDD]: $[DATESTAMP]"
+dumptxt -p "$[E]" "TIME [HHMMSS]: $[TIMESTAMP]"
+mv -o -s -n -w "$[E]" "$[GM9OUT]/eMMC_test_report.txt"
+textview "$[GM9OUT]/eMMC_test_report.txt"
+set PREVIEW_MODE "Results can be found at:\n$[GM9OUT]/eMMC_test_report.txt"
+echo "Results can be found at:\n$[GM9OUT]/eMMC_test_report.txt"
+set PREVIEW_COLOR_COMMENT "606070"
+set PREVIEW_MODE "FULL"
+set NAND_EMMC_SHA ""
+set NAND_SDMC_SHA ""
+set NAND_MINSIZE ""
+set NAND_OFFSET ""
+set NAND_00_SHA ""
+set NAND_FF_SHA ""
+set LITMUS_FILE ""
+set LITMUS_SIZE ""
+set LITMUS_OFFSET ""
+set TEMP_FILE ""
+set GB_SIZE ""
+set E ""
+goto mm_NAND_Management_Options
+
+@mm_CTRNAND_Options
+set PREVIEW_MODE "GM9FULLSCRIPT \nCTRNAND Options"
+labelsel -s -o "Select an option" ctr_*
+goto beginning
+
+@ctr_CTRTransfer
+set PREVIEW_MODE "GM9FULLSCRIPT \nCTRNAND Options \nCTRTransfer"
+if not find 0:/gm9/out/*ctrtransfer_?3ds.bin CTRIMAGE
+echo "$[GM9OUT] \nNo usable entries found."
+goto mm_CTRNAND_Options
+end
+find 0:/gm9/out/*ctrtransfer_?3ds.bin CTRIMAGE
+if not filesel "Choose a CTRTransfer Image." $[CTRIMAGE] CTRIMAGE
+echo "User aborted"
+goto mm_CTRNAND_Options
+end
+imgmount $[CTRIMAGE]
+if not find 7:/title/00000002/content/????????.app UHFDEUYRG
+set IMGOLDNEW "N3DS" 
+else
+set IMGOLDNEW "O3DS"
+end
+if chk $[ODTYPE] "O3DS"
+goto old
+else
+goto new
+end
+@old 
+if not chk $[IMGOLDNEW] "O3DS"
+imgumount
+echo "You're trying to transfer \nthe wrong console's type \nCTRNand image! \nAborting."
+goto mm_CTRNAND_Options
+end
+
+@new 
+if not chk $[IMGOLDNEW] "N3DS"
+imgumount
+echo "You're trying to transfer \nthe wrong console's type \nCTRNand image! \nAborting."
+goto mm_CTRNAND_Options
+end
+if not find 7:/title NULL
+echo "CTRNand image is incomplete! \nAborting."
+
+goto mm_CTRNAND_Options
+end
+if not find 7:/rw/sys/SecureInfo_? IMGSECURE
+
+echo "CTRNand image is incomplete! \nAborting"
+
+goto mm_CTRNAND_Options
+end
+if not ask "CTRTransfer /n$[CTRIMAGE]?"
+imgumount
+echo "User aborted."
+goto mm_CTRNAND_Options
+end
+if not allow 1:/private/movable.sed
+imgumount
+echo "Permissions denied. Aborting!"
+goto mm_CTRNAND_Options
+end
+if not fdummy 1:/test.bin FF
+echo "CTRNAND is unmountable! \nDo CTRTransfer D9 Type."
+goto mm_CTRNAND_Options
+end
+rm -s -o 1:/test.bin
+mv -w -o -s 7:/rw/sys/SecureInfo_B 7:/rw/sys/SecureInfo_A
+
+mv -w -o -s 7:/rw/sys/SecureInfo_C 7:/rw/sys/SecureInfo_A
+
+mv -s -o -w 1:/rw/sys/SecureInfo_A 1:/rw/sys/SecureInfo_A
+mv -s -o -w 1:/rw/sys/SecureInfo_C 1:/rw/sys/SecureInfo_A
+
+
+if not inject 7:/rw/sys/SecureInfo_A@100:1 1:/rw/sys/SecureInfo_A@100
+imgumount
+echo "CTRTransfer failed!"
+goto mm_CTRNAND_Options
+end
+rm -o -s 1:/dbs/ticket.bak
+if not mv 1:/dbs/ticket.db 1:/ticket.bak
+imgumount
+echo "CTRTransfer failed!"
+goto mm_CTRNAND_Options
+end
+rm 1:/dbs
+rm 1:/title
+if not mkdir 1:/dbs
+imgumount
+echo "CTRTransfer failed!"
+goto mm_CTRNAND_Options
+end
+if not mkdir 1:/title
+imgumount
+echo "CTRTransfer failed!"
+goto mm_CTRNAND_Options
+end
+if not cp -n -w 7:/dbs 1:/dbs
+imgumount
+echo "CTRTransfer failed!"
+goto mm_CTRNAND_Options
+end
+if not cp -n -w 7:/title 1:/title
+imgumount
+echo "CTRTransfer failed!"
+goto mm_CTRNAND_Options
+end
+echo "CTRTransfer success!"
+imgumount
+goto mm_CTRNAND_Options
+
+@ctr_CTRTransfer_D9_Type
+set PREVIEW_MODE "GM9FULLSCRIPT \nCTRNAND Options \nCTRTransfer D9 Type"
+
+if not ask "The CTRTransfer D9 Type is a CTRTransfer \nbased on the Decrypt9 old CTRTransfer method \nwhich flashes the entire CTRNAND. \nThis script tries to preserve user data if possible. \nDo this only if a normal CTRTransfer \ndidn't fix your problem. \nProceed"
+echo "User aborted."
+goto mm_CTRNAND_Options
+end
+if not find 0:/gm9/out/*ctrtransfer_?3ds.bin CTRD9IMAGE
+echo "$[GM9OUT] \nNo usable entries found."
+goto mm_CTRNAND_Options
+end
+filesel "Choose a CTRTransfer Image." $[CTRD9IMAGE] CTRD9IMAGE
+
+imgmount $[CTRD9IMAGE]
+if not find 7:/title/00000002/content/????????.app UHFDRUYR
+set IMGD9OLDNEW "N3DS" 
+else
+
+set IMGD9OLDNEW "O3DS"
+
+end
+
+if chk $[ODTYPE] "O3DS"
+goto oldd9
+else
+goto newd9
+end
+@oldd9 
+if not chk $[IMGD9OLDNEW] "O3DS"
+
+imgumount
+echo "You're trying to transfer \nthe wrong console's type \nCTRNand image! \nAborting."
+goto mm_CTRNAND_Options
+end
+
+@newd9 
+if not chk $[IMGD9OLDNEW] "N3DS"
+imgumount
+echo "You're trying to transfer \nthe wrong console's type \nCTRNand image! \nAborting."
+goto mm_CTRNAND_Options
+end
+if not ask "CTRTransfer (D9 Type) \n$[CTRD9IMAGE]?"
+imgumount
+echo "User aborted."
+goto mm_CTRNAND_Options
+end
+if not allow 1:/private/movable.sed
+echo "Permissions denied. Aborting!"
+goto mm_CTRNAND_Options
+end
+if not find S:/essential.exefs ESSENTIAL
+imgumount
+echo "Essential files backup not found! \nCan't proceed! \nAborting."
+
+goto mm_CTRNAND_Options
+
+end
+
+cp -o -s -w 1:/data 9:/data
+cp -o -s -w 1:/data/$[SYSID0]/extdata 9:/extdata
+cp -o -s -w 1:/private/movable.sed 9:/movable.sed
+cp -o -s -w 1:/rw/sys/LocalFriendCodeSeed_B 9:/localcode
+imgumount
+
+if not cp -w $[CTRD9IMAGE] S:/ctrnand_full.bin
+echo "CTRTransfer D9 Type failed!"
+goto mm_CTRNAND_Options
+end
+imgmount $[ESSENTIAL]
+
+if not cp -w G:/movable 1:/private/movable.sed
+
+imgumount
+echo "CTRTransfer D9 Type failed!"
+goto mm_CTRNAND_Options
+end
+if find 9:/movable.sed MOVABLED9
+cp -w -s -o $[MOVABLED9] 1:/private/movable.sed
+end
+rm -s -o 1:/data
+if find 9:/data DATABACKUP
+cp -s -o -w $[DATABACKUP] 1:/data
+
+cp -s -o -w 9:/extdata 1:/data/$[SYSID0]/extdata
+rm -s -o $[DATABACKUP]
+cp -s -o -w G:/frndseed 1:/rw/sys/LocalFriendCodeSeed_B
+cp -s -o -w 9:/localcode 1:/rw/sys/LocalFriendCodeSeed_B
+end
+rm -s -o $[MOVABLED9]
+imgumount
+
+imgmount $[CTRD9IMAGE]
+
+if not find 7:/rw/sys/SecureInfo_A
+mv -w -o -s 7:/rw/sys/SecureInfo_B 7:/rw/sys/SecureInfo_A
+
+mv -w -o -s 7:/rw/sys/SecureInfo_C 7:/rw/sys/SecureInfo_A
+
+end
+if not cp -w 7:/rw/sys/SecureInfo_A 1:/rw/sys/SecureInfo_A
+imgumount
+echo "CTRTransfer D9 Type failed!"
+goto mm_CTRNAND_Options
+
+end
+
+imgumount
+
+rm -s -o 1:/gm9
+rm -s -o 1:/rw/luma
+rm -s -o 1:/boot.firm
+echo "CTRTransfer D9 Type success!"
+goto mm_CTRNAND_Options
+
+
+@ctr_Make_CTRNAND_Transferable_Image
+set PREVIEW_MODE "GM9FULLSCRIPT \nCTRNAND Options \nMake CTRNAND Transferable Image"
+if not ask "This will make a .bin CTRNAND image \nthat can be used to perform a CTRTransfer. \nProceed?"
+echo "User aborted."
+goto beginning
+
+end
+if cp -h -w S:/ctrnand_full.bin $[GM9OUT]/$[REGION]_ctrtransfer_$[ODTYPE].bin
+
+imgmount $[GM9OUT]/$[REGION]_ctrtransfer_$[ODTYPE].bin
+
+rm -s -o 7:/gm9
+
+rm -s -o 7:/rw/luma
+
+rm -s -o 7:/boot.firm
+echo "CTRNand image building success!"
+goto mm_CTRNAND_Options
+
+end
+
+echo "CTRNand image building failed!"
+goto mm_CTRNAND_Options
+
+
+@mm_Boot9Strap_Options
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options"
+labelsel -s -o "Select an option" b9s_*
+goto beginning
+
+@b9s_Install_Boot9Strap
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap"
+if not ask "This will install Boot9Strap on your device. \nProceed?"
+echo "User aborted"
+goto mm_Boot9Strap_Options
+end
+if not fdummy 0:/test.bin 800cff
+rm -s -o 0:/test.bin
+echo "Security checks failed! \nSDCARD has not required free space! \nAborting!"
+goto mm_Boot9Strap_Options
+end
+rm -s -o 0:/test.bin
+if not find 0:/boot9strap/boot9strap.firm BOOT9STRAP
+echo "Boot9Strap FIRM not found. \nAborting!"
+goto mm_Boot9Strap_Options
+end
+if not find $[BOOT9STRAP].sha B9SHA
+
+echo "Boot9strap .sha file not found! \nAborting."
+
+goto mm_Boot9Strap_Options
+
+end
+
+if not sha $[BOOT9STRAP] $[B9SHA]
+echo "Security checks failed! \nBoot9Strap FIRM could not be verified! \nAborting!"
+goto mm_Boot9Strap_Options
+end
+if not sha $[BOOT9STRAP] 79C68585B4BA1D7C4A91B858861553E768C6576B92E303810B33219736B3598B
+
+echo "Security checks failed! \nProvided FIRM is outdated or unknown! \nAborting!"
+
+goto mm_Boot9Strap_Options
+
+end
+if not sha $[B9SHA] 9D0A138BB4FA8292C7431C10471D8453D1D506F8A7B54FCD1E089727845F4F77
+echo "Security checks failed! \nProvided .sha file could not be verified! \nAborting!"
+
+goto mm_Boot9Strap_Options
+
+end 
+
+if chk $[ONTYPE] "N3DS"
+if not sha S:/sector0x96.bin 82F2730D2C2DA3F30165F987FDCCAC5CBAB24B4E5F65C981CD7BE6F438E6D9D3
+if not find 0:/boot9strap/secret_sector.bin SECTOR
+echo "Security checks failed! \nSecret sector is corrupted. \nOriginal secret_sector not found in\n0:/boot9strap folder! \nAborting to avoid a brick!"
+goto mm_Boot9Strap_Options
+end
+end
+end
+if not allow S:/firm0.bin
+echo "Permissions denied. Aborting!"
+goto mm_Boot9Strap_Options
+end
+if not cp -w -n S:/firm0.bin 0:/boot9strap/firm0_backup.bin
+echo "FIRM partitions backup failed! Aborting!"
+goto mm_Boot9Strap_Options
+end
+shaget 0:/boot9strap/firm0_backup.bin B9SBACKSHA
+shaget S:/firm0.bin FIRM0SHA
+if not chk $[FIRM0SHA] [B9SBACKSHA]
+echo "FIRM partitions backup could not be verified! \nAborting!"
+goto mm_Boot9Strap_Options
+end
+if not cp -w -n S:/firm1.bin 0:/boot9strap/firm1_backup.bin
+echo "FIRM partitions backup failed! Aborting!"
+goto mm_Boot9Strap_Options
+end
+shaget 0:/boot9strap/firm1backup.bin B9SBACKSHA
+shaget S:/firm1.bin FIRM1SHA
+if not chk $[FIRM1SHA] [B9SBACKSHA]
+echo "FIRM partitions backup could not be verified! \nAborting!"
+goto mm_Boot9Strap_Options
+end
+if not find 0:/boot9strap/secret_sector.bin SECTOR
+cp -w S:/sector0x96.bin $[SECTOR]
+end
+if not cp -w -n $[BOOT9STRAP] S:/firm0.bin
+goto b9sinstall_emergency_routine
+end
+if not cp -w -n $[BOOT9STRAP] S:/firm1.bin
+goto b9sinstall_emergency_routine
+end
+if not cp -w -n $[SECTOR] S:/sector0x96.bin
+goto b9sinstall_sector_fail
+end
+@b9sinstall_good
+if chk $[RDTYPE] "devkit"
+fset S:/firm0.bin@100 88697CDCA9D1EA318256FCD9CED42964C1E98ABC6486B2F128EC02E71C5AE35D63D3BF1246134081AF68754787FCB922571D7F61A30DE4FCFA8293A9DA512396F1319A364968464CA9806E0A52567486754CDDD4C3A62BDCE255E0DEEC230129C1BAE1AE95D786865637C1E65FAE83EDF8E7B07D17C0AADA8F055B640D45AB0B
+fset S:/firm0.bin@180 AC76FF7B3439F5A4BFE8F7E0E103BCE995FAD913FB729D3D030B2644EC48396424E0563A1B3E6A1F680B39FC1461886FA7A60B6B56C5A846554AE648FC46E30E24678FAF1DC3CEB10C2A950F4FFA2083234ED8DCC3587A6D751A7E9AFA06156955084FF2725B698EB17454D9B02B6B76BE47ABBE206294366987A4CAB42CBD0B
+else
+fset S:/firm0.bin@100 B6724531C448657A2A2EE306457E350A10D544B42859B0E5B0BED27534CCCC2A4D47EDEA60A7DD99939950A6357B1E35DFC7FAC773B7E12E7C1481234AF141B31CF08E9F62293AA6BAAE246C15095F8B78402A684D852C680549FA5B3F14D9E838A2FB9C09A15ABB40DCA25E40A3DDC1F58E79CEC901974363A946E99B4346E8
+fset S:/firm0.bin@180 A372B6CD55A707E1EAB9BEC0200B5BA0B661236A8708D704517F43C6C38EE9560111E1405E5E8ED356C49C4FF6823D1219AFAEEB3DF3C36B62BBA88FC15BA8648F9333FD9FC092B8146C3D908F73155D48BE89D72612E18E4AA8EB9B7FD2A5F7328C4ECBFB0083833CBD5C983A25CEB8B941CC68EB017CE87F5D793ACA09ACF7
+end
+inject -n S:/firm0.bin@100:100 S:/firm1.bin@100
+imgmount S:/firm0.bin
+if not sha G:/header.bin 7C2E1DC860858BF9C7285915957FE64AF3B1B812C57FCB2C417881D31EE4246C
+imgumount
+
+goto b9sinstall_emergency_routine
+end
+imgumount
+
+imgmount S:/firm1.bin
+
+if not sha G:/header.bin 7C2E1DC860858BF9C7285915957FE64AF3B1B812C57FCB2C417881D31EE4246C
+imgumount
+
+goto b9sinstall_emergency_routine
+end
+imgumount
+if not sha S:/sector0x96.bin 82F2730D2C2DA3F30165F987FDCCAC5CBAB24B4E5F65C981CD7BE6F438E6D9D3
+goto b9sinstall_sector_fail2
+end
+@b9sinstall_well
+cp -s -o -w 0:/boot.firm 1:/boot.firm
+
+cp -s -o -w 0:/luma/ 1:/rw/luma
+
+mkdir -s -o 1:/gm9
+
+cp -s -o -w 0:/gm9/support 1:/gm9/support
+
+echo "Boot9Strap Install success!"
+goto mm_Boot9Strap_Options
+
+@b9sinstall_sector_fail
+if chk $[ONTYPE] "O3DS"
+goto b9sinstall_good
+end
+if not sha S:/sector0x96.bin 82F2730D2C2DA3F30165F987FDCCAC5CBAB24B4E5F65C981CD7BE6F438E6D9D3
+goto b9sinstall_sector_em
+else
+goto b9sinstall_good
+
+@b9sinstall_sector_fail2
+if chk $[ONTYPE] "N3DS"
+goto b9sinstall_sector_em
+else
+goto b9sinstall_well
+end
+
+@b9sinstall_emergency_routine
+if not cp -w -n 0:/boot9strap/firm0_backup.bin S:/firm0.bin
+echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nYou have to restore the FIRM partitions manually! \nCheck for firm0 and firm1 backup files into the \n"0:/boot9strap" folder and inject them to \nFIRM0 and FIRM1. \nThe script failed to do these steps because of an \nunknown error."
+goto mm_Exit
+end
+if not cp -w -n 0:/boot9strap/firm1_backup.bin S:/firm1.bin
+echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nTo save your console, \nyou have to restore the FIRM partitions manually! \nCheck for firm0 and firm1 backup files into the \n"0:/boot9strap" folder and inject them to \nFIRM0 and FIRM1. \nThe script failed to do these steps because of an \nunknown error."
+goto mm_Exit
+end
+echo "Boot9Strap Install failed! \nEmercency routines execution success! \nNewly installed FIRM partitions \ncould not be verified! \nScript entered emercency mode \and automatically restored \nthe FIRM partitions backup. \nConsole saved from a brick due to possibly corrupted \nFIRM partitions. \nThis should not have happened :/."
+goto mm_Boot9Strap_Options
+
+@b9sinstall_sector_em
+fdummy $[GM9OUT]/instructions.txt CFF
+set $[GM9OUT]/instructions.txt INST
+dumptxt -p $[INST] "Reminder: Turning off or rebooting the console before completing these steps = brick"
+dumptxt -p $[INST] "Using a corrupted NAND backup = brick"
+dumptxt -p $[INST] "Doing these steps wrongly = brick"
+dumptxt -p $[INST] "Be careful"
+dumptxt -p $[INST] "Instructions:"
+dumptxt -p $[INST] "If you need to unmount your sd, DO NOT turn off your console, press R+B and then remove the SD card, you can reinsert it whenever you want."
+dumptxt -p $[INST] "0 Plug in the AC charger and DO NOT unplug it until the end of the process."
+dumptxt -p $[INST] "1 Get your console's NAND backup"
+dumptxt -p $[INST] "2 Select it and press Y to copy it"
+dumptxt -p $[INST] "(If you copy the wrong file, just press SELECT to clear clipboard, then follow the instructions from step 1)"
+dumptxt -p $[INST] "3 Enter S:/ drive"
+dumptxt -p $[INST] "4 Press Y to paste the file"
+dumptxt -p $[INST] "5 Press A to inject the backup to nand_minsize.bin"
+dumptxt -p $[INST] "6 Unlock the NAND if needed"
+dumptxt -p $[INST] "7 When done, press A to relock the NAND"
+dumptxt -p $[INST] "8 Pray"
+dumptxt -p $[INST] "9 Press START to reboot the console"
+dumptxt -p $[INST] "10 If everything was successfull, you will have booted into the home menu"
+dumptxt -p $[INST] "11 Note that, if the NAND backup didn't have Boot9Strap, the console doesn't have Boot9Strap"
+echo "Boot9Strap Install failed!!! \nThis really should not have happenend :/."
+echo "If you turn off or reboot the console, \nyou'll BRICK, so DO NOT."
+echo "A guide on how to \nsave the console has been written to \n$[INST]"
+echo "Follow the guide very carefully"
+goto mm_Exit
+
+@b9s_Check_Boot9Strap_Version
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nCheck Boot9Strap Version"
+imgmount S:/firm0.bin
+if sha G:/header.bin 5C3B0CD4FE0C4987AF764B9FEFAD8B8ED39929E6EA9A8F6D782C2409BB16930A
+echo "Boot9Strap 1.0 \nIt's better to update it."
+goto b9sverdone
+end
+if sha G:/header.bin 893A8A5B9B87FD1869AAA0BAE9BCAA3C9102DFEC1FFACB2561321F53B6091884
+echo "Boot9Strap 1.1 \nIt's better to update it."
+goto b9sverdone
+end
+if sha G:/header.bin 9DDE2F7258FD1EE88EDE335ED781053F8925269D8720FE87BE4E2BD35B5990D3
+echo "Boot9Strap 1.2 \nIt's better to update it."
+goto b9sverdone
+end
+if sha G:/header.bin 7C2E1DC860858BF9C7285915957FE64AF3B1B812C57FCB2C417881D31EE4246C
+echo "Boot9Strap 1.3 \nYou have the latest version."
+goto b9sverdone
+end
+imgumount 
+echo "You do not have Boot9Strap. \nIf you think you have it, \nReinstall it."
+goto mm_Boot9Strap_Options
+@b9sverdone
+imgumount
+goto mm_Boot9Strap_Options
+
+@b9s_Safety_test
+if not ask "!!! CAREFUL !!!\nThis script will temporarily boot the\nconsole STOCK to check if it will work\nproperly after CFW is uninstalled.\n \nYou should only be using this script\nwhile following the instructions on\n3ds.hacks.guide/uninstall-cfw.\n \nThe console will remain in 'stock mode'\nuntil it is rebooted. Note that entering\nand exiting DS mode or System Settings\nwill reboot the console.\n \nUpdating from this environment may\nlead to UNINTENDED CONSEQUENCES!\n \nContinue?"
+
+echo "User aborted."
+goto mm_Boot9Strap_Options
+end
+if chk $[ONTYPE] "N3DS"
+
+set D 2
+
+else
+
+set D 0
+
+end
+
+find 1:/title/00040138/$[D]0000002/content/????????.app A
+
+imgmount $[A]
+
+if not verify G:/exefs/.firm
+
+echo "NATIVE_FIRM verification failed! Aborting!"
+goto mm_Boot9Strap_Options
+end
+if not boot G:/exefs/.firm
+echo "An error occured. \nPlease try again"
+goto mm_Boot9Strap_Options
+end
+
+@b9s_Uninstall_Boot9Strap
+if not ask "WARNING: \nby proceeding, you will uninstall the Boot9strap \nfrom your console reverting it to stock. \nMake sure you ran the Safety test to ensure \nthat your console won't brick after running this \nProceed?"
+echo "User aborted"
+goto mm_Boot9Strap_Options
+end
+if not chk $[HAX] "ntrboot"
+if not ask "WARNING!!! \nNtrboot not detected. \nIf you brick your device, you won't be able \nto restore it without \nntrboot or a hardmod! \nProceed anyway?"
+echo "User aborted"
+goto mm_Boot9Strap_Options
+end
+end
+if not chk $[HAX] "N3DS"
+goto unistall_hax_old
+end
+if chk $[ONTYPE] "N3DS"
+if not sha S:/sector0x96.bin 82F2730D2C2DA3F30165F987FDCCAC5CBAB24B4E5F65C981CD7BE6F438E6D9D3
+if not find 0:/boot9strap/secret_sector.bin SECTOR
+echo "Security checks failed! \nSecret sector is corrupted. \nYou have to provide it in the \n"0:/boot9strap" folder, aborting!"
+end
+cp -w S:/sector0x96.bin $[SECTOR]
+cp -w $[SECTOR] S:/sector0x96.bin
+end
+end
+if not find 1:/title/00040138/20000002/content/????????.app NATIVENEW
+echo "NATIVE_FIRM not found! \nAborting."
+goto mm_Boot9Strap_Options
+end
+imgmount $[NATIVENEW]
+if not cp -w G:/exefs/.firm $[GM9OUT]/NATIVE_FIRM.firm
+echo "Boot9Strap unistall failed! \nPlease try again."
+goto mm_Boot9strap_Options
+end
+imgumount
+goto un_hax
+
+@unistall_hax_old
+if not find 1:/title/00040138/00000002/content/????????.app NATIVEOLD
+echo "NATIVE_FIRM not found! \nAborting."
+goto mm_Boot9Strap_Options
+end
+imgmount $[NATIVEOLD]
+if not cp -w G:/exefs/.firm $[GM9OUT]/NATIVE_FIRM.firm
+echo "Boot9Strap unistall failed! \nPlease try again."
+goto mm_Boot9strap_Options
+end
+imgumount
+
+@un_hax
+set NATIVE_FIRM 0:/gm9/out/NATIVE_FIRM.firm
+if not verify $[NATIVE_FIRM]
+echo "NATIVE_FIRM verification failed! \nAborting."
+goto mm_Boot9Strap_Options
+end
+if not allow S:/firm0.bin
+echo "Permissions denied. Aborting!"
+goto mm_Boot9Strap_Options
+end
+rm -s -o 1:/boot.firm
+rm -s -o 1:/gm9
+rm -s -o 1:/rw/luma
+if not cp -w -n $[NATIVE_FIRM] S:/firm0.bin
+echo "Boot9Strap unistall failed! \nPlease try again."
+goto mm_Boot9Strap_Options
+end
+if not cp -w -n $[NATIVE_FIRM] S:/firm1.bin
+echo "Boot9Strap unistall failed! \nPlease try again."
+goto mm_Boot9Strap_Options
+end
+shaget S:/nand.bin@57FFE00:200 PRE_STAGE2_HASH
+if not sha S:/nand.bin@B800000:200 $[PRE_STAGE2_HASH]
+fget S:/nand.bin@57FFE00:1 PRE_STAGE2
+fill S:/nand.bin@B7FFE00:89C00 $[PRE_STAGE2]
+end
+echo "Boot9Strap unistall success!"
+goto mm_Boot9Strap_Options
+end
+
+
+@mm_Cartridge_Options
+set PREVIEW_MODE "GM9FULLSCRIPT \nCartridge Options"
+labelsel -s -o "Select an option" cart_*
+goto beginning
+
+@cart_Dump_Cartridge_to_.cia
+set PREVIEW_MODE "GM9FULLSCRIPT \nCartridge Options \nDump cartridge to .cia"
+if not ask "Dump cartridge game file to .cia to \n$[GM9OUT]?"
+echo "User aborted"
+goto mm_Cartridge_Options
+end
+if not find C:/*.trim.3ds 3DSFILE
+echo "Games files not found. Aborting!"
+goto mm_Cartridge_Options
+end
+if not buildcia $[3DSFILE]
+echo "CIA build failed!"
+goto mm_Cartridge_Options
+end
+echo "CIA build success!"
+goto mm_Cartridge_Options
+
+@cart_Dump_Cartridge_to_.3ds
+set PREVIEW_MODE "GM9FULLSCRIPT \nCartridge Optionn \nDump Cartridge to .3ds"
+if not ask "Dump cartridge game file to .3ds to \n$[GM9OUT]?"
+echo "User aborted"
+goto mm_Cartridge_Options
+end
+if not find C:/*.3ds 3DSDUMP
+echo "Game files not found. Aborting!"
+goto mm_Cartridge_Options
+end
+if not cp -w $[3DSDUMP] $[GM9OUT]/$[DATESTAMP]_3dsgamedump.3ds
+echo "Dump failed!"
+goto mm_Cartridge_Options
+end
+echo "Dump success!"
+goto mm_Cartridge_Options
+
+@cart_Dump_Cartridge_to_.nds
+set PREVIEW_MODE "GM9FULLSCRIPT \nCartridge Options \nDump Cartridge to .nds"
+if not ask "Dump cartridge game file to .nds to \n$[GM9OUT]?"
+echo "User aborted."
+goto mm_Cartridge_Options
+end
+if not find C:/*.nds NDSGAME
+echo "Game files not found. Aborting!"
+goto mm_Cartridge_Options
+end
+if not cp -w $[NDSGAME] $[GM9OUT]/$[DATESTAMP]_ndsgamedump.nds
+echo "Dump failed!"
+goto mm_Cartridge_Options
+end
+echo "Dump success!"
+goto mm_Cartridge_Options
+
+@mm_Dump_Options
+set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options"
+labelsel -s -o "Select an option" dump_*
+goto beginning
+
+@dump_Dump_firm0.bin
+set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump firm0.bin"
+if not ask "Dump firm0.bin to $[GM9OUT]?"
+echo "User aborted"
+goto mm_Dump_Options
+end
+if not cp -w S:/firm0.bin $[GM9OUT]/firm0.bin 
+echo "Dump failed!"
+goto mm_Dump_Options
+end
+echo "Dump success!"
+goto mm_Dump_Options
+
+@dump_Dump_firm1.bin
+set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump firm1.bin"
+if not ask "Dump firm1.bin to $[GM9OUT]?"
+echo "User aborted"
+goto mm_Dump_Options
+end
+if not cp -w S:/firm1.bin $[GM9OUT]/firm1.bin
+echo "Dump failed!"
+goto mm_Dump_Options
+end
+echo "Dump success!"
+goto mm_Dump_Options
+
+@dump_Dump_essential.exefs
+set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump essential.exefs"
+if not ask "Dump essential.exefs to $[GM9OUT]?"
+echo "User aborted"
+goto mm_Dump_Options
+end
+if not cp -w S:/essential.exefs $[GM9OUT]/essential.exefs
+echo "Dump failed!"
+goto mm_Dump_Options
+end
+echo "Dump success!"
+goto mm_Dump_Options
+
+@dump_Dump_SecureInfo
+set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump SecureInfo"
+if not ask "Dump SecureInfo to $[GM9OUT]?"
+echo "User aborted"
+goto mm_Dump_Options
+end
+if not cp -w 1:/rw/sys/SecureInfo_A $[GM9OUT]/SecureInfo_A
+echo "Dump failed!"
+goto mm_Dump_Options
+end
+echo "Dump success!"
+goto mm_Dump_Options
+
+@dump_Dump_movable.sed
+set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump movable.sed"
+if not ask "Dump movable.sed to $[GM9OUT]?"
+echo "User aborted"
+goto mm_Dump_Options
+end
+if not cp -w 1:/private/movable.sed $[GM9OUT]/movable.sed
+echo "Dump failed!"
+goto mm_Dump_Options
+end
+echo "Dump success!"
+goto mm_Dump_Options
+
+@dump_Dump_boot9.bin
+set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump boot9.bin"
+if not ask "Dump boot9.bin to $[GM9OUT]?"
+echo "User aborted"
+goto mm_Dump_Options
+end
+if not cp -w M:/boot9.bin $[GM9OUT]/boot9.bin
+echo "Dump failed!"
+goto mm_Dump_Options
+end
+echo "Dump success!"
+goto mm_Dump_Options
+
+@dump_Dump_otp.bin
+set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump otp.bin"
+if not ask "Dump otp.bin to $[GM9OUT]?"
+echo "User aborted"
+goto mm_Dump_Options
+end
+if not cp -w M:/otp.mem $[GM9OUT]/otp.bin
+echo "Dump failed!"
+goto mm_Dump_Options
+end
+echo "Dump success!"
+goto mm_Dump_Options
+
+@dump_Dump_LocalFriendCodeSeed_B
+set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump LocalFriendCodeSeed_B"
+if not ask "Dump LocalFriendCodeSeed_B to $[GM9OUT]?"
+echo "User aborted"
+goto mm_Dump_Options
+end
+if not cp -w 1:/rw/sys/LocalFriendCodeSeed_B $[GM9OUT]/LocalFriendCodeSeed_B
+echo "Dump failed!"
+goto mm_Dump_Options
+end
+echo "Dump success!"
+goto mm_Dump_Options
+
+@dump_Dump_agbsave.bin
+set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump agbsave.bin"
+if not ask "Dump agbsave.bin to $[GM9OUT]?"
+echo "User aborted"
+goto mm_Dump_Options
+end
+if not cp -w S:/agbsave.bin $[GM9OUT]/agbsave.bin
+echo "Dump failed!"
+goto mm_Dump_Options
+end
+echo "Dump success!"
+goto mm_Dump_Options
+
+@dump_Dump_nnid.bin
+set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump nnid.bin"
+if not ask "Dump nnid.bin (nnid info file) to $[GM9OUT]?"
+echo "User aborted"
+goto mm_Dump_Options
+end
+if not cp -w 1:/data/$[SYSID0]/sysdata/00010038/00000000 $[GM9OUT]/nnid.bin
+echo "Dump failed!"
+goto mm_Dump_Options
+end
+echo "Dump success!"
+goto mm_Dump_Options
+
+@mm_FBI_Inject_Options
+set PREVIEW_MODE "GM9FULLSCRIPT \nFBI Inject Options"
+labelsel -s -o "Select an option" fbi_*
+goto beginning
+
+@fbi_Inject_FBI_to_H&S
+set PREVIEW_MODE "GM9FULLSCRIPT \nFBI Inject Options \nInject FBI to H&S"
+if not ask "Inject FBI to H&S?"
+echo "User aborted."
+goto mm_FBI_Inject_Options
+end
+if not find $[GM9OUT]/FBI.cia FBISRC
+if not find 0:/cias/FBI.cia FBISRC
+if not filesel -d "FBI.cia not found. Select manually." 0:/*.cia FBISRC
+goto mm_FBI_Inject_Options
+end
+if not ask "$[FBISRC] \n \nCorrect?"
+echo "User aborted."
+goto mm_FBI_Inject_Options
+end
+end
+end
+if chk $[REGION] "USA"
+if chk $[ONTYPE] "n3ds"
+find -f 1:/title/00040010/20021300/content/*.app H&SPATH
+else
+find -f 1:/title/00040010/00021300/content/*.app H&SPATH
+end
+elif chk $[REGION] "EUR"
+if chk $[ONTYPE] "n3ds"
+find -f 1:/title/00040010/20022300/content/*.app H&SPATH
+else
+find -f 1:/title/00040010/00022300/content/*.app H&SPATH
+end
+elif chk $[REGION] "JPN"
+if chk $[ONTYPE] "n3ds"
+find -f 1:/title/00040010/20020300/content/*.app H&SPATH
+else
+find -f 1:/title/00040010/00020300/content/*.app H&SPATH
+end
+elif chk $[REGION] "KOR"
+if chk $[ONTYPE] "n3ds"
+find -f 1:/title/00040010/20027300/content/*.app H&SPATH
+else
+find -f 1:/title/00040010/00027300/content/*.app H&SPATH
+end
+elif chk $[REGION] "CHN"
+if chk $[ONTYPE] "n3ds"
+find -f 1:/title/00040010/20026300/content/*.app H&SPATH
+else
+find -f 1:/title/00040010/00026300/content/*.app H&SPATH
+end
+elif chk $[REGION] "TWN"
+if chk $[ONTYPE] "n3ds"
+find -f 1:/title/00040010/20028300/content/*.app H&SPATH
+else
+find -f 1:/title/00040010/00028300/content/*.app H&SPATH
+end
+else
+echo "Unknown region. Aborting!"
+rm -o -s $[GM9TEMP]
+goto mm_FBI_Inject_Options
+end
+if not allow -a 1:/
+echo "Permissions denied. Aborting!"
+rm -o -s $[GM9TEMP]
+goto mm_FBI_Inject_Options
+end
+strsplit -b H&SBAK $[H&SPATH] "."
+set H&SBAK "$[H&SBAK].bak"
+if find $[H&SBAK] NULL
+mv -w -k -n $[H&SBAK] $[H&SPATH]
+end
+set GM9TEMP "0:/gm9/temp"
+if not find $[GM9TEMP] NULL
+mkdir $[GM9TEMP]
+end
+imgmount "$[FBISRC]"
+find G:/*.app FBIAPP
+strsplit FBINC $[FBIAPP] "/"
+strsplit -b FBINC $[FBINC] "."
+cp -n -w $[FBIAPP] $[GM9TEMP]/00000002.app
+cp -n -w G:/$[FBINC]/ncch.bin $[GM9TEMP]/FBIncch.bin
+imgumount
+imgmount $[H&SPATH]
+cp -n -w G:/ncch.bin $[GM9TEMP]/H&Sncch.bin
+imgumount
+set FBI "$[GM9TEMP]/FBIncch.bin"
+set H&S "$[GM9TEMP]/H&Sncch.bin"
+if not inject -n $[FBI]@104:2 $[H&S]@104
+echo "FBI Inject failed!"
+rm $[GM9TEMP]
+goto mm_FBI_Inject_Options
+end
+if not inject -n $[FBI]@111:1 $[H&S]@111
+echo "FBI Inject failed!"
+rm $[GM9TEMP]
+goto mm_FBI_Inject_Options
+ends
+if not inject -n $[FBI]@130:D0 $[H&S]@130
+echo "FBI Inject failed!"
+rm $[GM9TEMP]
+goto mm_FBI_Inject_Options
+end
+if not inject -n $[H&S]@000:200 $[GM9TEMP]/00000002.app@000
+echo "FBI Inject failed!"
+rm $[GM9TEMP]
+goto mm_FBI_Inject_Options
+end
+inject -n $[H&S]@108:008 $[GM9TEMP]/00000002.app@3C8
+echo "FBI Inject failed!"
+rm $[GM9TEMP]
+goto mm_FBI_Inject_Options
+end
+inject -n $[H&S]@108:008 $[GM9TEMP]/00000002.app@400
+echo "FBI Inject failed!"
+rm $[GM9TEMP]
+goto mm_FBI_Inject_Options
+end
+inject -n $[H&S]@108:008 $[GM9TEMP]/00000002.app@800
+echo "FBI Inject failed!"
+rm $[GM9TEMP]
+goto mm_FBI_Inject_Options
+end
+@hashext
+if not shaget $[GM9TEMP]/00000002.app@200:400 $[GM9TEMP]/00000002.app.sha
+goto hashext
+end
+inject -n $[GM9TEMP]/00000002.app.sha@000:020 $[GM9TEMP]/00000002.app@160
+@ench&s
+if not encrypt $[GM9TEMP]/00000002.app
+goto ench&s
+end
+mv $[H&SPATH] $[H&SBAK]
+mv -w $[GM9TEMP]/00000002.app $[H&SPATH]
+rm -o -s $[GM9TEMP]
+echo "FBI inject success!."
+goto mm_FBI_Inject_Options
+
+@fbi_Restore_H&S
+set PREVIEW_MODE "GM9FULLSCRIPT \nFBI Inject Options \nRestore H&S"
+if not ask "Restore H&S?"
+goto mm_FBI_Inject_Options
+end
+if chk $[REGION] "USA"
+if chk $[ONTYPE] "n3ds"
+find -f 1:/title/00040010/20021300/content/*.app H&SPATH
+else
+find -f 1:/title/00040010/00021300/content/*.app H&SPATH
+end
+elif chk $[REGION] "EUR"
+if chk $[ONTYPE] "n3ds"
+find -f 1:/title/00040010/20022300/content/*.app H&SPATH
+else
+find -f 1:/title/00040010/00022300/content/*.app H&SPATH
+end
+elif chk $[REGION] "JPN"
+if chk $[ONTYPE] "n3ds"
+find -f 1:/title/00040010/20020300/content/*.app H&SPATH
+else
+find -f 1:/title/00040010/00020300/content/*.app H&SPATH
+end
+elif chk $[REGION] "KOR"
+if chk $[ONTYPE] "n3ds"
+find -f 1:/title/00040010/20027300/content/*.app H&SPATH
+else
+find -f 1:/title/00040010/00027300/content/*.app H&SPATH
+end
+elif chk $[REGION] "CHN"
+if chk $[ONTYPE] "n3ds"
+find -f 1:/title/00040010/20026300/content/*.app H&SPATH
+else
+find -f 1:/title/00040010/00026300/content/*.app H&SPATH
+end
+elif chk $[REGION] "TWN"
+if chk $[ONTYPE] "n3ds"
+find -f 1:/title/00040010/20028300/content/*.app H&SPATH
+else
+find -f 1:/title/00040010/00028300/content/*.app H&SPATH
+end
+else
+echo "Unknown region. Aborting!"
+rm -o -s $[GM9TEMP]
+goto mm_FBI_Inject_Options
+end
+strsplit -b H&SBAK $[H&SPATH] "."
+if not find $[H&SBAK].bak NULL
+echo "H&S backup not found. Aborting!"
+goto mm_FBI_Inject_Options
+end
+if not allow -a 1:/
+echo "Permissions denied. Aborting!"
+goto mm_FBI_Inject_Options
+end
+rm $[H&SPATH]
+if not mv -n -w $[H&SBAK].bak $[H&SPATH]
+echo "H&S restore failed!"
+goto mm_FBI_Inject_Options
+end
+echo "H&S restore success!"
+goto mm_FBI_Inject_Options
+
+@mm_Scripts_from_Plailect's_Guide
+set PREVIEW_MODE "GM9FULLSCRIPT \nScripts from Plailect's Guide"
+labelsel -s -o "Select an option" plai_*
+goto beginning
+
+@plai_Setup_Luma3DS_to_CTRNAND
+set PREVIEW_MODE "GM9FULLSCRIPT \nScripts from Plailect's Guide \nSetup Luma3DS to CTRNAND"
+if not ask "Copy Luma3DS filed to CTRNAND?"
+echo "User aborted."
+goto mm_Scripts_from_Plailect's_Guide
+end
+if not allow 1:/title
+echo "Permissions denied. Aborting!"
+goto mm_Scripts_from_Plailect's_Guide
+end
+if not cp -w 0:/boot.firm 1:/boot.firm
+echo "File copy failed!"
+goto mm_Scripts_from_Plailect's_Guide
+end
+if not cp -w 0:/luma 1:/rw/luma
+echo "File copy failed!"
+goto mm_Scripts_from_Plailect's_Guide
+end
+mkdir 1:/gm9
+if not cp -w 0:/gm9/support 1:/gm9/support
+echo "File copy failed!"
+goto mm_Scripts_from_Plailect's_Guide
+end
+echo "File copy success!"
+goto mm_Scripts_from_Plailect's_Guide
+
+@plai_Cleanup_SDCARD
+set PREVIEW_MODE "GM9FULLSCRIPT \nScripts from Plailect's Guide \nCleanup SDCARD"
+if not ask "This will clean the SDCARD \nfrom setup files. \nContinue?"
+echo "User aborted."
+goto mm_Scripts_from_Plailect's_Guide
+end
+if not allow -a 0:/
+echo "Permissions denied. Aborting!"
+goto mm_Scripts_from_Plailect's_Guide
+end
+if not allow -a A:/
+echo "Permissions denied. Aborting!"
+goto mm_Scripts_from_Plailect's_Guide
+end
+rm -s -o 0:/arm11code.bin
+rm -o -s 0:/arm9.bin
+rm -o -s 0:/arm11.bin
+rm -o -s 0:/ntr.bin 
+rm -o -s 0:/soundhax-usa-o3ds.m4a
+rm -o -s 0:/soundhax-usa-n3ds.m4a
+rm -o -s 0:/soundhax-eur-o3ds.m4a
+rm -o -s 0:/soundhax-eur-n3ds.m4a
+rm -o -s 0:/soundhax-jpn-o3ds.m4a
+rm -o -s 0:/soundhax-jpn-n3ds.m4a
+rm -o -s 0:/soundhax-kor-o3ds.m4a
+rm -o -s 0:/soundhax-kor-n3ds.m4a
+rm -o -s 0:/otherapp.bin
+rm -o -s 0:/3ds/safehax.3dsx
+rm -o -s 0:/3ds/udsploit.3dsx
+rm -o -s 0:/safehaxpayload.bin
+rm -o -s 0:/Launcher.dat
+rm -o -s 0:/SafeB9SInstaller.dat 
+rm -o -s 0:/public.sav
+rm -o -s 0:/boot.nds
+rm -o -s 0:/savedata
+rm -o -s 0:/sudoku_v0.app
+rm -o -s 0:/4swords.app
+rm -o -s 0:/luma/payloads/ntrboot_flasher.firm
+rm -o -s 0:/ntrboot
+rm -o -s 0:/ntrboot.firm 
+rm -o -s 0:/boot9strap
+for 0:/cias *
+rm -o -s $[FORPATH]
+next
+rm -o -s 0:/gm9/scripts/setup_ctrnand_luma3ds.gm9
+rm -o -s 0:/gm9/scripts/cleanup_sd_card.gm9
+rm -o -s 0:/arm9loaderhax.bin
+rm -o -s 0:/files9/aeskeydb.bin
+rm -o -s 0:/steelhax
+rm -o -s 0:/movable.sed
+rm -o -s 0:/3ds/steelhax_installer/*
+rm -o -s 0:/3ds/steelhax_installer.*
+rm -o -s 0:/484E4441.bin
+rm -o -s 0:/484E4441.bin.patched
+rm -o -s 0:/frogcert.bin
+rm -o -s 0:/private/ds/app/4B47554A/001/T00031_1038C2A757B77_000.ppm
+rm -o -s 0:/3ds/Frogtool.3dsx
+rm -o -s 0:/3ds/squirrelboot.3dsx
+rm -o -s 0:/3ds/slotTool.3dsx
+rm -o -s 0:/usm.bin
+rm -o -s "A:/Nintendo DSiWare/F00D43D5.bin"
+rm -o -s 0:/browserhax_hblauncher_ropbin_payload.bin
+rm -o -s 0:/arm11code.bin
+echo "SD cleanup success!."
+goto mm_Scripts_from_Plailect's_Guide
+
+@plai_Remove_NNID
+set PREVIEW_MODE "GM9FULLSCRIPT \nScripts from Plailect's Guide \nRemove NNID"
+if not ask "This will remove NNID from your console \nProceed?"
+echo "User aborted."
+goto mm_Scripts_from_Plailect's_Guide
+end
+if not allow -a 1:/
+echo "Permissions denied. Aborting!"
+goto mm_Scripts_from_Plailect's_Guide
+end
+if find 1:/data/$[SYSID0]/sysdata/00010038/10000000 NONNID
+echo "NNID is not linked! Aborting!"
+goto mm_Scripts_from_Plailect's_Guide
+end
+mv -w -n 1:/data/$[SYSID0]/sysdata/00010038/00000000 $[NONNID]
+echo "NNID remove success!"
+goto mm_Scripts_from_Plailect's_Guide
+
+@plai_Remove_ExtData
+set PREVIEW_MODE "GM9FULLSCRIPT \nScripts from Plailect's Guide \nRemove ExtData"
+if not ask "This will remove the HOME Menu ExtData.\nProceed?"
+echo "User aborted."
+goto mm_Scripts_from_Plailect's_Guide
+end
+if not allow -a A:/
+echo "Permissions denied. Aborting!"
+goto mm_Scripts_from_Plailect's_Guide
+end
+rm -o -s A:/extdata/00000000/00000098
+rm -o -s A:/extdata/00000000/00000082
+rm -o -s A:/extdata/00000000/0000008f
+rm -o -s A:/extdata/00000000/000000A1
+rm -o -s A:/extdata/00000000/000000A9
+rm -o -s A:/extdata/00000000/000000B1
+echo "ExtData remove success!."
+goto mm_Scripts_from_Plailect's_Guide
+
+
+@plai_CTRTransfer_Ticket_Copy
+set PREVIEW_MODE "GM9FULLSCRIPT \nScripts from Plailect's Guide \nCTRTransfer Ticket Copy"
+if not ask "This will copy CTRTransfer tickets. \nProceed?"
+echo "User aborted"
+goto mm_Scripts_from_Plailect's_Guide 
+end
+if not allow -a 1:/
+echo "Permissions denied. Aborting!"
+goto mm_Scripts_from_Plailect's_Guide
+end
+if not imgmount 1:/dbs/ticket.bak
+echo "Could not find ticket backup.\n Aborting!"
+goto mm_Scripts_from_Plailect's_Guide
+end
+if not find T:/*o* NULL
+echo "No user tickets found.\nAborting!"
+goto mm_Scripts_from_Plailect's_Guide
+end
+rm -o -s $[GM9OUT]/ctrtransfer_tickets
+mkdir $[GM9OUT]/ctrtransfer_tickets
+cp -o -s T:/eshop $[GM9OUT]/ctrtransfer_tickets/eshop
+cp -o -s T:/unknown $[GM9OUT]/ctrtransfer_tickets/unknown
+echo "CTRTransfer Ticket Copy success!"
+goto mm_Scripts_from_Plailect's_Guide
+
+@mm_Inject_Options
+set PREVIEW_MODE "GM9FULLSCRIPT \nInject Options"
+labelsel -s -o "Select an options" inject_*
+goto beginning
+
+@inject_Inject_SecureInfo
+set PREVIEW_MODE "GM9FULLSCRIPT \nInject Options \nInject SecureInfo"
+if not ask "Inject SecureInfo from \n$[GM9OUT]?"
+echo "User aborted"
+goto mm_Inject_Options
+end
+if not find $[GM9OUT]/SecureInfo_A SECUREINJ
+echo "File not found. Aborting!"
+goto mm_Inject_Options
+end
+if not allow 1:/rw/sys/SecureInfo_A
+echo "Permissions denied. Aborting!"
+goto mm_Inject_Options
+end
+if not inject -n $[SECUREINJ] 1:/rw/sys/SecureInfo_A
+echo "Inject failed!"
+goto mm_Inject_Options
+end
+echo "Inject success!"
+goto mm_Inject_Options
+
+@inject_Inject_movable.sed
+set PREVIEW_MODE "GM9FULLSCRIPT \nInject Options \nInject movable.sed"
+if not ask "Inject movable.sed from \n$[GM9OUT]? \n(if the provided movable.sed \n isn't your console's movable.sed, \nyou'll have problems afterwards!)"
+echo "User aborted"
+goto mm_Inject_Options
+end
+if not find $[GM9OUT]/movable.sed MOVABLEINJ
+echo "File not found. Aborting!"
+goto mm_Inject_Options
+end
+if not allow 1:/private/movable.sed
+echo "Permissions denied. Aborting!"
+goto mm_Inject_Options
+end
+if not inject -n $[MOVABLEINJ] 1:/private/movable.sed
+echo "Inject failed!"
+goto mm_Inject_Options
+end
+echo "Inject success!"
+goto mm_Inject_Options
+
+@inject_Inject_LocalFriendCodeSeed_B
+set PREVIEW_MODE "GM9FULLSCRIPT \nInject Options \nInject LocalFriendCodeSeed_B"
+if not ask "Inject LocalFriendCodeSeed_B from \n$[GM9OUT]?\n(If you inject another console's \nLocalFriendCodeSeed_B and then you remove Boot9Strap, \nthe result will be a brick!) \n(If you are unbanning the console, \ninjecting another console's LocalFriendCodeSeed_B \nis mandatory, so proceed at your own risk.) "
+echo "User aborted"
+goto mm_Inject_Options
+end
+if not find $[GM9OUT]/LocalFriendCodeSeed_B FRIENDINJ
+echo "File not found. Aborting!"
+goto mm_Inject_Options
+end
+if not allow 1:/rw/sys/LocalFriendCodeSeed_B
+echo "Permissions denied. Aborting!"
+goto mm_Inject_Options
+end
+if not inject -n $[FRIENDINJ] 1:/rw/sys/LocalFriendCodeSeed_B
+echo "Inject failed!"
+goto mm_Inject_Options
+end
+echo "Inject success!"
+goto mm_Inject_Options
+
+@inject_Inject_Agbsave.bin
+set PREVIEW_MODE "GM9FULLSCRIPT \nInject Options \nInject agbsave.bin"
+if not ask "Inject agbsave.bin from \n$[GM9OUT]?"
+echo "User aborted"
+goto mm_Inject_Options
+end
+if not find $[GM9OUT]/agbsave.bin AGBINJ
+echo "File not found. Aborting!"
+goto mm_Inject_Options
+end
+if not allow S:/agbsave.bin
+echo "Permissions denied. Aborting!"
+goto mm_Inject_Options
+end
+if not inject -n $[AGBINJ] S:/agbsave.bin
+echo "Inject failed!"
+goto mm_Inject_Options
+end
+echo "Inject success!"
+goto mm_Inject_Options
+
+@inject_Inject_Nnid.bin
+set PREVIEW_MODE "GM9FULLSCRIPT \nInject Options \nInject nnid.bin"
+if not ask "Inject nnid from \n$[GM9OUT]? \n(Will restore nnid that was linked \nwhen the backup was made.)"
+echo "User aborted"
+goto mm_Inject_Options
+end
+if not find $[GM9OUT]/nnid.bin NNIDINJ
+echo "File not found. Aborting!"
+goto mm_Inject_Options
+end
+if not allow 1:/data/$[SYSID0]/sysdata/00010038/00000000
+echo "Permissions denied. Aborting!"
+goto mm_Inject_Options
+end
+if not inject -n $[NNIDINJ] 1:/data/$[SYSID0]/sysdata/00010038/00000000
+echo "Inject failed! \n(Probably no nnid linked to the console now?)"
+goto mm_Inject_Options
+end
+rm -s -o 1:/data/$[SYSID0]/sysdata/00010038/10000000
+echo "Inject success!"
+goto mm_Inject_Options
+
+@mm_Console_Options
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options"
+labelsel -s -o "Select an option" cons_*
+goto beginning
+
+@cons_Console_Format
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nConsole Format"
+if not ask "WARNING: \nby proceeding you'll format your console \nlike the system settings does \nBy proceedng you'll lose ALL your save data.\nProceed?"
+echo "User aborted"
+
+goto
+mm_Console_Options
+
+end
+
+if not allow 1:/private/movable.sed
+echo "Permissions denied. Aborting!"
+
+goto mm_Console_Options
+
+end
+
+if not fget 1:/private/movable.sed@119:01 GREENPRE
+echo "Unable to retrieve data from Movable.sed! \nAborting!"
+goto mm_Console_Options
+end
+if not fget 1:/private/movable.sed@121:01 REDPRE
+echo "Unable to retrieve data from Movable.sed! \nAborting!"
+goto mm_Console_Options
+end
+if chk $[GREENPRE] "00"
+set GREENPOST "01"
+goto greenpostset
+end
+if chk $[GREENPRE] "01"
+set GREENPOST "02"
+goto greenpostset
+end
+if chk $[GREENPRE] "02"
+set GREENPOST "03"
+goto greenpostset
+end
+if chk $[GREENPRE] "03"
+set GREENPOST "04"
+goto greenpostset
+end
+if chk $[GREENPRE] "04"
+set GREENPOST "05"
+goto greenpostset
+end
+if chk $[GREENPRE] "05"
+set GREENPOST "06"
+goto greenpostset
+end
+if chk $[GREENPRE] "06"
+set GREENPOST "07"
+goto greenpostset
+end
+if chk $[GREENPRE] "07"
+set GREENPOST "08"
+goto greenpostset
+end
+if chk $[GREENPRE] "08"
+set GREENPOST "09"
+goto greenpostset
+end
+if chk $[GREENPRE] "09"
+set GREENPOST "0a"
+goto greenpostset
+end
+if chk $[GREENPRE] "0a"
+set GREENPOST "0b"
+goto greenpostset
+end
+if chk $[GREENPRE] "0b"
+set GREENPOST "0c"
+goto greenpostset
+end
+if chk $[GREENPRE] "0c"
+set GREENPOST "0d"
+goto greenpostset
+end
+if chk $[GREENPRE] "0d"
+set GREENPOST "0e"
+goto greenpostset
+end
+if chk $[GREENPRE] "0e"
+set GREENPOST "0f"
+goto greenpostset
+end
+if chk $[GREENPRE] "0f"
+set GREENPOST "10"
+goto greenpostset
+end
+if chk $[GREENPRE] "10"
+set GREENPOST "11"
+goto greenpostset
+end
+if chk $[GREENPRE] "11"
+set GREENPOST "12"
+goto greenpostset
+end
+if chk $[GREENPRE] "12"
+set GREENPOST "13"
+goto greenpostset
+end
+if chk $[GREENPRE] "13"
+set GREENPOST "14"
+goto greenpostset
+end
+if chk $[GREENPRE] "14"
+set GREENPOST "15"
+goto greenpostset
+end
+if chk $[GREENPRE] "15"
+set GREENPOST "16"
+goto greenpostset
+end
+if chk $[GREENPRE] "16"
+set GREENPOST "17"
+goto greenpostset
+end
+if chk $[GREENPRE] "17"
+set GREENPOST "18"
+goto greenpostset
+end
+if chk $[GREENPRE] "18"
+set GREENPOST "19"
+goto greenpostset
+end
+if chk $[GREENPRE] "19"
+set GREENPOST "1a"
+goto greenpostset
+end
+if chk $[GREENPRE] "1a"
+set GREENPOST "1b"
+goto greenpostset
+end
+if chk $[GREENPRE] "1b"
+set GREENPOST "1c"
+goto greenpostset
+end
+if chk $[GREENPRE] "1c"
+set GREENPOST "1d"
+goto greenpostset
+end
+if chk $[GREENPRE] "1d"
+set GREENPOST "1e"
+goto greenpostset
+end
+if chk $[GREENPRE] "1e"
+set GREENPOST "1f"
+goto greenpostset
+end
+if chk $[GREENPRE] "1f"
+set GREENPOST "20"
+goto greenpostset
+end
+if chk $[GREENPRE] "20"
+set GREENPOST "21"
+goto greenpostset
+end
+if chk $[GREENPRE] "21"
+set GREENPOST "22"
+goto greenpostset
+end
+if chk $[GREENPRE] "22"
+set GREENPOST "23"
+goto greenpostset
+end
+if chk $[GREENPRE] "23"
+set GREENPOST "24"
+goto greenpostset
+end
+if chk $[GREENPRE] "24"
+set GREENPOST "25"
+goto greenpostset
+end
+if chk $[GREENPRE] "25"
+set GREENPOST "26"
+goto greenpostset
+end
+if chk $[GREENPRE] "26"
+set GREENPOST "27"
+goto greenpostset
+end
+if chk $[GREENPRE] "27"
+set GREENPOST "28"
+goto greenpostset
+end
+if chk $[GREENPRE] "28"
+set GREENPOST "29"
+goto greenpostset
+end
+if chk $[GREENPRE] "29"
+set GREENPOST "2a"
+goto greenpostset
+end
+if chk $[GREENPRE] "2a"
+set GREENPOST "2b"
+goto greenpostset
+end
+if chk $[GREENPRE] "2b"
+set GREENPOST "2c"
+goto greenpostset
+end
+if chk $[GREENPRE] "2c"
+set GREENPOST "2d"
+goto greenpostset
+end
+if chk $[GREENPRE] "2d"
+set GREENPOST "2e"
+goto greenpostset
+end
+if chk $[GREENPRE] "2e"
+set GREENPOST "2f"
+goto greenpostset
+end
+if chk $[GREENPRE] "2f"
+set GREENPOST "30"
+goto greenpostset
+end
+if chk $[GREENPRE] "30"
+set GREENPOST "31"
+goto greenpostset
+end
+if chk $[GREENPRE] "31"
+set GREENPOST "32"
+goto greenpostset
+end
+if chk $[GREENPRE] "32"
+set GREENPOST "33"
+goto greenpostset
+end
+if chk $[GREENPRE] "33"
+set GREENPOST "34"
+goto greenpostset
+end
+if chk $[GREENPRE] "34"
+set GREENPOST "35"
+goto greenpostset
+end
+if chk $[GREENPRE] "35"
+set GREENPOST "36"
+goto greenpostset
+end
+if chk $[GREENPRE] "36"
+set GREENPOST "37"
+goto greenpostset
+end
+if chk $[GREENPRE] "37"
+set GREENPOST "38"
+goto greenpostset
+end
+if chk $[GREENPRE] "38"
+set GREENPOST "39"
+goto greenpostset
+end
+if chk $[GREENPRE] "39"
+set GREENPOST "3a"
+goto greenpostset
+end
+if chk $[GREENPRE] "3a"
+set GREENPOST "3b"
+goto greenpostset
+end
+if chk $[GREENPRE] "3b"
+set GREENPOST "3c"
+goto greenpostset
+end
+if chk $[GREENPRE] "3c"
+set GREENPOST "3d"
+goto greenpostset
+end
+if chk $[GREENPRE] "3d"
+set GREENPOST "3e"
+goto greenpostset
+end
+if chk $[GREENPRE] "3e"
+set GREENPOST "3f"
+goto greenpostset
+end
+if chk $[GREENPRE] "3f"
+set GREENPOST "40"
+goto greenpostset
+end
+if chk $[GREENPRE] "40"
+set GREENPOST "41"
+goto greenpostset
+end
+if chk $[GREENPRE] "41"
+set GREENPOST "42"
+goto greenpostset
+end
+if chk $[GREENPRE] "42"
+set GREENPOST "43"
+goto greenpostset
+end
+if chk $[GREENPRE] "43"
+set GREENPOST "44"
+goto greenpostset
+end
+if chk $[GREENPRE] "44"
+set GREENPOST "45"
+goto greenpostset
+end
+if chk $[GREENPRE] "45"
+set GREENPOST "46"
+goto greenpostset
+end
+if chk $[GREENPRE] "46"
+set GREENPOST "47"
+goto greenpostset
+end
+if chk $[GREENPRE] "47"
+set GREENPOST "48"
+goto greenpostset
+end
+if chk $[GREENPRE] "48"
+set GREENPOST "49"
+goto greenpostset
+end
+if chk $[GREENPRE] "49"
+set GREENPOST "4a"
+goto greenpostset
+end
+if chk $[GREENPRE] "4a"
+set GREENPOST "4b"
+goto greenpostset
+end
+if chk $[GREENPRE] "4b"
+set GREENPOST "4c"
+goto greenpostset
+end
+if chk $[GREENPRE] "4c"
+set GREENPOST "4d"
+goto greenpostset
+end
+if chk $[GREENPRE] "4d"
+set GREENPOST "4e"
+goto greenpostset
+end
+if chk $[GREENPRE] "4e"
+set GREENPOST "4f"
+goto greenpostset
+end
+if chk $[GREENPRE] "4f"
+set GREENPOST "50"
+goto greenpostset
+end
+if chk $[GREENPRE] "50"
+set GREENPOST "51"
+goto greenpostset
+end
+if chk $[GREENPRE] "51"
+set GREENPOST "52"
+goto greenpostset
+end
+if chk $[GREENPRE] "52"
+set GREENPOST "53"
+goto greenpostset
+end
+if chk $[GREENPRE] "53"
+set GREENPOST "54"
+goto greenpostset
+end
+if chk $[GREENPRE] "54"
+set GREENPOST "55"
+goto greenpostset
+end
+if chk $[GREENPRE] "55"
+set GREENPOST "56"
+goto greenpostset
+end
+if chk $[GREENPRE] "56"
+set GREENPOST "57"
+goto greenpostset
+end
+if chk $[GREENPRE] "57"
+set GREENPOST "58"
+goto greenpostset
+end
+if chk $[GREENPRE] "58"
+set GREENPOST "59"
+goto greenpostset
+end
+if chk $[GREENPRE] "59"
+set GREENPOST "5a"
+goto greenpostset
+end
+if chk $[GREENPRE] "5a"
+set GREENPOST "5b"
+goto greenpostset
+end
+if chk $[GREENPRE] "5b"
+set GREENPOST "5c"
+goto greenpostset
+end
+if chk $[GREENPRE] "5c"
+set GREENPOST "5d"
+goto greenpostset
+end
+if chk $[GREENPRE] "5d"
+set GREENPOST "5e"
+goto greenpostset
+end
+if chk $[GREENPRE] "5e"
+set GREENPOST "5f"
+goto greenpostset
+end
+if chk $[GREENPRE] "5f"
+set GREENPOST "60"
+goto greenpostset
+end
+if chk $[GREENPRE] "60"
+set GREENPOST "61"
+goto greenpostset
+end
+if chk $[GREENPRE] "61"
+set GREENPOST "62"
+goto greenpostset
+end
+if chk $[GREENPRE] "62"
+set GREENPOST "63"
+goto greenpostset
+end
+if chk $[GREENPRE] "63"
+set GREENPOST "64"
+goto greenpostset
+end
+if chk $[GREENPRE] "64"
+set GREENPOST "65"
+goto greenpostset
+end
+if chk $[GREENPRE] "65"
+set GREENPOST "66"
+goto greenpostset
+end
+if chk $[GREENPRE] "66"
+set GREENPOST "67"
+goto greenpostset
+end
+if chk $[GREENPRE] "67"
+set GREENPOST "68"
+goto greenpostset
+end
+if chk $[GREENPRE] "68"
+set GREENPOST "69"
+goto greenpostset
+end
+if chk $[GREENPRE] "69"
+set GREENPOST "6a"
+goto greenpostset
+end
+if chk $[GREENPRE] "6a"
+set GREENPOST "6b"
+goto greenpostset
+end
+if chk $[GREENPRE] "6b"
+set GREENPOST "6c"
+goto greenpostset
+end
+if chk $[GREENPRE] "6c"
+set GREENPOST "6d"
+goto greenpostset
+end
+if chk $[GREENPRE] "6d"
+set GREENPOST "6e"
+goto greenpostset
+end
+if chk $[GREENPRE] "6e"
+set GREENPOST "6f"
+goto greenpostset
+end
+if chk $[GREENPRE] "6f"
+set GREENPOST "70"
+goto greenpostset
+end
+if chk $[GREENPRE] "70"
+set GREENPOST "71"
+goto greenpostset
+end
+if chk $[GREENPRE] "71"
+set GREENPOST "72"
+goto greenpostset
+end
+if chk $[GREENPRE] "72"
+set GREENPOST "73"
+goto greenpostset
+end
+if chk $[GREENPRE] "73"
+set GREENPOST "74"
+goto greenpostset
+end
+if chk $[GREENPRE] "74"
+set GREENPOST "75"
+goto greenpostset
+end
+if chk $[GREENPRE] "75"
+set GREENPOST "76"
+goto greenpostset
+end
+if chk $[GREENPRE] "76"
+set GREENPOST "77"
+goto greenpostset
+end
+if chk $[GREENPRE] "77"
+set GREENPOST "78"
+goto greenpostset
+end
+if chk $[GREENPRE] "78"
+set GREENPOST "79"
+goto greenpostset
+end
+if chk $[GREENPRE] "79"
+set GREENPOST "7a"
+goto greenpostset
+end
+if chk $[GREENPRE] "7a"
+set GREENPOST "7b"
+goto greenpostset
+end
+if chk $[GREENPRE] "7b"
+set GREENPOST "7c"
+goto greenpostset
+end
+if chk $[GREENPRE] "7c"
+set GREENPOST "7d"
+goto greenpostset
+end
+if chk $[GREENPRE] "7d"
+set GREENPOST "7e"
+goto greenpostset
+end
+if chk $[GREENPRE] "7e"
+set GREENPOST "7f"
+goto greenpostset
+end
+if chk $[GREENPRE] "7f"
+set GREENPOST "80"
+goto greenpostset
+end
+if chk $[GREENPRE] "80"
+set GREENPOST "81"
+goto greenpostset
+end
+if chk $[GREENPRE] "81"
+set GREENPOST "82"
+goto greenpostset
+end
+if chk $[GREENPRE] "82"
+set GREENPOST "83"
+goto greenpostset
+end
+if chk $[GREENPRE] "83"
+set GREENPOST "84"
+goto greenpostset
+end
+if chk $[GREENPRE] "84"
+set GREENPOST "85"
+goto greenpostset
+end
+if chk $[GREENPRE] "85"
+set GREENPOST "86"
+goto greenpostset
+end
+if chk $[GREENPRE] "86"
+set GREENPOST "87"
+goto greenpostset
+end
+if chk $[GREENPRE] "87"
+set GREENPOST "88"
+goto greenpostset
+end
+if chk $[GREENPRE] "88"
+set GREENPOST "89"
+goto greenpostset
+end
+if chk $[GREENPRE] "89"
+set GREENPOST "8a"
+goto greenpostset
+end
+if chk $[GREENPRE] "8a"
+set GREENPOST "8b"
+goto greenpostset
+end
+if chk $[GREENPRE] "8b"
+set GREENPOST "8c"
+goto greenpostset
+end
+if chk $[GREENPRE] "8c"
+set GREENPOST "8d"
+goto greenpostset
+end
+if chk $[GREENPRE] "8d"
+set GREENPOST "8e"
+goto greenpostset
+end
+if chk $[GREENPRE] "8e"
+set GREENPOST "8f"
+goto greenpostset
+end
+if chk $[GREENPRE] "8f"
+set GREENPOST "90"
+goto greenpostset
+end
+if chk $[GREENPRE] "90"
+set GREENPOST "91"
+goto greenpostset
+end
+if chk $[GREENPRE] "91"
+set GREENPOST "92"
+goto greenpostset
+end
+if chk $[GREENPRE] "92"
+set GREENPOST "93"
+goto greenpostset
+end
+if chk $[GREENPRE] "93"
+set GREENPOST "94"
+goto greenpostset
+end
+if chk $[GREENPRE] "94"
+set GREENPOST "95"
+goto greenpostset
+end
+if chk $[GREENPRE] "95"
+set GREENPOST "96"
+goto greenpostset
+end
+if chk $[GREENPRE] "96"
+set GREENPOST "97"
+goto greenpostset
+end
+if chk $[GREENPRE] "97"
+set GREENPOST "98"
+goto greenpostset
+end
+if chk $[GREENPRE] "98"
+set GREENPOST "99"
+goto greenpostset
+end
+if chk $[GREENPRE] "99"
+set GREENPOST "9a"
+goto greenpostset
+end
+if chk $[GREENPRE] "9a"
+set GREENPOST "9b"
+goto greenpostset
+end
+if chk $[GREENPRE] "9b"
+set GREENPOST "9c"
+goto greenpostset
+end
+if chk $[GREENPRE] "9c"
+set GREENPOST "9d"
+goto greenpostset
+end
+if chk $[GREENPRE] "9d"
+set GREENPOST "9e"
+goto greenpostset
+end
+if chk $[GREENPRE] "9e"
+set GREENPOST "9f"
+goto greenpostset
+end
+if chk $[GREENPRE] "9f"
+set GREENPOST "a0"
+goto greenpostset
+end
+if chk $[GREENPRE] "a0"
+set GREENPOST "a1"
+goto greenpostset
+end
+if chk $[GREENPRE] "a1"
+set GREENPOST "a2"
+goto greenpostset
+end
+if chk $[GREENPRE] "a2"
+set GREENPOST "a3"
+goto greenpostset
+end
+if chk $[GREENPRE] "a3"
+set GREENPOST "a4"
+goto greenpostset
+end
+if chk $[GREENPRE] "a4"
+set GREENPOST "a5"
+goto greenpostset
+end
+if chk $[GREENPRE] "a5"
+set GREENPOST "a6"
+goto greenpostset
+end
+if chk $[GREENPRE] "a6"
+set GREENPOST "a7"
+goto greenpostset
+end
+if chk $[GREENPRE] "a7"
+set GREENPOST "a8"
+goto greenpostset
+end
+if chk $[GREENPRE] "a8"
+set GREENPOST "a9"
+goto greenpostset
+end
+if chk $[GREENPRE] "a9"
+set GREENPOST "aa"
+goto greenpostset
+end
+if chk $[GREENPRE] "aa"
+set GREENPOST "ab"
+goto greenpostset
+end
+if chk $[GREENPRE] "ab"
+set GREENPOST "ac"
+goto greenpostset
+end
+if chk $[GREENPRE] "ac"
+set GREENPOST "ad"
+goto greenpostset
+end
+if chk $[GREENPRE] "ad"
+set GREENPOST "ae"
+goto greenpostset
+end
+if chk $[GREENPRE] "ae"
+set GREENPOST "af"
+goto greenpostset
+end
+if chk $[GREENPRE] "af"
+set GREENPOST "b0"
+goto greenpostset
+end
+if chk $[GREENPRE] "b0"
+set GREENPOST "b1"
+goto greenpostset
+end
+if chk $[GREENPRE] "b1"
+set GREENPOST "b2"
+goto greenpostset
+end
+if chk $[GREENPRE] "b2"
+set GREENPOST "b3"
+goto greenpostset
+end
+if chk $[GREENPRE] "b3"
+set GREENPOST "b4"
+goto greenpostset
+end
+if chk $[GREENPRE] "b4"
+set GREENPOST "b5"
+goto greenpostset
+end
+if chk $[GREENPRE] "b5"
+set GREENPOST "b6"
+goto greenpostset
+end
+if chk $[GREENPRE] "b6"
+set GREENPOST "b7"
+goto greenpostset
+end
+if chk $[GREENPRE] "b7"
+set GREENPOST "b8"
+goto greenpostset
+end
+if chk $[GREENPRE] "b8"
+set GREENPOST "b9"
+goto greenpostset
+end
+if chk $[GREENPRE] "b9"
+set GREENPOST "ba"
+goto greenpostset
+end
+if chk $[GREENPRE] "ba"
+set GREENPOST "bb"
+goto greenpostset
+end
+if chk $[GREENPRE] "bb"
+set GREENPOST "bc"
+goto greenpostset
+end
+if chk $[GREENPRE] "bc"
+set GREENPOST "bd"
+goto greenpostset
+end
+if chk $[GREENPRE] "bd"
+set GREENPOST "be"
+goto greenpostset
+end
+if chk $[GREENPRE] "be"
+set GREENPOST "bf"
+goto greenpostset
+end
+if chk $[GREENPRE] "bf"
+set GREENPOST "c0"
+goto greenpostset
+end
+if chk $[GREENPRE] "c0"
+set GREENPOST "c1"
+goto greenpostset
+end
+if chk $[GREENPRE] "c1"
+set GREENPOST "c2"
+goto greenpostset
+end
+if chk $[GREENPRE] "c2"
+set GREENPOST "c3"
+goto greenpostset
+end
+if chk $[GREENPRE] "c3"
+set GREENPOST "c4"
+goto greenpostset
+end
+if chk $[GREENPRE] "c5"
+set GREENPOST "c6"
+goto greenpostset
+end
+if chk $[GREENPRE] "c6"
+set GREENPOST "c7"
+goto greenpostset
+end
+if chk $[GREENPRE] "c7"
+set GREENPOST "c8"
+goto greenpostset
+end
+if chk $[GREENPRE] "c8"
+set GREENPOST "c9"
+goto greenpostset
+end
+if chk $[GREENPRE] "c9"
+set GREENPOST "ca"
+goto greenpostset
+end
+if chk $[GREENPRE] "ca"
+set GREENPOST "cb"
+goto greenpostset
+end
+if chk $[GREENPRE] "cb"
+set GREENPOST "cc"
+goto greenpostset
+end
+if chk $[GREENPRE] "cc"
+set GREENPOST "cd"
+goto greenpostset
+end
+if chk $[GREENPRE] "cd"
+set GREENPOST "ce"
+goto greenpostset
+end
+if chk $[GREENPRE] "ce"
+set GREENPOST "cf"
+goto greenpostset
+end
+if chk $[GREENPRE] "cf"
+set GREENPOST "d0"
+goto greenpostset
+end
+if chk $[GREENPRE] "d0"
+set GREENPOST "d1"
+goto greenpostset
+end
+if chk $[GREENPRE] "d1"
+set GREENPOST "d2"
+goto greenpostset
+end
+if chk $[GREENPRE] "d2"
+set GREENPOST "d3"
+goto greenpostset
+end
+if chk $[GREENPRE] "d3"
+set GREENPOST "d4"
+goto greenpostset
+end
+if chk $[GREENPRE] "d4"
+set GREENPOST "d5"
+goto greenpostset
+end
+if chk $[GREENPRE] "d5"
+set GREENPOST "d6"
+goto greenpostset
+end
+if chk $[GREENPRE] "d6"
+set GREENPOST "d7"
+goto greenpostset
+end
+if chk $[GREENPRE] "d7"
+set GREENPOST "d8"
+goto greenpostset
+end
+if chk $[GREENPRE] "d8"
+set GREENPOST "d9"
+goto greenpostset
+end
+if chk $[GREENPRE] "d9"
+set GREENPOST "da"
+goto greenpostset
+end
+if chk $[GREENPRE] "da"
+set GREENPOST "db"
+goto greenpostset
+end
+if chk $[GREENPRE] "db"
+set GREENPOST "dc"
+goto greenpostset
+end
+if chk $[GREENPRE] "dc"
+set GREENPOST "dd"
+goto greenpostset
+end
+if chk $[GREENPRE] "dd"
+set GREENPOST "de"
+goto greenpostset
+end
+if chk $[GREENPRE] "de"
+set GREENPOST "df"
+goto greenpostset
+end
+if chk $[GREENPRE] "df"
+set GREENPOST "e0"
+goto greenpostset
+end
+if chk $[GREENPRE] "e0"
+set GREENPOST "e1"
+goto greenpostset
+end
+if chk $[GREENPRE] "e1"
+set GREENPOST "e2"
+goto greenpostset
+end
+if chk $[GREENPRE] "e2"
+set GREENPOST "e3"
+goto greenpostset
+end
+if chk $[GREENPRE] "e3"
+set GREENPOST "e4"
+goto greenpostset
+end
+if chk $[GREENPRE] "e4"
+set GREENPOST "e5"
+goto greenpostset
+end
+if chk $[GREENPRE] "e5"
+set GREENPOST "e6"
+goto greenpostset
+end
+if chk $[GREENPRE] "e6"
+set GREENPOST "e7"
+goto greenpostset
+end
+if chk $[GREENPRE] "e7"
+set GREENPOST "e8"
+goto greenpostset
+end
+if chk $[GREENPRE] "e8"
+set GREENPOST "e9"
+goto greenpostset
+end
+if chk $[GREENPRE] "e9"
+set GREENPOST "ea"
+goto greenpostset
+end
+if chk $[GREENPRE] "ea"
+set GREENPOST "eb"
+goto greenpostset
+end
+if chk $[GREENPRE] "eb"
+set GREENPOST "ec"
+goto greenpostset
+end
+if chk $[GREENPRE] "ec"
+set GREENPOST "ed"
+goto greenpostset
+end
+if chk $[GREENPRE] "ed"
+set GREENPOST "ee"
+goto greenpostset
+end
+if chk $[GREENPRE] "ee"
+set GREENPOST "ef"
+goto greenpostset
+end
+if chk $[GREENPRE] "ef"
+set GREENPOST "f0"
+goto greenpostset
+end
+if chk $[GREENPRE] "f0"
+set GREENPOST "f1"
+goto greenpostset
+end
+if chk $[GREENPRE] "f1"
+set GREENPOST "f2"
+goto greenpostset
+end
+if chk $[GREENPRE] "f2"
+set GREENPOST "f3"
+goto greenpostset
+end
+if chk $[GREENPRE] "f3"
+set GREENPOST "f4"
+goto greenpostset
+end
+if chk $[GREENPRE] "f4"
+set GREENPOST "f5"
+goto greenpostset
+end
+if chk $[GREENPRE] "f5"
+set GREENPOST "f6"
+goto greenpostset
+end
+if chk $[GREENPRE] "f6"
+set GREENPOST "f7"
+goto greenpostset
+end
+if chk $[GREENPRE] "f7"
+set GREENPOST "f8"
+goto greenpostset
+end
+if chk $[GREENPRE] "f8"
+set GREENPOST "f9"
+goto greenpostset
+end
+if chk $[GREENPRE] "f9"
+set GREENPOST "fa"
+goto greenpostset
+end
+if chk $[GREENPRE] "fa"
+set GREENPOST "fb"
+goto greenpostset
+end
+if chk $[GREENPRE] "fb"
+set GREENPOST "fc"
+goto greenpostset
+end
+if chk $[GREENPRE] "fc"
+set GREENPOST "fd"
+goto greenpostset
+end
+if chk $[GREENPRE] "fd"
+set GREENPOST "fe"
+goto greenpostset
+end
+if chk $[GREENPRE] "fe"
+set GREENPOST "ff"
+goto greenpostset
+end
+if chk $[GREENPRE] "ff"
+set GREENPOST "00"
+goto greenpostset
+end
+@greenpostset
+if chk $[REDPRE] "00"
+set REDPOST "01"
+goto redpostset
+end
+if chk $[REDPRE] "01"
+set REDPOST "02"
+goto redpostset
+end
+if chk $[REDPRE] "02"
+set REDPOST "03"
+goto redpostset
+end
+if chk $[REDPRE] "03"
+set REDPOST "04"
+goto redpostset
+end
+if chk $[REDPRE] "04"
+set REDPOST "05"
+goto redpostset
+end
+if chk $[REDPRE] "05"
+set REDPOST "06"
+goto redpostset
+end
+if chk $[REDPRE] "06"
+set REDPOST "07"
+goto redpostset
+end
+if chk $[REDPRE] "07"
+set REDPOST "08"
+goto redpostset
+end
+if chk $[REDPRE] "08"
+set REDPOST "09"
+goto redpostset
+end
+if chk $[REDPRE] "09"
+set REDPOST "0a"
+goto redpostset
+end
+if chk $[REDPRE] "0a"
+set REDPOST "0b"
+goto redpostset
+end
+if chk $[REDPRE] "0b"
+set REDPOST "0c"
+goto redpostset
+end
+if chk $[REDPRE] "0c"
+set REDPOST "0d"
+goto redpostset
+end
+if chk $[REDPRE] "0d"
+set REDPOST "0e"
+goto redpostset
+end
+if chk $[REDPRE] "0e"
+set REDPOST "0f"
+goto redpostset
+end
+if chk $[REDPRE] "0f"
+set REDPOST "10"
+goto redpostset
+end
+if chk $[REDPRE] "10"
+set REDPOST "11"
+goto redpostset
+end
+if chk $[REDPRE] "11"
+set REDPOST "12"
+goto redpostset
+end
+if chk $[REDPRE] "12"
+set REDPOST "13"
+goto redpostset
+end
+if chk $[REDPRE] "13"
+set REDPOST "14"
+goto redpostset
+end
+if chk $[REDPRE] "14"
+set REDPOST "15"
+goto redpostset
+end
+if chk $[REDPRE] "15"
+set REDPOST "16"
+goto redpostset
+end
+if chk $[REDPRE] "16"
+set REDPOST "17"
+goto redpostset
+end
+if chk $[REDPRE] "17"
+set REDPOST "18"
+goto redpostset
+end
+if chk $[REDPRE] "18"
+set REDPOST "19"
+goto redpostset
+end
+if chk $[REDPRE] "19"
+set REDPOST "1a"
+goto redpostset
+end
+if chk $[REDPRE] "1a"
+set REDPOST "1b"
+goto redpostset
+end
+if chk $[REDPRE] "1b"
+set REDPOST "1c"
+goto redpostset
+end
+if chk $[REDPRE] "1c"
+set REDPOST "1d"
+goto redpostset
+end
+if chk $[REDPRE] "1d"
+set REDPOST "1e"
+goto redpostset
+end
+if chk $[REDPRE] "1e"
+set REDPOST "1f"
+goto redpostset
+end
+if chk $[REDPRE] "1f"
+set REDPOST "20"
+goto redpostset
+end
+if chk $[REDPRE] "20"
+set REDPOST "21"
+goto redpostset
+end
+if chk $[REDPRE] "21"
+set REDPOST "22"
+goto redpostset
+end
+if chk $[REDPRE] "22"
+set REDPOST "23"
+goto redpostset
+end
+if chk $[REDPRE] "23"
+set REDPOST "24"
+goto redpostset
+end
+if chk $[REDPRE] "24"
+set REDPOST "25"
+goto redpostset
+end
+if chk $[REDPRE] "25"
+set REDPOST "26"
+goto redpostset
+end
+if chk $[REDPRE] "26"
+set REDPOST "27"
+goto redpostset
+end
+if chk $[REDPRE] "27"
+set REDPOST "28"
+goto redpostset
+end
+if chk $[REDPRE] "28"
+set REDPOST "29"
+goto redpostset
+end
+if chk $[REDPRE] "29"
+set REDPOST "2a"
+goto redpostset
+end
+if chk $[REDPRE] "2a"
+set REDPOST "2b"
+goto redpostset
+end
+if chk $[REDPRE] "2b"
+set REDPOST "2c"
+goto redpostset
+end
+if chk $[REDPRE] "2c"
+set REDPOST "2d"
+goto redpostset
+end
+if chk $[REDPRE] "2d"
+set REDPOST "2e"
+goto redpostset
+end
+if chk $[REDPRE] "2e"
+set REDPOST "2f"
+goto redpostset
+end
+if chk $[REDPRE] "2f"
+set REDPOST "30"
+goto redpostset
+end
+if chk $[REDPRE] "30"
+set REDPOST "31"
+goto redpostset
+end
+if chk $[REDPRE] "31"
+set REDPOST "32"
+goto redpostset
+end
+if chk $[REDPRE] "32"
+set REDPOST "33"
+goto redpostset
+end
+if chk $[REDPRE] "33"
+set REDPOST "34"
+goto redpostset
+end
+if chk $[REDPRE] "34"
+set REDPOST "35"
+goto redpostset
+end
+if chk $[REDPRE] "35"
+set REDPOST "36"
+goto redpostset
+end
+if chk $[REDPRE] "36"
+set REDPOST "37"
+goto redpostset
+end
+if chk $[REDPRE] "37"
+set REDPOST "38"
+goto redpostset
+end
+if chk $[REDPRE] "38"
+set REDPOST "39"
+goto redpostset
+end
+if chk $[REDPRE] "39"
+set REDPOST "3a"
+goto redpostset
+end
+if chk $[REDPRE] "3a"
+set REDPOST "3b"
+goto redpostset
+end
+if chk $[REDPRE] "3b"
+set REDPOST "3c"
+goto redpostset
+end
+if chk $[REDPRE] "3c"
+set REDPOST "3d"
+goto redpostset
+end
+if chk $[REDPRE] "3d"
+set REDPOST "3e"
+goto redpostset
+end
+if chk $[REDPRE] "3e"
+set REDPOST "3f"
+goto redpostset
+end
+if chk $[REDPRE] "3f"
+set REDPOST "40"
+goto redpostset
+end
+if chk $[REDPRE] "40"
+set REDPOST "41"
+goto redpostset
+end
+if chk $[REDPRE] "41"
+set REDPOST "42"
+goto redpostset
+end
+if chk $[REDPRE] "42"
+set REDPOST "43"
+goto redpostset
+end
+if chk $[REDPRE] "33"
+set REDPOST "44"
+goto redpostset
+end
+if chk $[REDPRE] "44"
+set REDPOST "45"
+goto redpostset
+end
+if chk $[REDPRE] "45"
+set REDPOST "46"
+goto redpostset
+end
+if chk $[REDPRE] "46"
+set REDPOST "47"
+goto redpostset
+end
+if chk $[REDPRE] "47"
+set REDPOST "48"
+goto redpostset
+end
+if chk $[REDPRE] "48"
+set REDPOST "49"
+goto redpostset
+end
+if chk $[REDPRE] "49"
+set REDPOST "4a"
+goto redpostset
+end
+if chk $[REDPRE] "4a"
+set REDPOST "4b"
+goto redpostset
+end
+if chk $[REDPRE] "4b"
+set REDPOST "4c"
+goto redpostset
+end
+if chk $[REDPRE] "4c"
+set REDPOST "4d"
+goto redpostset
+end
+if chk $[REDPRE] "4d"
+set REDPOST "4e"
+goto redpostset
+end
+if chk $[REDPRE] "4e"
+set REDPOST "4f"
+goto redpostset
+end
+if chk $[REDPRE] "4f"
+set REDPOST "50"
+goto redpostset
+end
+if chk $[REDPRE] "50"
+set REDPOST "51"
+goto redpostset
+end
+if chk $[REDPRE] "51"
+set REDPOST "52"
+goto redpostset
+end
+if chk $[REDPRE] "52"
+set REDPOST "53"
+goto redpostset
+end
+if chk $[REDPRE] "53"
+set REDPOST "54"
+goto redpostset
+end
+if chk $[REDPRE] "54"
+set REDPOST "55"
+goto redpostset
+end
+if chk $[REDPRE] "55"
+set REDPOST "56"
+goto redpostset
+end
+if chk $[REDPRE] "56"
+set REDPOST "57"
+goto redpostset
+end
+if chk $[REDPRE] "57"
+set REDPOST "58"
+goto redpostset
+end
+if chk $[REDPRE] "59"
+set REDPOST "5a"
+goto redpostset
+end
+if chk $[REDPRE] "5a"
+set REDPOST "5b"
+goto redpostset
+end
+if chk $[REDPRE] "5b"
+set REDPOST "5c"
+goto redpostset
+end
+if chk $[REDPRE] "5c"
+set REDPOST "5d"
+goto redpostset
+end
+if chk $[REDPRE] "5d"
+set REDPOST "5e"
+goto redpostset
+end
+if chk $[REDPRE] "5e"
+set REDPOST "5f"
+goto redpostset
+end
+if chk $[REDPRE] "5f"
+set REDPOST "60"
+goto redpostset
+end
+if chk $[REDPRE] "60"
+set REDPOST "61"
+goto redpostset
+end
+if chk $[REDPRE] "61"
+set REDPOST "62"
+goto redpostset
+end
+if chk $[REDPRE] "62"
+set REDPOST "63"
+goto redpostset
+end
+if chk $[REDPRE] "63"
+set REDPOST "64"
+goto redpostset
+end
+if chk $[REDPRE] "64"
+set REDPOST "65"
+goto redpostset
+end
+if chk $[REDPRE] "65"
+set REDPOST "66"
+goto redpostset
+end
+if chk $[REDPRE] "66"
+set REDPOST "67"
+goto redpostset
+end
+if chk $[REDPRE] "67"
+set REDPOST "68"
+goto redpostset
+end
+if chk $[REDPRE] "68"
+set REDPOST "69"
+goto redpostset
+end
+if chk $[REDPRE] "69"
+set REDPOST "6a"
+goto redpostset
+end
+if chk $[REDPRE] "6a"
+set REDPOST "6b"
+goto redpostset
+end
+if chk $[REDPRE] "6b"
+set REDPOST "6c"
+goto redpostset
+end
+if chk $[REDPRE] "6c"
+set REDPOST "6d"
+goto redpostset
+end
+if chk $[REDPRE] "6d"
+set REDPOST "6e"
+goto redpostset
+end
+if chk $[REDPRE] "6e"
+set REDPOST "6f"
+goto redpostset
+end
+if chk $[REDPRE] "6f"
+set REDPOST "70"
+goto redpostset
+end
+if chk $[REDPRE] "70"
+set REDPOST "71"
+goto redpostset
+end
+if chk $[REDPRE] "71"
+set REDPOST "72"
+goto redpostset
+end
+if chk $[REDPRE] "72"
+set REDPOST "73"
+goto redpostset
+end
+if chk $[REDPRE] "73"
+set REDPOST "74"
+goto redpostset
+end
+if chk $[REDPRE] "74"
+set REDPOST "75"
+goto redpostset
+end
+if chk $[REDPRE] "75"
+set REDPOST "76"
+goto redpostset
+end
+if chk $[REDPRE] "76"
+set REDPOST "77"
+goto redpostset
+end
+if chk $[REDPRE] "77"
+set REDPOST "78"
+goto redpostset
+end
+if chk $[REDPRE] "78"
+set REDPOST "79"
+goto redpostset
+end
+if chk $[REDPRE] "79"
+set REDPOST "7a"
+goto redpostset
+end
+if chk $[REDPRE] "7a"
+set REDPOST "7b"
+goto redpostset
+end
+if chk $[REDPRE] "7b"
+set REDPOST "7c"
+goto redpostset
+end
+if chk $[REDPRE] "7c"
+set REDPOST "7d"
+goto redpostset
+end
+if chk $[REDPRE] "7d"
+set REDPOST "7e"
+goto redpostset
+end
+if chk $[REDPRE] "7e"
+set REDPOST "7f"
+goto redpostset
+end
+if chk $[REDPRE] "7f"
+set REDPOST "80"
+goto redpostset
+end
+if chk $[REDPRE] "80"
+set REDPOST "81"
+goto redpostset
+end
+if chk $[REDPRE] "81"
+set REDPOST "82"
+goto redpostset
+end
+if chk $[REDPRE] "82"
+set REDPOST "83"
+goto redpostset
+end
+if chk $[REDPRE] "83"
+set REDPOST "84"
+goto redpostset
+end
+if chk $[REDPRE] "84"
+set REDPOST "85"
+goto redpostset
+end
+if chk $[REDPRE] "85"
+set REDPOST "86"
+goto redpostset
+end
+if chk $[REDPRE] "86"
+set REDPOST "87"
+goto redpostset
+end
+if chk $[REDPRE] "87"
+set REDPOST "88"
+goto redpostset
+end
+if chk $[REDPRE] "88"
+set REDPOST "89"
+goto redpostset
+end
+if chk $[REDPRE] "89"
+set REDPOST "8a"
+goto redpostset
+end
+if chk $[REDPRE] "8a"
+set REDPOST "8b"
+goto redpostset
+end
+if chk $[REDPRE] "8b"
+set REDPOST "8c"
+goto redpostset
+end
+if chk $[REDPRE] "8c"
+set REDPOST "8d"
+goto redpostset
+end
+if chk $[REDPRE] "8d"
+set REDPOST "8e"
+goto redpostset
+end
+if chk $[REDPRE] "8e"
+set REDPOST "8f"
+goto redpostset
+end
+if chk $[REDPRE] "8f"
+set REDPOST "90"
+goto redpostset
+end
+if chk $[REDPRE] "90"
+set REDPOST "91"
+goto redpostset
+end
+if chk $[REDPRE] "91"
+set REDPOST "92"
+goto redpostset
+end
+if chk $[REDPRE] "92"
+set REDPOST "93"
+goto redpostset
+end
+if chk $[REDPRE] "93"
+set REDPOST "94"
+goto redpostset
+end
+if chk $[REDPRE] "94"
+set REDPOST "95"
+goto redpostset
+end
+if chk $[REDPRE] "95"
+set REDPOST "96"
+goto redpostset
+end
+if chk $[REDPRE] "96"
+set REDPOST "97"
+goto redpostset
+end
+if chk $[REDPRE] "97"
+set REDPOST "98"
+goto redpostset
+end
+if chk $[REDPRE] "98"
+set REDPOST "99"
+goto redpostset
+end
+if chk $[REDPRE] "99"
+set REDPOST "9a"
+goto redpostset
+end
+if chk $[REDPRE] "9a"
+set REDPOST "9b"
+goto redpostset
+end
+if chk $[REDPRE] "9b"
+set REDPOST "9c"
+goto redpostset
+end
+if chk $[REDPRE] "9c"
+set REDPOST "9d"
+goto redpostset
+end
+if chk $[REDPRE] "9d"
+set REDPOST "9e"
+goto redpostset
+end
+if chk $[REDPRE] "9e"
+set REDPOST "9f"
+goto redpostset
+end
+if chk $[REDPRE] "9f"
+set REDPOST "a0"
+goto redpostset
+end
+if chk $[REDPRE] "a0"
+set REDPOST "a1"
+goto redpostset
+end
+if chk $[REDPRE] "a1"
+set REDPOST "a2"
+goto redpostset
+end
+if chk $[REDPRE] "a2"
+set REDPOST "a3"
+goto redpostset
+end
+if chk $[REDPRE] "9a3"
+set REDPOST "a4"
+goto redpostset
+end
+if chk $[REDPRE] "a4"
+set REDPOST "a5"
+goto redpostset
+end
+if chk $[REDPRE] "a5"
+set REDPOST "a6"
+goto redpostset
+end
+if chk $[REDPRE] "a6"
+set REDPOST "a7"
+goto redpostset
+end
+if chk $[REDPRE] "a7"
+set REDPOST "a8"
+goto redpostset
+end
+if chk $[REDPRE] "a8"
+set REDPOST "a9"
+goto redpostset
+end
+if chk $[REDPRE] "a9"
+set REDPOST "aa"
+goto redpostset
+end
+if chk $[REDPRE] "aa"
+set REDPOST "ab"
+goto redpostset
+end
+if chk $[REDPRE] "ab"
+set REDPOST "ac"
+goto redpostset
+end
+if chk $[REDPRE] "ac"
+set REDPOST "ad"
+goto redpostset
+end
+if chk $[REDPRE] "ad"
+set REDPOST "ae"
+goto redpostset
+end
+if chk $[REDPRE] "ae"
+set REDPOST "af"
+goto redpostset
+end
+if chk $[REDPRE] "af"
+set REDPOST "b0"
+goto redpostset
+end
+if chk $[REDPRE] "b0"
+set REDPOST "b1"
+goto redpostset
+end
+if chk $[REDPRE] "b1"
+set REDPOST "b2"
+goto redpostset
+end
+if chk $[REDPRE] "b2"
+set REDPOST "b3"
+goto redpostset
+end
+if chk $[REDPRE] "b3"
+set REDPOST "b4"
+goto redpostset
+end
+if chk $[REDPRE] "b4"
+set REDPOST "b5"
+goto redpostset
+end
+if chk $[REDPRE] "b5"
+set REDPOST "b6"
+goto redpostset
+end
+if chk $[REDPRE] "b6"
+set REDPOST "b7"
+goto redpostset
+end
+if chk $[REDPRE] "b7"
+set REDPOST "b8"
+goto redpostset
+end
+if chk $[REDPRE] "b8"
+set REDPOST "b9"
+goto redpostset
+end
+if chk $[REDPRE] "b9"
+set REDPOST "ba"
+goto redpostset
+end
+if chk $[REDPRE] "ba"
+set REDPOST "bb"
+goto redpostset
+end
+if chk $[REDPRE] "bb"
+set REDPOST "bc"
+goto redpostset
+end
+if chk $[REDPRE] "bc"
+set REDPOST "bd"
+goto redpostset
+end
+if chk $[REDPRE] "bd"
+set REDPOST "be"
+goto redpostset
+end
+if chk $[REDPRE] "be"
+set REDPOST "bf"
+goto redpostset
+end
+if chk $[REDPRE] "bf"
+set REDPOST "c0"
+goto redpostset
+end
+if chk $[REDPRE] "c0"
+set REDPOST "c1"
+goto redpostset
+end
+if chk $[REDPRE] "c1"
+set REDPOST "c2"
+goto redpostset
+end
+if chk $[REDPRE] "c2"
+set REDPOST "c3"
+goto redpostset
+end
+if chk $[REDPRE] "c3"
+set REDPOST "c4"
+goto redpostset
+end
+if chk $[REDPRE] "c4"
+set REDPOST "c5"
+goto redpostset
+end
+if chk $[REDPRE] "c5"
+set REDPOST "c6"
+goto redpostset
+end
+if chk $[REDPRE] "c6"
+set REDPOST "c7"
+goto redpostset
+end
+if chk $[REDPRE] "c7"
+set REDPOST "c8"
+goto redpostset
+end
+if chk $[REDPRE] "c8"
+set REDPOST "c9"
+goto redpostset
+end
+if chk $[REDPRE] "c9"
+set REDPOST "ca"
+goto redpostset
+end
+if chk $[REDPRE] "ca"
+set REDPOST "cb"
+goto redpostset
+end
+if chk $[REDPRE] "cb"
+set REDPOST "cc"
+goto redpostset
+end
+if chk $[REDPRE] "cc"
+set REDPOST "cd"
+goto redpostset
+end
+if chk $[REDPRE] "cd"
+set REDPOST "ce"
+goto redpostset
+end
+if chk $[REDPRE] "ce"
+set REDPOST "cf"
+goto redpostset
+end
+if chk $[REDPRE] "cf"
+set REDPOST "d0"
+goto redpostset
+end
+if chk $[REDPRE] "d0"
+set REDPOST "d1"
+goto redpostset
+end
+if chk $[REDPRE] "d1"
+set REDPOST "d2"
+goto redpostset
+end
+if chk $[REDPRE] "d2"
+set REDPOST "d3"
+goto redpostset
+end
+if chk $[REDPRE] "d3"
+set REDPOST "d4"
+goto redpostset
+end
+if chk $[REDPRE] "d4"
+set REDPOST "d5"
+goto redpostset
+end
+if chk $[REDPRE] "d5"
+set REDPOST "d6"
+goto redpostset
+end
+if chk $[REDPRE] "d6"
+set REDPOST "d7"
+goto redpostset
+end
+if chk $[REDPRE] "d7"
+set REDPOST "d8"
+goto redpostset
+end
+if chk $[REDPRE] "d8"
+set REDPOST "d9"
+goto redpostset
+end
+if chk $[REDPRE] "d9"
+set REDPOST "da"
+goto redpostset
+end
+if chk $[REDPRE] "da"
+set REDPOST "db"
+goto redpostset
+end
+if chk $[REDPRE] "db"
+set REDPOST "dc"
+goto redpostset
+end
+if chk $[REDPRE] "dc"
+set REDPOST "dd"
+goto redpostset
+end
+if chk $[REDPRE] "dd"
+set REDPOST "de"
+goto redpostset
+end
+if chk $[REDPRE] "de"
+set REDPOST "df"
+goto redpostset
+end
+if chk $[REDPRE] "df"
+set REDPOST "e0"
+goto redpostset
+end
+if chk $[REDPRE] "e0"
+set REDPOST "e1"
+goto redpostset
+end
+if chk $[REDPRE] "e1"
+set REDPOST "e2"
+goto redpostset
+end
+if chk $[REDPRE] "e2"
+set REDPOST "e3"
+goto redpostset
+end
+if chk $[REDPRE] "e3"
+set REDPOST "e4"
+goto redpostset
+end
+if chk $[REDPRE] "e4"
+set REDPOST "e5"
+goto redpostset
+end
+if chk $[REDPRE] "e5"
+set REDPOST "e6"
+goto redpostset
+end
+if chk $[REDPRE] "e6"
+set REDPOST "e7"
+goto redpostset
+end
+if chk $[REDPRE] "e7"
+set REDPOST "e8"
+goto redpostset
+end
+if chk $[REDPRE] "e8"
+set REDPOST "e9"
+goto redpostset
+end
+if chk $[REDPRE] "e9"
+set REDPOST "ea"
+goto redpostset
+end
+if chk $[REDPRE] "ea"
+set REDPOST "eb"
+goto redpostset
+end
+if chk $[REDPRE] "eb"
+set REDPOST "ec"
+goto redpostset
+end
+if chk $[REDPRE] "ec"
+set REDPOST "ed"
+goto redpostset
+end
+if chk $[REDPRE] "ed"
+set REDPOST "ee"
+goto redpostset
+end
+if chk $[REDPRE] "ee"
+set REDPOST "ef"
+goto redpostset
+end
+if chk $[REDPRE] "ef"
+set REDPOST "f0"
+goto redpostset
+end
+if chk $[REDPRE] "f0"
+set REDPOST "f1"
+goto redpostset
+end
+if chk $[REDPRE] "f1"
+set REDPOST "f2"
+goto redpostset
+end
+if chk $[REDPRE] "f2"
+set REDPOST "f3"
+goto redpostset
+end
+if chk $[REDPRE] "f3"
+set REDPOST "f4"
+goto redpostset
+end
+if chk $[REDPRE] "f4"
+set REDPOST "f5"
+goto redpostset
+end
+if chk $[REDPRE] "f5"
+set REDPOST "f6"
+goto redpostset
+end
+if chk $[REDPRE] "f6"
+set REDPOST "f7"
+goto redpostset
+end
+if chk $[REDPRE] "f7"
+set REDPOST "f8"
+goto redpostset
+end
+if chk $[REDPRE] "f8"
+set REDPOST "f9"
+goto redpostset
+end
+if chk $[REDPRE] "f9"
+set REDPOST "fa"
+goto redpostset
+end
+if chk $[REDPRE] "fa"
+set REDPOST "fb"
+goto redpostset
+end
+if chk $[REDPRE] "fb"
+set REDPOST "fc"
+goto redpostset
+end
+if chk $[REDPRE] "fc"
+set REDPOST "fd"
+goto redpostset
+end
+if chk $[REDPRE] "fd"
+set REDPOST "fe"
+goto redpostset
+end
+if chk $[REDPRE] "fe"
+set REDPOST "ff"
+goto redpostset
+end
+if chk $[REDPRE] "ff"
+set REDPOST "00"
+goto redpostset
+end
+@redpostset
+cp -s -o 1:/data/$[SYSID0]/sysdata/00010038/00000000 9:/nnid
+cp -s -o 1:/private/movable.sed 9:/movable.sed
+mv -s -o 1:/data/$[SYSID0]/sysdata/0t0010038/00000000 1:/data/$[SYSID0]/sysdata/00010038/10000000
+if not fset 1:/private/movable.sed@119 $[GREENPOST]
+goto formatfail
+end
+if not fset 1:/private/movable.sed@121 $[REDPOST]
+goto formatfail
+end
+fixcmac -s -o "1:/private/movable.sed"
+fixcmac -s -o "1:/"
+rm -s -o A:/*
+rm -s -o 2:/title/00030004
+echo "Console format success!"
+goto mm_Console_Options
+
+@formatfail
+cp -w -s -o 9:/movable.sed 1:/private/movable.sed 
+cp -w -s -o 9:/nnid.bin 1:/data/$[SYSID0]/sysdata/00010038/00000000
+echo "Console format failed!"
+goto mm_Console_Options
+
+
+
+@cons_Show_Parental_Controls_PIN
+ set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nShow Parental Controls PIN"
+if findnot "1:/data/$[SYSID0]/sysdata/00010017/00000000" NULL
+echo "1:/data/<ID0>/sysdata/00010017/00000000\nFile is missing."
+goto mm_Console_Options
+elif fget "1:/data/$[SYSID0]/sysdata/00010017/00000000@40000:01" NULL
+echo "1:/data/<ID0>/sysdata/00010017/00000000\nFile is too big."
+goto mm_Console_Options
+elif not fget "1:/data/$[SYSID0]/sysdata/00010017/00000000@3FFFF:01" NULL
+echo "1:/data/<ID0>/sysdata/00010017/00000000\nFile is too small."
+goto mm_Console_Options
+end
+set MAGIC_CHECK ""
+if fget "1:/data/$[SYSID0]/sysdata/00010017/00000000@100:04" MAGIC_CHECK
+end
+if not chk "$[MAGIC_CHECK]" "44495341" # 'DISA'
+set MAGIC_CHECK ""
+echo "1:/data/<ID0>/sysdata/00010017/00000000\nFailed to find magic 'DISA'."
+goto mm_Console_Options
+else
+set MAGIC_CHECK ""
+end
+imgumount
+if not imgmount "1:/data/$[SYSID0]/sysdata/00010017/00000000"
+echo "1:/data/<ID0>/sysdata/00010017/00000000\nNot mountable."
+goto mm_Console_Options
+end
+if findnot "D:/partitionA.bin" NULL
+imgumount
+echo "D:/partitionA.bin\nFile is missing."
+goto MENU
+end
+fget "D:/partitionA.bin@7241:04" PIN_NUMBER # Firmware 8.1 or newer.
+if chk "$[PIN_NUMBER]" "00000000"
+set PIN_NUMBER ""
+else
+set OFFSET "7241"
+goto FOUND_PIN_COMBO
+end
+fget "D:/partitionA.bin@7581:04" PIN_NUMBER # Firmware 7.2 or older.
+if chk "$[PIN_NUMBER]" "00000000"
+imgumount
+set PIN_NUMBER ""
+echo "Parental Controls not set. No more action required."
+goto mm_Console_Options
+else
+set OFFSET "7581"
+goto FOUND_PIN_COMBO
+end
+@FOUND_PIN_COMBO
+set PIN_NUMBER ""
+set HEXVALUE ""
+set PIN_DIGIT "01"
+fget "D:/partitionA.bin@$[OFFSET]:01" HEXVALUE
+@HEX_TO_DEC_NUMBERS
+if chk "$[HEXVALUE]" "30"
+set PIN_NUMBER "$[PIN_NUMBER]0"
+elif chk "$[HEXVALUE]" "31"
+set PIN_NUMBER "$[PIN_NUMBER]1"
+elif chk "$[HEXVALUE]" "32"
+set PIN_NUMBER "$[PIN_NUMBER]2"
+elif chk "$[HEXVALUE]" "33"
+set PIN_NUMBER "$[PIN_NUMBER]3"
+elif chk "$[HEXVALUE]" "34"
+set PIN_NUMBER "$[PIN_NUMBER]4"
+elif chk "$[HEXVALUE]" "35"
+set PIN_NUMBER "$[PIN_NUMBER]5"
+elif chk "$[HEXVALUE]" "36"
+set PIN_NUMBER "$[PIN_NUMBER]6"
+elif chk "$[HEXVALUE]" "37"
+set PIN_NUMBER "$[PIN_NUMBER]7"
+elif chk "$[HEXVALUE]" "38"
+set PIN_NUMBER "$[PIN_NUMBER]8"
+elif chk "$[HEXVALUE]" "39"
+set PIN_NUMBER "$[PIN_NUMBER]9"
+else
+set PIN_NUMBER "$[PIN_NUMBER]X"
+echo "An Unknown Error Occured\nDigit: $[PIN_DIGIT]\nHex: 0x$[HEXVALUE]\nPIN: $[PIN_NUMBER]"
+imgumount
+set OFFSET ""
+set HEXVALUE ""
+set PIN_DIGIT ""
+set PIN_NUMBER ""
+goto mm_Console_Options
+end
+if chk "$[PIN_DIGIT]" "01"
+set HEXVALUE ""
+set PIN_DIGIT "02"
+if chk "$[OFFSET]" "7241"
+fget "D:/partitionA.bin@7242:01" HEXVALUE
+elif chk "$[OFFSET]" "7581"
+fget "D:/partitionA.bin@7582:01" HEXVALUE
+end
+goto HEX_TO_DEC_NUMBERS
+elif chk "$[PIN_DIGIT]" "02"
+set HEXVALUE ""
+set PIN_DIGIT "03"
+if chk "$[OFFSET]" "7241"
+fget "D:/partitionA.bin@7243:01" HEXVALUE
+elif chk "$[OFFSET]" "7581"
+fget "D:/partitionA.bin@7583:01" HEXVALUE
+end
+goto HEX_TO_DEC_NUMBERS
+elif chk "$[PIN_DIGIT]" "03"
+set HEXVALUE ""
+set PIN_DIGIT "04"
+if chk "$[OFFSET]" "7241"
+fget "D:/partitionA.bin@7244:01" HEXVALUE
+elif chk "$[OFFSET]" "7581"
+fget "D:/partitionA.bin@7584:01" HEXVALUE
+end
+goto HEX_TO_DEC_NUMBERS
+elif chk "$[PIN_DIGIT]" "04"
+imgumount
+set OFFSET ""
+set HEXVALUE ""
+set PIN_DIGIT ""
+echo "Parental Controls PIN is\n$[PIN_NUMBER] \nNo more action required."
+set PIN_NUMBER ""
+goto mm_Console_Options
+else
+echo "An Unknown Error Occured\nDigit: $[PIN_DIGIT]\nHex: 0x$[HEXVALUE]\nPIN: $[PIN_NUMBER]"
+imgumount
+set OFFSET ""
+set HEXVALUE ""
+set PIN_DIGIT ""
+set PIN_NUMBER ""
+goto mm_Console_Options
+end
+
+@cons_Movable.sed_KeyY_Fix
+echo "Info about this function(1/2):\nIf the entire CTRNAND was erased and then restored \nwith CTRTransfer, there's a chance your library of \ngames may no longer be recognizable by the 2DS/3DS.\nThis is due to a mismatch in encryption between the\n'KeyY' in the 'movable.sed' and the '<ID0>' subfolder \nfound in the 'Nintendo 3DS' folder. It is possible to  \nrestore the original 'KeyY' tied to that '<ID0>'\nsubfolder as long as the user profile with those games\ndid not come from a 'System Transfer'"
+echo "Info about this function (2/2):\nThis function fixes only fix 'KeyY' changed from 'Format System Memory'.\nTitles not shown on 'HOME Menu' due to missing tickets \ndo not fall under this category. To check for this,    \nlook for greyed out X markings at: System Settings > \nData Management > Nintendo 3DS > Software. To restore \nlegit tickets of eShop purchases, use 'FBI' to install \nthem if they were previously backed up. For nonlegit \ntitles, use 'faketik' to install spoofed tickets."
+if not ask "Continue with finding the correct 'KeyY'?"
+goto mm_Console_Options
+end
+if findnot "1:/private/movable.sed" NULL
+echo "1:/private/movable.sed\nFile is missing."
+goto mm_Console_Options
+elif findnot "0:/Nintendo 3DS" NULL
+echo "0:/Nintendo 3DS\nFolder is missing."
+goto mm_Console_Options
+end
+if not find -f "0:/Nintendo 3DS/*" NULL
+echo "0:/Nintendo 3DS\nNo usable <ID0> folder entry."
+goto mm_Console_Options
+end
+if not allow "1:/private/movable.sed" 
+echo "Permissions denied. Aborting!"
+goto mm_Console_Options
+elif not allow -a "1:/"
+echo "Permissions denied. Aborting!"
+goto mm_Console_Options
+end
+set LITMUS_FILE ""
+if findnot "$[GM9OUT]/dummy_???.bin" LITMUS_FILE
+strsplit LITMUS_FILE "$[LITMUS_FILE]" "/"
+end
+fdummy "$[GM9OUT]/$[LITMUS_FILE]" "C800000"
+if fget "$[GM9OUT]/$[LITMUS_FILE]@C7FFFFF:01" NULL
+rm -o -s "$[GM9OUT]/$[LITMUS_FILE]"
+set LITMUS_FILE ""
+else
+rm -o -s "$[GM9OUT]/$[LITMUS_FILE]"
+set LITMUS_FILE ""
+echo "Insufficient memory.\n200 MB of free space is required."
+goto mm_Console_Options
+end
+set <ID0>_NAME ""
+find -f "0:/Nintendo 3DS/*" <ID0>_NAME
+strsplit <ID0>_NAME "$[<ID0>_NAME]" "/"
+if not chk "$[<ID0>_NAME]" "Private"
+goto SKIP_PRIVATE_FOLDER_CHECK
+end
+set <ID0>_NAME ""
+find "0:/Nintendo 3DS/*" <ID0>_NAME
+strsplit <ID0>_NAME "$[<ID0>_NAME]" "/"
+if chk "$[<ID0>_NAME]" "Private"
+echo "0:/Nintendo 3DS\nNo usable <ID0> folder entry."
+goto mm_Console_Options
+end
+@SKIP_PRIVATE_FOLDER_CHECK
+set MAGIC_CHECK ""
+if not fget "1:/private/movable.sed@00:04" MAGIC_CHECK
+echo "1:/private/movable.sed\nFailed to find magic 'SEED'."
+goto mm_Console_Options
+end
+if not chk "$[MAGIC_CHECK]" "53454544" # 'SEED'
+echo 1:/private/movable.sed\nMagic does not match 'SEED'."
+goto MENU
+end
+set MOVABLE_SIZE ""
+if fget "1:/private/movable.sed@140:01" NULL
+echo "1:/private/movable.sed\nFile is too big."
+goto MENU
+elif fget "1:/private/movable.sed@13F:01" NULL
+set MOVABLE_SIZE "320 bytes"
+elif fget "1:/private/movable.sed@120:01" NULL
+echo "1:/private/movable.sed\nFile is too big."
+goto MENU
+elif fget "1:/private/movable.sed@11F:01" NULL
+set MOVABLE_SIZE "288 bytes"
+else
+echo "1:/private/movable.sed\nFile size is too small."
+goto MENU
+end
+@SELECT_<ID0>_DIR
+set <ID0>_NAME ""
+if not dirsel "Select the 32-char <ID0> folder.\nPress (B) to return to Menu Options." "0:/Nintendo 3DS" <ID0>_NAME
+goto mm_Console_Options
+end
+strsplit <ID0>_NAME "$[<ID0>_NAME]" "/"
+if chk "$[<ID0>_NAME]" "Private"
+goto SELECT_<ID0>_DIR
+end
+if not ask "<ID0>: $[<ID0>_NAME]\n \nIs this the correct folder?\nThis may take a while..."
+goto SELECT_<ID0>_DIR
+end
+echo "Maximum time to complete the process: 1.5 Hours.\nHold the (B) button to bring up quit."
+set MOVABLE_FILE ""
+findnot "$[GM9OUT]/$[DATESTAMP]_$[SERIAL]_???_movable.sed" MOVABLE_FILE
+@FIX_MOVABLE_DIR
+if not fdummy "$[MOVABLE_FILE]" "01"
+end
+if find "$[MOVABLE_FILE]" NULL
+rm -o -s "$[MOVABLE_FILE]"
+else
+findnot "$[GM9OUT]/$[DATESTAMP]_UNKNOWN_???_movable.sed" MOVABLE_FILE
+goto FIX_MOVABLE_DIR
+end
+if find "1:/private/movable.sed" NULL
+cp -o -s -n -w "1:/private/movable.sed" "$[MOVABLE_FILE]"
+set MOVABLE_FILE_SHA "$[MOVABLE_FILE].sha"
+else
+echo "1:/private/movable.sed\nFile could not be copied."
+goto mm_Console_Options
+end
+if chk "$[MOVABLE_SIZE]" "320 bytes"
+fget "$[MOVABLE_FILE]@118:01" HEXVALUE_0x118_BACKWARDS
+fget "$[MOVABLE_FILE]@120:01" HEXVALUE_0x120_BACKWARDS
+set HEXVALUE_0x118_FORWARDS "$[HEXVALUE_0x118_BACKWARDS]"
+set HEXVALUE_0x120_FORWARDS "$[HEXVALUE_0x120_BACKWARDS]"
+elif chk "$[MOVABLE_SIZE]" "288 bytes"
+fget "$[MOVABLE_FILE]@118:01" HEXVALUE_0x118_BACKWARDS
+set HEXVALUE_0x118_FORWARDS "$[HEXVALUE_0x118_BACKWARDS]"
+end
+fget "$[MOVABLE_FILE]@110:10" INITIAL_KEY_Y
+set INITIAL_0x118 "$[HEXVALUE_0x118_BACKWARDS]"
+set INITIAL_<ID0>_CALCULATED ""
+@SHAGET_INITIAL_MOVABLE
+if not shaget "$[MOVABLE_FILE]@110:10" "$[MOVABLE_FILE_SHA]"
+goto SHAGET_INITIAL_MOVABLE
+end
+fget "$[MOVABLE_FILE_SHA]@00:04" U32_0
+fget "$[MOVABLE_FILE_SHA]@04:04" U32_1
+fget "$[MOVABLE_FILE_SHA]@08:04" U32_2
+fget "$[MOVABLE_FILE_SHA]@0C:04" U32_3
+fset -e "$[MOVABLE_FILE_SHA]@00" "$[U32_0]"
+fset -e "$[MOVABLE_FILE_SHA]@04" "$[U32_1]"
+fset -e "$[MOVABLE_FILE_SHA]@08" "$[U32_2]"
+fset -e "$[MOVABLE_FILE_SHA]@0C" "$[U32_3]"
+fget "$[MOVABLE_FILE_SHA]@00:10" INITIAL_<ID0>_CALCULATED
+set GO_PAST_FIRST_MATCH "YES"
+set LOOP_BREAK "NO_1"
+@SHAGET_MOVABLE_BACKWARDS
+if chk "$[LOOP_BREAK]" "NO_1"
+set LOOP_BREAK "NO_2"
+elif chk "$[LOOP_BREAK]" "NO_2"
+set LOOP_BREAK "YES"
+elif chk "$[LOOP_BREAK]" "YES"
+goto ASK_IF_WANT_TO_CANCEL_BACKWARDS
+end
+if chk "$[MOVABLE_SIZE]" "320 bytes"
+fset "$[MOVABLE_FILE]@118" "$[HEXVALUE_0x118_BACKWARDS]"
+fset "$[MOVABLE_FILE]@120" "$[HEXVALUE_0x120_BACKWARDS]"
+elif chk "$[MOVABLE_SIZE]" "288 bytes"
+fset "$[MOVABLE_FILE]@118" "$[HEXVALUE_0x118_BACKWARDS]"
+end
+if not shaget "$[MOVABLE_FILE]@110:10" "$[MOVABLE_FILE_SHA]"
+goto SHAGET_MOVABLE_BACKWARDS
+else
+set LOOP_BREAK "NO_1"
+goto CONTINUE_FINDING_KEY_Y_BACKWARDS
+end
+@ASK_IF_WANT_TO_CANCEL_BACKWARDS
+if ask "Would you like to end the search run?\n \nPress (A) to continue.\nPress (B) to cancel."
+set LOOP_BREAK "NO_1"
+goto SHAGET_MOVABLE_BACKWARDS
+else
+rm -o -s "$[MOVABLE_FILE]"
+rm -o -s "$[MOVABLE_FILE_SHA]"
+goto mm_Console_Options
+end
+@CONTINUE_FINDING_KEY_Y_BACKWARDS
+fget "$[MOVABLE_FILE_SHA]@00:04" U32_0
+fget "$[MOVABLE_FILE_SHA]@04:04" U32_1
+fget "$[MOVABLE_FILE_SHA]@08:04" U32_2
+fget "$[MOVABLE_FILE_SHA]@0C:04" U32_3
+fset -e "$[MOVABLE_FILE_SHA]@00" "$[U32_0]"
+fset -e "$[MOVABLE_FILE_SHA]@04" "$[U32_1]"
+fset -e "$[MOVABLE_FILE_SHA]@08" "$[U32_2]"
+fset -e "$[MOVABLE_FILE_SHA]@0C" "$[U32_3]"
+fget "$[MOVABLE_FILE_SHA]@00:10" <ID0>_CALCULATED_BACKWARDS
+if chk "$[<ID0>_CALCULATED_BACKWARDS]" "$[<ID0>_NAME]"
+fget "$[MOVABLE_FILE]@110:10" FINAL_KEY_Y
+goto KEY_Y-<ID0>_MATCH_FOUND
+end
+set OFFSET_CHECK "0x118"
+set HEXVALUE "$[HEXVALUE_0x118_BACKWARDS]"
+goto INPUT_OLD_HEXVALUE_BACKWARDS
+@OUTPUT_NEW_HEXVALUE_0x118_BACKWARDS
+set HEXVALUE_0x118_BACKWARDS "$[HEXVALUE]"
+if chk "$[MOVABLE_SIZE]" "320 bytes"
+goto RUN_0x120_HEX_BACKWARDS
+elif chk "$[MOVABLE_SIZE]" "288 bytes"
+goto SKIP_0x120_HEX_BACKWARDS
+end
+@RUN_0x120_HEX_BACKWARDS
+set OFFSET_CHECK "0x120"
+set HEXVALUE "$[HEXVALUE_0x120_BACKWARDS]"
+goto INPUT_OLD_HEXVALUE_BACKWARDS
+@OUTPUT_NEW_HEXVALUE_0x120_BACKWARDS
+set HEXVALUE_0x120_BACKWARDS "$[HEXVALUE]"
+@SKIP_0x120_HEX_BACKWARDS
+@SHAGET_MOVABLE_FORWARDS
+if chk "$[LOOP_BREAK]" "NO_1"
+set LOOP_BREAK "NO_2"
+elif chk "$[LOOP_BREAK]" "NO_2"
+set LOOP_BREAK "YES"
+elif chk "$[LOOP_BREAK]" "YES"
+goto ASK_IF_WANT_TO_CANCEL_FORWARDS
+end
+if chk "$[MOVABLE_SIZE]" "320 bytes"
+fset "$[MOVABLE_FILE]@118" "$[HEXVALUE_0x118_FORWARDS]"
+fset "$[MOVABLE_FILE]@120" "$[HEXVALUE_0x120_FORWARDS]"
+elif chk "$[MOVABLE_SIZE]" "288 bytes"
+fset "$[MOVABLE_FILE]@118" "$[HEXVALUE_0x118_FORWARDS]"
+end
+if not shaget "$[MOVABLE_FILE]@110:10" "$[MOVABLE_FILE_SHA]"
+goto SHAGET_MOVABLE_FORWARDS
+else
+set LOOP_BREAK "NO_1"
+goto CONTINUE_FINDING_KEY_Y_FORWARDS
+end
+@ASK_IF_WANT_TO_CANCEL_FORWARDS
+if ask "Would you like to end the search run?\n \nPress (A) to continue.\nPress (B) to cancel."
+set LOOP_BREAK "NO_1"
+goto SHAGET_MOVABLE_FORWARDS
+else
+rm -o -s "$[MOVABLE_FILE]"
+rm -o -s "$[MOVABLE_FILE_SHA]"
+goto mm_Console_Options
+end
+@CONTINUE_FINDING_KEY_Y_FORWARDS
+fget "$[MOVABLE_FILE_SHA]@00:04" U32_0
+fget "$[MOVABLE_FILE_SHA]@04:04" U32_1
+fget "$[MOVABLE_FILE_SHA]@08:04" U32_2
+fget "$[MOVABLE_FILE_SHA]@0C:04" U32_3
+fset -e "$[MOVABLE_FILE_SHA]@00" "$[U32_0]"
+fset -e "$[MOVABLE_FILE_SHA]@04" "$[U32_1]"
+fset -e "$[MOVABLE_FILE_SHA]@08" "$[U32_2]"
+fset -e "$[MOVABLE_FILE_SHA]@0C" "$[U32_3]"
+fget "$[MOVABLE_FILE_SHA]@00:10" <ID0>_CALCULATED_FORWARDS
+if chk "$[<ID0>_CALCULATED_FORWARDS]" "$[<ID0>_NAME]"
+fget "$[MOVABLE_FILE]@110:10" FINAL_KEY_Y
+goto KEY_Y-<ID0>_MATCH_FOUND
+end
+set OFFSET_CHECK "0x118"
+set HEXVALUE "$[HEXVALUE_0x118_FORWARDS]"
+goto INPUT_OLD_HEXVALUE_FORWARDS
+@OUTPUT_NEW_HEXVALUE_0x118_FORWARDS
+set HEXVALUE_0x118_FORWARDS "$[HEXVALUE]"
+if chk "$[MOVABLE_SIZE]" "320 bytes"
+goto RUN_0x120_HEX_FORWARDS
+elif chk "$[MOVABLE_SIZE]" "288 bytes"
+goto SKIP_0x120_HEX_FORWARDS
+end
+@RUN_0x120_HEX_FORWARDS
+set OFFSET_CHECK "0x120"
+set HEXVALUE "$[HEXVALUE_0x120_FORWARDS]"
+goto INPUT_OLD_HEXVALUE_FORWARDS
+@OUTPUT_NEW_HEXVALUE_0x120_FORWARDS
+set HEXVALUE_0x120_FORWARDS "$[HEXVALUE]"
+@SKIP_0x120_HEX_FORWARDS
+if chk "$[HEXVALUE_0x118_BACKWARDS]" "$[INITIAL_0x118]"
+rm -o -s "$[MOVABLE_FILE]"
+rm -o -s "$[MOVABLE_FILE_SHA]"
+echo "Could not find KeyY matching <ID0>."
+goto mm_Console_Options
+elif chk "$[HEXVALUE_0x118_FORWARDS]" "$[INITIAL_0x118]"
+rm -o -s "$[MOVABLE_FILE]"
+rm -o -s "$[MOVABLE_FILE_SHA]"
+echo "Could not find KeyY matching <ID0>."
+goto mm_Console_Options
+elif chk "$[GO_PAST_FIRST_MATCH]" "YES"
+set GO_PAST_FIRST_MATCH "NO"
+goto SHAGET_MOVABLE_BACKWARDS
+elif chk "$[<ID0>_CALCULATED_BACKWARDS]" "$[<ID0>_CALCULATED_FORWARDS]"
+rm -o -s "$[MOVABLE_FILE]"
+rm -o -s "$[MOVABLE_FILE_SHA]"
+echo "Could not find KeyY matching <ID0>."
+goto mm_Console_Options
+else
+goto SHAGET_MOVABLE_BACKWARDS
+end
+@KEY_Y-<ID0>_MATCH_FOUND
+set NAND_DIR ""
+findnot "$[GM9OUT]/$[DATESTAMP]_$[SERIAL]_sysnand ctrnand_???" NAND_DIR
+@FIX_NAND_DIR_2
+if not mkdir "$[NAND_DIR]"
+end
+if find "$[NAND_DIR]" NULL
+rm -o -s "$[NAND_DIR]"
+else
+findnot "$[GM9OUT]/$[DATESTAMP]_UNKNOWN_sysnand ctrnand_???" NAND_DIR
+goto FIX_NAND_DIR_2
+end
+if chk "$[INITIAL_KEY_Y]" "$[FINAL_KEY_Y]"
+rm -o -s "$[MOVABLE_FILE]"
+rm -o -s "$[MOVABLE_FILE_SHA]"
+echo "Old KeyY: $[INITIAL_KEY_Y]\n<ID0>: $[INITIAL_<ID0>_CALCULATED]\n \nNew KeyY: $[FINAL_KEY_Y]\n<ID0>: $[<ID0>_NAME]\n \nCurrent 'KeyY' matches <ID0> folder. \nNo action required."
+goto mm_Console_Options
+end
+if ask "Old KeyY: $[INITIAL_KEY_Y]\n<ID0>: $[INITIAL_<ID0>_CALCULATED]\n \nNew KeyY: $[FINAL_KEY_Y]\n<ID0>: $[<ID0>_NAME]\n \nFound match success.\n \nMake 'KeyY' corrections to 'movable.sed'?"
+rm -o -s "$[MOVABLE_FILE_SHA]"
+mv -o -s -n -w "$[MOVABLE_FILE]" "$[MOVABLE_FILE].bak"
+cp -o -s -n -w "1:/private/movable.sed" "$[MOVABLE_FILE]"
+mv -o -s -n -w "$[MOVABLE_FILE].bak" "1:/private/movable.sed"
+fixcmac -o -s "1:/private/movable.sed"
+strsplit MOVABLE_FILE "$[MOVABLE_FILE]" "/"
+mv -o -s -n -w "$[GM9OUT]/$[MOVABLE_FILE]" "$[NAND_DIR]/$[INITIAL_<ID0>_CALCULATED]_movable.sed"
+cp -o -s -n -w "1:/data" "$[NAND_DIR]/data"	
+echo "Original file and 'data' profile backed up at:\n$[NAND_DIR]"
+if find "1:/data/$[INITIAL_<ID0>_CALCULATED]" NULL
+if ask "Import the 'data' profile?\n \nFrom:\n1:/data/$[INITIAL_<ID0>_CALCULATED]\n \nTo:\n1:/data/$[<ID0>_NAME]"
+mv -o -s -n -w "1:/data/$[INITIAL_<ID0>_CALCULATED]" "1:/data/$[<ID0>_NAME]"
+rm -o -s "1:/data/$[<ID0>_NAME]/sysdata/00010011" # Delete the Secure Value to prevent anti-cheat save erase.
+fixcmac -o -s "1:/data"
+end
+end	
+goto mm_Console_Options
+else
+rm -o -s "$[MOVABLE_FILE_SHA]"
+mv -o -s -n -w "$[MOVABLE_FILE]" "$[MOVABLE_FILE].bak"
+cp -o -s -n -w "1:/private/movable.sed" "$[MOVABLE_FILE]"
+mv -o -s -n -w "$[MOVABLE_FILE].bak" "1:/private/movable.sed"
+fixcmac -o -s "1:/private/movable.sed"
+mv -o -s -n -w "1:/private/movable.sed" "$[MOVABLE_FILE].bak"
+cp -o -s -n -w "$[MOVABLE_FILE]" "1:/private/movable.sed"
+mv -o -s -n -w "$[MOVABLE_FILE].bak" "$[MOVABLE_FILE]"
+strsplit MOVABLE_FILE "$[MOVABLE_FILE]" "/"
+mv -o -s -n -w "$[GM9OUT]/$[MOVABLE_FILE]" "$[NAND_DIR]/$[<ID0>_NAME]_movable.sed"
+echo "1:/private/movable.sed\nOriginal file not replaced.\n \nCalculated file backed up at:\n$[NAND_DIR]"
+goto mm_Console_Options
+end
+@INPUT_OLD_HEXVALUE_BACKWARDS
+set H "$[HEXVALUE]"
+if chk "$[H]" "00"
+set H "FF"
+elif chk "$[H]" "01"
+set H "00"
+elif chk "$[H]" "02"
+set H "01"
+elif chk "$[H]" "03"
+set H "02"
+elif chk "$[H]" "04"
+set H "03"
+elif chk "$[H]" "05"
+set H "04"
+elif chk "$[H]" "06"
+set H "05"
+elif chk "$[H]" "07"
+set H "06"
+elif chk "$[H]" "08"
+set H "07"
+elif chk "$[H]" "09"
+set H "08"
+elif chk "$[H]" "0A"
+set H "09"
+elif chk "$[H]" "0B"
+set H "0A"
+elif chk "$[H]" "0C"
+set H "0B"
+elif chk "$[H]" "0D"
+set H "0C"
+elif chk "$[H]" "0E"
+set H "0D"
+elif chk "$[H]" "0F"
+set H "0E"
+elif chk "$[H]" "10"
+set H "0F"
+elif chk "$[H]" "11"
+set H "10"
+elif chk "$[H]" "12"
+set H "11"
+elif chk "$[H]" "13"
+set H "12"
+elif chk "$[H]" "14"
+set H "13"
+elif chk "$[H]" "15"
+set H "14"
+elif chk "$[H]" "16"
+set H "15"
+elif chk "$[H]" "17"
+set H "16"
+elif chk "$[H]" "18"
+set H "17"
+elif chk "$[H]" "19"
+set H "18"
+elif chk "$[H]" "1A"
+set H "19"
+elif chk "$[H]" "1B"
+set H "1A"
+elif chk "$[H]" "1C"
+set H "1B"
+elif chk "$[H]" "1D"
+set H "1C"
+elif chk "$[H]" "1E"
+set H "1D"
+elif chk "$[H]" "1F"
+set H "1E"
+elif chk "$[H]" "20"
+set H "1F"
+elif chk "$[H]" "21"
+set H "20"
+elif chk "$[H]" "22"
+set H "21"
+elif chk "$[H]" "23"
+set H "22"
+elif chk "$[H]" "24"
+set H "23"
+elif chk "$[H]" "25"
+set H "24"
+elif chk "$[H]" "26"
+set H "25"
+elif chk "$[H]" "27"
+set H "26"
+elif chk "$[H]" "28"
+set H "27"
+elif chk "$[H]" "29"
+set H "28"
+elif chk "$[H]" "2A"
+set H "29"
+elif chk "$[H]" "2B"
+set H "2A"
+elif chk "$[H]" "2C"
+set H "2B"
+elif chk "$[H]" "2D"
+set H "2C"
+elif chk "$[H]" "2E"
+set H "2D"
+elif chk "$[H]" "2F"
+set H "2E"
+elif chk "$[H]" "30"
+set H "2F"
+elif chk "$[H]" "31"
+set H "30"
+elif chk "$[H]" "32"
+set H "31"
+elif chk "$[H]" "33"
+set H "32"
+elif chk "$[H]" "34"
+set H "33"
+elif chk "$[H]" "35"
+set H "34"
+elif chk "$[H]" "36"
+set H "35"
+elif chk "$[H]" "37"
+set H "36"
+elif chk "$[H]" "38"
+set H "37"
+elif chk "$[H]" "39"
+set H "38"
+elif chk "$[H]" "3A"
+set H "39"
+elif chk "$[H]" "3B"
+set H "3A"
+elif chk "$[H]" "3C"
+set H "3B"
+elif chk "$[H]" "3D"
+set H "3C"
+elif chk "$[H]" "3E"
+set H "3D"
+elif chk "$[H]" "3F"
+set H "3E"
+elif chk "$[H]" "40"
+set H "3F"
+elif chk "$[H]" "41"
+set H "40"
+elif chk "$[H]" "42"
+set H "41"
+elif chk "$[H]" "43"
+set H "42"
+elif chk "$[H]" "44"
+set H "43"
+elif chk "$[H]" "45"
+set H "44"
+elif chk "$[H]" "46"
+set H "45"
+elif chk "$[H]" "47"
+set H "46"
+elif chk "$[H]" "48"
+set H "47"
+elif chk "$[H]" "49"
+set H "48"
+elif chk "$[H]" "4A"
+set H "49"
+elif chk "$[H]" "4B"
+set H "4A"
+elif chk "$[H]" "4C"
+set H "4B"
+elif chk "$[H]" "4D"
+set H "4C"
+elif chk "$[H]" "4E"
+set H "4D"
+elif chk "$[H]" "4F"
+set H "4E"
+elif chk "$[H]" "50"
+set H "4F"
+elif chk "$[H]" "51"
+set H "50"
+elif chk "$[H]" "52"
+set H "51"
+elif chk "$[H]" "53"
+set H "52"
+elif chk "$[H]" "54"
+set H "53"
+elif chk "$[H]" "55"
+set H "54"
+elif chk "$[H]" "56"
+set H "55"
+elif chk "$[H]" "57"
+set H "56"
+elif chk "$[H]" "58"
+set H "57"
+elif chk "$[H]" "59"
+set H "58"
+elif chk "$[H]" "5A"
+set H "59"
+elif chk "$[H]" "5B"
+set H "5A"
+elif chk "$[H]" "5C"
+set H "5B"
+elif chk "$[H]" "5D"
+set H "5C"
+elif chk "$[H]" "5E"
+set H "5D"
+elif chk "$[H]" "5F"
+set H "5E"
+elif chk "$[H]" "60"
+set H "5F"
+elif chk "$[H]" "61"
+set H "60"
+elif chk "$[H]" "62"
+set H "61"
+elif chk "$[H]" "63"
+set H "62"
+elif chk "$[H]" "64"
+set H "63"
+elif chk "$[H]" "65"
+set H "64"
+elif chk "$[H]" "66"
+set H "65"
+elif chk "$[H]" "67"
+set H "66"
+elif chk "$[H]" "68"
+set H "67"
+elif chk "$[H]" "69"
+set H "68"
+elif chk "$[H]" "6A"
+set H "69"
+elif chk "$[H]" "6B"
+set H "6A"
+elif chk "$[H]" "6C"
+set H "6B"
+elif chk "$[H]" "6D"
+set H "6C"
+elif chk "$[H]" "6E"
+set H "6D"
+elif chk "$[H]" "6F"
+set H "6E"
+elif chk "$[H]" "70"
+set H "6F"
+elif chk "$[H]" "71"
+set H "70"
+elif chk "$[H]" "72"
+set H "71"
+elif chk "$[H]" "73"
+set H "72"
+elif chk "$[H]" "74"
+set H "73"
+elif chk "$[H]" "75"
+set H "74"
+elif chk "$[H]" "76"
+set H "75"
+elif chk "$[H]" "77"
+set H "76"
+elif chk "$[H]" "78"
+set H "77"
+elif chk "$[H]" "79"
+set H "78"
+elif chk "$[H]" "7A"
+set H "79"
+elif chk "$[H]" "7B"
+set H "7A"
+elif chk "$[H]" "7C"
+set H "7B"
+elif chk "$[H]" "7D"
+set H "7C"
+elif chk "$[H]" "7E"
+set H "7D"
+elif chk "$[H]" "7F"
+set H "7E"
+elif chk "$[H]" "80"
+set H "7F"
+elif chk "$[H]" "81"
+set H "80"
+elif chk "$[H]" "82"
+set H "81"
+elif chk "$[H]" "83"
+set H "82"
+elif chk "$[H]" "84"
+set H "83"
+elif chk "$[H]" "85"
+set H "84"
+elif chk "$[H]" "86"
+set H "85"
+elif chk "$[H]" "87"
+set H "86"
+elif chk "$[H]" "88"
+set H "87"
+elif chk "$[H]" "89"
+set H "88"
+elif chk "$[H]" "8A"
+set H "89"
+elif chk "$[H]" "8B"
+set H "8A"
+elif chk "$[H]" "8C"
+set H "8B"
+elif chk "$[H]" "8D"
+set H "8C"
+elif chk "$[H]" "8E"
+set H "8D"
+elif chk "$[H]" "8F"
+set H "8E"
+elif chk "$[H]" "90"
+set H "8F"
+elif chk "$[H]" "91"
+set H "90"
+elif chk "$[H]" "92"
+set H "91"
+elif chk "$[H]" "93"
+set H "92"
+elif chk "$[H]" "94"
+set H "93"
+elif chk "$[H]" "95"
+set H "94"
+elif chk "$[H]" "96"
+set H "95"
+elif chk "$[H]" "97"
+set H "96"
+elif chk "$[H]" "98"
+set H "97"
+elif chk "$[H]" "99"
+set H "98"
+elif chk "$[H]" "9A"
+set H "99"
+elif chk "$[H]" "9B"
+set H "9A"
+elif chk "$[H]" "9C"
+set H "9B"
+elif chk "$[H]" "9D"
+set H "9C"
+elif chk "$[H]" "9E"
+set H "9D"
+elif chk "$[H]" "9F"
+set H "9E"
+elif chk "$[H]" "A0"
+set H "9F"
+elif chk "$[H]" "A1"
+set H "A0"
+elif chk "$[H]" "A2"
+set H "A1"
+elif chk "$[H]" "A3"
+set H "A2"
+elif chk "$[H]" "A4"
+set H "A3"
+elif chk "$[H]" "A5"
+set H "A4"
+elif chk "$[H]" "A6"
+set H "A5"
+elif chk "$[H]" "A7"
+set H "A6"
+elif chk "$[H]" "A8"
+set H "A7"
+elif chk "$[H]" "A9"
+set H "A8"
+elif chk "$[H]" "AA"
+set H "A9"
+elif chk "$[H]" "AB"
+set H "AA"
+elif chk "$[H]" "AC"
+set H "AB"
+elif chk "$[H]" "AD"
+set H "AC"
+elif chk "$[H]" "AE"
+set H "AD"
+elif chk "$[H]" "AF"
+set H "AE"
+elif chk "$[H]" "B0"
+set H "AF"
+elif chk "$[H]" "B1"
+set H "B0"
+elif chk "$[H]" "B2"
+set H "B1"
+elif chk "$[H]" "B3"
+set H "B2"
+elif chk "$[H]" "B4"
+set H "B3"
+elif chk "$[H]" "B5"
+set H "B4"
+elif chk "$[H]" "B6"
+set H "B5"
+elif chk "$[H]" "B7"
+set H "B6"
+elif chk "$[H]" "B8"
+set H "B7"
+elif chk "$[H]" "B9"
+set H "B8"
+elif chk "$[H]" "BA"
+set H "B9"
+elif chk "$[H]" "BB"
+set H "BA"
+elif chk "$[H]" "BC"
+set H "BB"
+elif chk "$[H]" "BD"
+set H "BC"
+elif chk "$[H]" "BE"
+set H "BD"
+elif chk "$[H]" "BF"
+set H "BE"
+elif chk "$[H]" "C0"
+set H "BF"
+elif chk "$[H]" "C1"
+set H "C0"
+elif chk "$[H]" "C2"
+set H "C1"
+elif chk "$[H]" "C3"
+set H "C2"
+elif chk "$[H]" "C4"
+set H "C3"
+elif chk "$[H]" "C5"
+set H "C4"
+elif chk "$[H]" "C6"
+set H "C5"
+elif chk "$[H]" "C7"
+set H "C6"
+elif chk "$[H]" "C8"
+set H "C7"
+elif chk "$[H]" "C9"
+set H "C8"
+elif chk "$[H]" "CA"
+set H "C9"
+elif chk "$[H]" "CB"
+set H "CA"
+elif chk "$[H]" "CC"
+set H "CB"
+elif chk "$[H]" "CD"
+set H "CC"
+elif chk "$[H]" "CE"
+set H "CD"
+elif chk "$[H]" "CF"
+set H "CE"
+elif chk "$[H]" "D0"
+set H "CF"
+elif chk "$[H]" "D1"
+set H "D0"
+elif chk "$[H]" "D2"
+set H "D1"
+elif chk "$[H]" "D3"
+set H "D2"
+elif chk "$[H]" "D4"
+set H "D3"
+elif chk "$[H]" "D5"
+set H "D4"
+elif chk "$[H]" "D6"
+set H "D5"
+elif chk "$[H]" "D7"
+set H "D6"
+elif chk "$[H]" "D8"
+set H "D7"
+elif chk "$[H]" "D9"
+set H "D8"
+elif chk "$[H]" "DA"
+set H "D9"
+elif chk "$[H]" "DB"
+set H "DA"
+elif chk "$[H]" "DC"
+set H "DB"
+elif chk "$[H]" "DD"
+set H "DC"
+elif chk "$[H]" "DE"
+set H "DD"
+elif chk "$[H]" "DF"
+set H "DE"
+elif chk "$[H]" "E0"
+set H "DF"
+elif chk "$[H]" "E1"
+set H "E0"
+elif chk "$[H]" "E2"
+set H "E1"
+elif chk "$[H]" "E3"
+set H "E2"
+elif chk "$[H]" "E4"
+set H "E3"
+elif chk "$[H]" "E5"
+set H "E4"
+elif chk "$[H]" "E6"
+set H "E5"
+elif chk "$[H]" "E7"
+set H "E6"
+elif chk "$[H]" "E8"
+set H "E7"
+elif chk "$[H]" "E9"
+set H "E8"
+elif chk "$[H]" "EA"
+set H "E9"
+elif chk "$[H]" "EB"
+set H "EA"
+elif chk "$[H]" "EC"
+set H "EB"
+elif chk "$[H]" "ED"
+set H "EC"
+elif chk "$[H]" "EE"
+set H "ED"
+elif chk "$[H]" "EF"
+set H "EE"
+elif chk "$[H]" "F0"
+set H "EF"
+elif chk "$[H]" "F1"
+set H "F0"
+elif chk "$[H]" "F2"
+set H "F1"
+elif chk "$[H]" "F3"
+set H "F2"
+elif chk "$[H]" "F4"
+set H "F3"
+elif chk "$[H]" "F5"
+set H "F4"
+elif chk "$[H]" "F6"
+set H "F5"
+elif chk "$[H]" "F7"
+set H "F6"
+elif chk "$[H]" "F8"
+set H "F7"
+elif chk "$[H]" "F9"
+set H "F8"
+elif chk "$[H]" "FA"
+set H "F9"
+elif chk "$[H]" "FB"
+set H "FA"
+elif chk "$[H]" "FC"
+set H "FB"
+elif chk "$[H]" "FD"
+set H "FC"
+elif chk "$[H]" "FE"
+set H "FD"
+elif chk "$[H]" "FF"
+set H "FE"
+end
+set HEXVALUE "$[H]"
+set H ""
+if chk "$[OFFSET_CHECK]" "0x118"
+goto OUTPUT_NEW_HEXVALUE_0x118_BACKWARDS
+elif chk "$[OFFSET_CHECK]" "0x120"
+goto OUTPUT_NEW_HEXVALUE_0x120_BACKWARDS
+end
+@INPUT_OLD_HEXVALUE_FORWARDS
+set H "$[HEXVALUE]"
+if chk "$[H]" "00"
+set H "01"
+elif chk "$[H]" "01"
+set H "02"
+elif chk "$[H]" "02"
+set H "03"
+elif chk "$[H]" "03"
+set H "04"
+elif chk "$[H]" "04"
+set H "05"
+elif chk "$[H]" "05"
+set H "06"
+elif chk "$[H]" "06"
+set H "07"
+elif chk "$[H]" "07"
+set H "08"
+elif chk "$[H]" "08"
+set H "09"
+elif chk "$[H]" "09"
+set H "0A"
+elif chk "$[H]" "0A"
+set H "0B"
+elif chk "$[H]" "0B"
+set H "0C"
+elif chk "$[H]" "0C"
+set H "0D"
+elif chk "$[H]" "0D"
+set H "0E"
+elif chk "$[H]" "0E"
+set H "0F"
+elif chk "$[H]" "0F"
+set H "10"
+elif chk "$[H]" "10"
+set H "11"
+elif chk "$[H]" "11"
+set H "12"
+elif chk "$[H]" "12"
+set H "13"
+elif chk "$[H]" "13"
+set H "14"
+elif chk "$[H]" "14"
+set H "15"
+elif chk "$[H]" "15"
+set H "16"
+elif chk "$[H]" "16"
+set H "17"
+elif chk "$[H]" "17"
+set H "18"
+elif chk "$[H]" "18"
+set H "19"
+elif chk "$[H]" "19"
+set H "1A"
+elif chk "$[H]" "1A"
+set H "1B"
+elif chk "$[H]" "1B"
+set H "1C"
+elif chk "$[H]" "1C"
+set H "1D"
+elif chk "$[H]" "1D"
+set H "1E"
+elif chk "$[H]" "1E"
+set H "1F"
+elif chk "$[H]" "1F"
+set H "20"
+elif chk "$[H]" "20"
+set H "21"
+elif chk "$[H]" "21"
+set H "22"
+elif chk "$[H]" "22"
+set H "23"
+elif chk "$[H]" "23"
+set H "24"
+elif chk "$[H]" "24"
+set H "25"
+elif chk "$[H]" "25"
+set H "26"
+elif chk "$[H]" "26"
+set H "27"
+elif chk "$[H]" "27"
+set H "28"
+elif chk "$[H]" "28"
+set H "29"
+elif chk "$[H]" "29"
+set H "2A"
+elif chk "$[H]" "2A"
+set H "2B"
+elif chk "$[H]" "2B"
+set H "2C"
+elif chk "$[H]" "2C"
+set H "2D"
+elif chk "$[H]" "2D"
+set H "2E"
+elif chk "$[H]" "2E"
+set H "2F"
+elif chk "$[H]" "2F"
+set H "30"
+elif chk "$[H]" "30"
+set H "31"
+elif chk "$[H]" "31"
+set H "32"
+elif chk "$[H]" "32"
+set H "33"
+elif chk "$[H]" "33"
+set H "34"
+elif chk "$[H]" "34"
+set H "35"
+elif chk "$[H]" "35"
+set H "36"
+elif chk "$[H]" "36"
+set H "37"
+elif chk "$[H]" "37"
+set H "38"
+elif chk "$[H]" "38"
+set H "39"
+elif chk "$[H]" "39"
+set H "3A"
+elif chk "$[H]" "3A"
+set H "3B"
+elif chk "$[H]" "3B"
+set H "3C"
+elif chk "$[H]" "3C"
+set H "3D"
+elif chk "$[H]" "3D"
+set H "3E"
+elif chk "$[H]" "3E"
+set H "3F"
+elif chk "$[H]" "3F"
+set H "40"
+elif chk "$[H]" "40"
+set H "41"
+elif chk "$[H]" "41"
+set H "42"
+elif chk "$[H]" "42"
+set H "43"
+elif chk "$[H]" "43"
+set H "44"
+elif chk "$[H]" "44"
+set H "45"
+elif chk "$[H]" "45"
+set H "46"
+elif chk "$[H]" "46"
+set H "47"
+elif chk "$[H]" "47"
+set H "48"
+elif chk "$[H]" "48"
+set H "49"
+elif chk "$[H]" "49"
+set H "4A"
+elif chk "$[H]" "4A"
+set H "4B"
+elif chk "$[H]" "4B"
+set H "4C"
+elif chk "$[H]" "4C"
+set H "4D"
+elif chk "$[H]" "4D"
+set H "4E"
+elif chk "$[H]" "4E"
+set H "4F"
+elif chk "$[H]" "4F"
+set H "50"
+elif chk "$[H]" "50"
+set H "51"
+elif chk "$[H]" "51"
+set H "52"
+elif chk "$[H]" "52"
+set H "53"
+elif chk "$[H]" "53"
+set H "54"
+elif chk "$[H]" "54"
+set H "55"
+elif chk "$[H]" "55"
+set H "56"
+elif chk "$[H]" "56"
+set H "57"
+elif chk "$[H]" "57"
+set H "58"
+elif chk "$[H]" "58"
+set H "59"
+elif chk "$[H]" "59"
+set H "5A"
+elif chk "$[H]" "5A"
+set H "5B"
+elif chk "$[H]" "5B"
+set H "5C"
+elif chk "$[H]" "5C"
+set H "5D"
+elif chk "$[H]" "5D"
+set H "5E"
+elif chk "$[H]" "5E"
+set H "5F"
+elif chk "$[H]" "5F"
+set H "60"
+elif chk "$[H]" "60"
+set H "61"
+elif chk "$[H]" "61"
+set H "62"
+elif chk "$[H]" "62"
+set H "63"
+elif chk "$[H]" "63"
+set H "64"
+elif chk "$[H]" "64"
+set H "65"
+elif chk "$[H]" "65"
+set H "66"
+elif chk "$[H]" "66"
+set H "67"
+elif chk "$[H]" "67"
+set H "68"
+elif chk "$[H]" "68"
+set H "69"
+elif chk "$[H]" "69"
+set H "6A"
+elif chk "$[H]" "6A"
+set H "6B"
+elif chk "$[H]" "6B"
+set H "6C"
+elif chk "$[H]" "6C"
+set H "6D"
+elif chk "$[H]" "6D"
+set H "6E"
+elif chk "$[H]" "6E"
+set H "6F"
+elif chk "$[H]" "6F"
+set H "70"
+elif chk "$[H]" "70"
+set H "71"
+elif chk "$[H]" "71"
+set H "72"
+elif chk "$[H]" "72"
+set H "73"
+elif chk "$[H]" "73"
+set H "74"
+elif chk "$[H]" "74"
+set H "75"
+elif chk "$[H]" "75"
+set H "76"
+elif chk "$[H]" "76"
+set H "77"
+elif chk "$[H]" "77"
+set H "78"
+elif chk "$[H]" "78"
+set H "79"
+elif chk "$[H]" "79"
+set H "7A"
+elif chk "$[H]" "7A"
+set H "7B"
+elif chk "$[H]" "7B"
+set H "7C"
+elif chk "$[H]" "7C"
+set H "7D"
+elif chk "$[H]" "7D"
+set H "7E"
+elif chk "$[H]" "7E"
+set H "7F"
+elif chk "$[H]" "7F"
+set H "80"
+elif chk "$[H]" "80"
+set H "81"
+elif chk "$[H]" "81"
+set H "82"
+elif chk "$[H]" "82"
+set H "83"
+elif chk "$[H]" "83"
+set H "84"
+elif chk "$[H]" "84"
+set H "85"
+elif chk "$[H]" "85"
+set H "86"
+elif chk "$[H]" "86"
+set H "87"
+elif chk "$[H]" "87"
+set H "88"
+elif chk "$[H]" "88"
+set H "89"
+elif chk "$[H]" "89"
+set H "8A"
+elif chk "$[H]" "8A"
+set H "8B"
+elif chk "$[H]" "8B"
+set H "8C"
+elif chk "$[H]" "8C"
+set H "8D"
+elif chk "$[H]" "8D"
+set H "8E"
+elif chk "$[H]" "8E"
+set H "8F"
+elif chk "$[H]" "8F"
+set H "90"
+elif chk "$[H]" "90"
+set H "91"
+elif chk "$[H]" "91"
+set H "92"
+elif chk "$[H]" "92"
+set H "93"
+elif chk "$[H]" "93"
+set H "94"
+elif chk "$[H]" "94"
+set H "95"
+elif chk "$[H]" "95"
+set H "96"
+elif chk "$[H]" "96"
+set H "97"
+elif chk "$[H]" "97"
+set H "98"
+elif chk "$[H]" "98"
+set H "99"
+elif chk "$[H]" "99"
+set H "9A"
+elif chk "$[H]" "9A"
+set H "9B"
+elif chk "$[H]" "9B"
+set H "9C"
+elif chk "$[H]" "9C"
+set H "9D"
+elif chk "$[H]" "9D"
+set H "9E"
+elif chk "$[H]" "9E"
+set H "9F"
+elif chk "$[H]" "9F"
+set H "A0"
+elif chk "$[H]" "A0"
+set H "A1"
+elif chk "$[H]" "A1"
+set H "A2"
+elif chk "$[H]" "A2"
+set H "A3"
+elif chk "$[H]" "A3"
+set H "A4"
+elif chk "$[H]" "A4"
+set H "A5"
+elif chk "$[H]" "A5"
+set H "A6"
+elif chk "$[H]" "A6"
+set H "A7"
+elif chk "$[H]" "A7"
+set H "A8"
+elif chk "$[H]" "A8"
+set H "A9"
+elif chk "$[H]" "A9"
+set H "AA"
+elif chk "$[H]" "AA"
+set H "AB"
+elif chk "$[H]" "AB"
+set H "AC"
+elif chk "$[H]" "AC"
+set H "AD"
+elif chk "$[H]" "AD"
+set H "AE"
+elif chk "$[H]" "AE"
+set H "AF"
+elif chk "$[H]" "AF"
+set H "B0"
+elif chk "$[H]" "B0"
+set H "B1"
+elif chk "$[H]" "B1"
+set H "B2"
+elif chk "$[H]" "B2"
+set H "B3"
+elif chk "$[H]" "B3"
+set H "B4"
+elif chk "$[H]" "B4"
+set H "B5"
+elif chk "$[H]" "B5"
+set H "B6"
+elif chk "$[H]" "B6"
+set H "B7"
+elif chk "$[H]" "B7"
+set H "B8"
+elif chk "$[H]" "B8"
+set H "B9"
+elif chk "$[H]" "B9"
+set H "BA"
+elif chk "$[H]" "BA"
+set H "BB"
+elif chk "$[H]" "BB"
+set H "BC"
+elif chk "$[H]" "BC"
+set H "BD"
+elif chk "$[H]" "BD"
+set H "BE"
+elif chk "$[H]" "BE"
+set H "BF"
+elif chk "$[H]" "BF"
+set H "C0"
+elif chk "$[H]" "C0"
+set H "C1"
+elif chk "$[H]" "C1"
+set H "C2"
+elif chk "$[H]" "C2"
+set H "C3"
+elif chk "$[H]" "C3"
+set H "C4"
+elif chk "$[H]" "C4"
+set H "C5"
+elif chk "$[H]" "C5"
+set H "C6"
+elif chk "$[H]" "C6"
+set H "C7"
+elif chk "$[H]" "C7"
+set H "C8"
+elif chk "$[H]" "C8"
+set H "C9"
+elif chk "$[H]" "C9"
+set H "CA"
+elif chk "$[H]" "CA"
+set H "CB"
+elif chk "$[H]" "CB"
+set H "CC"
+elif chk "$[H]" "CC"
+set H "CD"
+elif chk "$[H]" "CD"
+set H "CE"
+elif chk "$[H]" "CE"
+set H "CF"
+elif chk "$[H]" "CF"
+set H "D0"
+elif chk "$[H]" "D0"
+set H "D1"
+elif chk "$[H]" "D1"
+set H "D2"
+elif chk "$[H]" "D2"
+set H "D3"
+elif chk "$[H]" "D3"
+set H "D4"
+elif chk "$[H]" "D4"
+set H "D5"
+elif chk "$[H]" "D5"
+set H "D6"
+elif chk "$[H]" "D6"
+set H "D7"
+elif chk "$[H]" "D7"
+set H "D8"
+elif chk "$[H]" "D8"
+set H "D9"
+elif chk "$[H]" "D9"
+set H "DA"
+elif chk "$[H]" "DA"
+set H "DB"
+elif chk "$[H]" "DB"
+set H "DC"
+elif chk "$[H]" "DC"
+set H "DD"
+elif chk "$[H]" "DD"
+set H "DE"
+elif chk "$[H]" "DE"
+set H "DF"
+elif chk "$[H]" "DF"
+set H "E0"
+elif chk "$[H]" "E0"
+set H "E1"
+elif chk "$[H]" "E1"
+set H "E2"
+elif chk "$[H]" "E2"
+set H "E3"
+elif chk "$[H]" "E3"
+set H "E4"
+elif chk "$[H]" "E4"
+set H "E5"
+elif chk "$[H]" "E5"
+set H "E6"
+elif chk "$[H]" "E6"
+set H "E7"
+elif chk "$[H]" "E7"
+set H "E8"
+elif chk "$[H]" "E8"
+set H "E9"
+elif chk "$[H]" "E9"
+set H "EA"
+elif chk "$[H]" "EA"
+set H "EB"
+elif chk "$[H]" "EB"
+set H "EC"
+elif chk "$[H]" "EC"
+set H "ED"
+elif chk "$[H]" "ED"
+set H "EE"
+elif chk "$[H]" "EE"
+set H "EF"
+elif chk "$[H]" "EF"
+set H "F0"
+elif chk "$[H]" "F0"
+set H "F1"
+elif chk "$[H]" "F1"
+set H "F2"
+elif chk "$[H]" "F2"
+set H "F3"
+elif chk "$[H]" "F3"
+set H "F4"
+elif chk "$[H]" "F4"
+set H "F5"
+elif chk "$[H]" "F5"
+set H "F6"
+elif chk "$[H]" "F6"
+set H "F7"
+elif chk "$[H]" "F7"
+set H "F8"
+elif chk "$[H]" "F8"
+set H "F9"
+elif chk "$[H]" "F9"
+set H "FA"
+elif chk "$[H]" "FA"
+set H "FB"
+elif chk "$[H]" "FB"
+set H "FC"
+elif chk "$[H]" "FC"
+set H "FD"
+elif chk "$[H]" "FD"
+set H "FE"
+elif chk "$[H]" "FE"
+set H "FF"
+elif chk "$[H]" "FF"
+set H "00"
+end
+set HEXVALUE "$[H]"
+set H ""
+if chk "$[OFFSET_CHECK]" "0x118"
+goto OUTPUT_NEW_HEXVALUE_0x118_FORWARDS
+elif chk "$[OFFSET_CHECK]" "0x120"
+goto OUTPUT_NEW_HEXVALUE_0x120_FORWARDS
+end
+
+@cons_DSiWare_CIAs_and_Saves    
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nDSiWare CIAs and Saves"
+labelsel -o -s "DSiWare CIAs & Saves\nPress (B) to return to Menu Options." DSIWARE_*
+goto mm_Console_Options
+@DSIWARE_Restore_Saves
+set TWLN_DIR_SELECTION ""
+if not dirsel "Select the 'dsiware' folder." "$[GM9OUT]" TWLN_DIR_SELECTION
+set PREVIEW_COLOR_COMMENT "606070"
+goto mm_Console_Options
+end
+if findnot "$[TWLN_DIR_SELECTION]/extracted saves" NULL
+echo "The 'extracted saves' subfolder \nwas not found.\n \nEither the wrong folder was selected \nor no backed up saves exist."
+goto DSIWARE_Restore_Saves
+end
+if not allow -a "2:/title" # Level 1 
+echo "Permissions denied. Aborting!"
+goto DSIWARE_Restore_Saves
+end
+if find -f "$[TWLN_DIR_SELECTION]/*.cia" NULL
+goto DETECTED_CIA_FILES
+end
+goto RESTORE_SAVES
+@DETECTED_CIA_FILES
+if not ask "CIA files detected in this directory.\n \nSave restore only works after \nreinstalling DSiWare titles.\n \nContinue restoring saves anyway?"
+goto DSIWARE_Restore_Saves
+end
+@RESTORE_SAVES
+set TID_HIGH ""
+set TID_LOW ""
+if find -f "$[TWLN_DIR_SELECTION]/extracted saves/title/*" TID_HIGH
+strsplit TID_HIGH "$[TID_HIGH]" "/"
+else
+mv -o -s -n -w "$[TWLN_DIR_SELECTION]/extracted saves/title_temp" "$[TWLN_DIR_SELECTION]/extracted saves/title"
+set TID_LOW ""
+set TID_HIGH ""
+if fget "$[TWLN_DIR_SELECTION]/save_restore_error.txt@00:01" NULL
+echo "$[TWLN_DIR_SELECTION]/\nsave_restore_error.txt\n \nRestore error(s) encountered."
+textview "$[TWLN_DIR_SELECTION]/save_restore_error.txt"
+else
+rm -o -s "$[TWLN_DIR_SELECTION]/save_restore_error.txt"
+end	
+echo "DSiWare saves restored."
+goto mm_Console_Options
+end
+if find -f "$[TWLN_DIR_SELECTION]/extracted saves/title/$[TID_HIGH]/*" TID_LOW
+strsplit TID_LOW "$[TID_LOW]" "/"
+else
+mv -o -s -n -w "$[TWLN_DIR_SELECTION]/extracted saves/title/$[TID_HIGH]" "$[TWLN_DIR_SELECTION]/extracted saves/title_temp/$[TID_HIGH]"
+goto RESTORE_SAVES
+end
+if not find -f "$[TWLN_DIR_SELECTION]/extracted saves/title/$[TID_HIGH]/$[TID_LOW]/data/*.sav" NULL
+dumptxt -p "$[TWLN_DIR_SELECTION]/save_restore_error.txt" "$[TID_HIGH]$[TID_LOW] - Backed up SAV is missing."
+mv -o -s -n -w "$[TWLN_DIR_SELECTION]/extracted saves/title/$[TID_HIGH]/$[TID_LOW]" "$[TWLN_DIR_SELECTION]/extracted saves/title_temp/$[TID_HIGH]/$[TID_LOW]"
+goto RESTORE_SAVES
+end
+if findnot "2:/title/$[TID_HIGH]/$[TID_LOW]" NULL
+dumptxt -p "$[TWLN_DIR_SELECTION]/save_restore_error.txt" "$[TID_HIGH]$[TID_LOW] - Game not installed."
+mv -o -s -n -w "$[TWLN_DIR_SELECTION]/extracted saves/title/$[TID_HIGH]/$[TID_LOW]" "$[TWLN_DIR_SELECTION]/extracted saves/title_temp/$[TID_HIGH]/$[TID_LOW]"
+goto RESTORE_SAVES
+end
+if find -f "2:/title/$[TID_HIGH]/$[TID_LOW]/data/*.sav" NULL
+cp -o -s -n -w "$[TWLN_DIR_SELECTION]/extracted saves/title/$[TID_HIGH]/$[TID_LOW]/data" "2:/title/$[TID_HIGH]/$[TID_LOW]/data"
+else
+dumptxt -p "$[TWLN_DIR_SELECTION]/save_restore_error.txt" "$[TID_HIGH]$[TID_LOW] - Installed game's SAV file is missing."
+end
+mv -o -s -n -w "$[TWLN_DIR_SELECTION]/extracted saves/title/$[TID_HIGH]/$[TID_LOW]" "$[TWLN_DIR_SELECTION]/extracted saves/title_temp/$[TID_HIGH]/$[TID_LOW]"
+goto RESTORE_SAVES
+@DSIWARE_Backup_CIAs_&_Saves 
+echo "This option is for those who are moving their DSiWare \ncollection from one 3DS/2DS system to another such \nas in a 'System Transfer' or library cloning/sharing.\nA minimum free space of about 200 MB on the SD card is \nrequired to copy the '2:/title', build the CIAs, and \nextract the individual save files. Use the DSiWare\n'Restore Saves' after installing the CIAs with 'FBI'."  
+if not ask "Proceed with backing up DSiWare?\nPress (B) to cancel attempt."
+goto mm_Console_Options
+end
+if findnot "$[GM9OUT]" NULL
+mkdir "$[GM9OUT]"
+end
+set LITMUS_FILE ""
+if findnot "$[GM9OUT]/dummy_???.bin" LITMUS_FILE
+strsplit LITMUS_FILE "$[LITMUS_FILE]" "/"
+end
+fdummy "$[GM9OUT]/$[LITMUS_FILE]" "C800000"
+if fget "$[GM9OUT]/$[LITMUS_FILE]@C7FFFFF:01" NULL
+rm -o -s "$[GM9OUT]/$[LITMUS_FILE]"
+set LITMUS_FILE ""
+else
+rm -o -s "$[GM9OUT]/$[LITMUS_FILE]"
+set LITMUS_FILE ""
+echo "Insufficient memory.\n200 MB of free space is required."
+goto mm_Console_Options
+end
+set TWLN_DIR ""
+findnot "$[GM9OUT]/$[DATESTAMP]_$[SERIAL]_dsiware_???" TWLN_DIR
+@FIX_TWLN_DIR_STANDALONE
+if not mkdir "$[TWLN_DIR]"
+end
+if find "$[TWLN_DIR]" NULL
+rm -o -s "$[TWLN_DIR]"
+else
+findnot "$[GM9OUT]/$[DATESTAMP]_UNKNOWN_dsiware_???" TWLN_DIR
+goto FIX_TWLN_DIR_STANDALONE
+end
+set GM9OUT_TEMP_DIR ""
+findnot "0:/gm9/out_temp_???" GM9OUT_TEMP_DIR
+@FIX_GM9OUT_TEMP_DIR_STANDALONE
+if not mkdir "$[GM9OUT_TEMP_DIR]"
+end
+if find "$[GM9OUT_TEMP_DIR]" NULL
+rm -o -s "$[GM9OUT_TEMP_DIR]"
+else
+findnot "0:/gm9/out_temp_????" GM9OUT_TEMP_DIR
+goto FIX_GM9OUT_TEMP_DIR_STANDALONE
+end
+mv -o -s -n -w "$[GM9OUT]" "$[GM9OUT_TEMP_DIR]"
+cp -o -s -n -w "2:/title" "$[TWLN_DIR]/title"
+@FIND_NEXT_DSIWARE_STANDALONE
+set TID_HIGH ""
+set TID_LOW ""
+set TMD_FILE ""
+set CIA_FILE ""
+set SAVE_FILE ""
+if find -f "$[TWLN_DIR]/title/*" TID_HIGH
+strsplit TID_HIGH "$[TID_HIGH]" "/"
+end
+if find -f "$[TWLN_DIR]/title/$[TID_HIGH]/*" TID_LOW
+strsplit TID_LOW "$[TID_LOW]" "/"
+end
+if find -f "$[TWLN_DIR]/title/$[TID_HIGH]/$[TID_LOW]/content/*.tmd" TMD_FILE
+strsplit TMD_FILE "$[TMD_FILE]" "/"
+end
+@BUILDCIA_TRY_AGAIN_STANDALONE
+if buildcia -o -s "$[TWLN_DIR]/title/$[TID_HIGH]/$[TID_LOW]/content/$[TMD_FILE]"
+goto BUILDCIA_SUCCESS_STANDALONE
+else
+goto BUILDCIA_FAILED_STANDALONE
+end
+@BUILDCIA_FAILED_STANDALONE
+if chk "$[TMD_FILE]" ""
+goto BUILDCIA_SUCCESS_STANDALONE
+elif ask "Title ID: $[TID_HIGH]$[TID_LOW]\nFailed to build CIA.\n \nTry again?"
+goto BUILDCIA_TRY_AGAIN_STANDALONE
+else
+dumptxt -p "$[TWLN_DIR]/dsiware_missing_titles.txt" "$[TID_HIGH]$[TID_LOW]"
+dumptxt -p "$[TWLN_DIR]/dsiware_missing_titles.txt" ""
+end 
+@BUILDCIA_SUCCESS_STANDALONE
+if find "$[GM9OUT]/0000000*.cia" CIA_FILE
+strsplit CIA_FILE "$[CIA_FILE]" "/"
+mv -o -s -n -w "$[GM9OUT]/$[CIA_FILE]" "$[GM9OUT]/$[TID_HIGH]$[TID_LOW].cia"
+set CIA_FILE "$[TID_HIGH]$[TID_LOW].cia"
+elif find "$[GM9OUT]/*.cia" CIA_FILE
+strsplit CIA_FILE "$[CIA_FILE]" "/"
+end
+if find "$[GM9OUT]/$[CIA_FILE]" NULL
+mv -o -s -n -w "$[GM9OUT]/$[CIA_FILE]" "$[TWLN_DIR]/$[CIA_FILE]"
+end
+if find "$[TWLN_DIR]/title/$[TID_HIGH]/$[TID_LOW]/data/*.sav" SAVE_FILE
+strsplit SAVE_FILE "$[SAVE_FILE]" "/"
+mv -o -s -n "$[TWLN_DIR]/title/$[TID_HIGH]/$[TID_LOW]/data/$[SAVE_FILE]" "$[TWLN_DIR]/extracted saves/title/$[TID_HIGH]/$[TID_LOW]/data/$[SAVE_FILE]"
+end
+if chk "$[TID_HIGH]" ""
+rm -o -s "$[TWLN_DIR]/title"
+elif find "$[TWLN_DIR]/title/$[TID_HIGH]/$[TID_LOW]" NULL
+rm -o -s "$[TWLN_DIR]/title/$[TID_HIGH]/$[TID_LOW]"
+goto FIND_NEXT_DSIWARE_STANDALONE
+elif chk "$[TID_LOW]" ""
+rm -o -s "$[TWLN_DIR]/title/$[TID_HIGH]"
+goto FIND_NEXT_DSIWARE_STANDALONE
+end
+set FIX_TWL-B88A_CIA_DIR ""
+if find "$[TWLN_DIR]/0003000542383841 NINTENDO DSi* (TWL-B88A) (DSi Exclusive) (W).cia" FIX_TWL-B88A_CIA_DIR
+mv -o -s -n -w "$[FIX_TWL-B88A_CIA_DIR]" "$[TWLN_DIR]/0003000542383841 NINTENDO DSi (TWL-B88A) (DSi Exclusive) (W).cia"
+set FIX_TWL-B88A_CIA_DIR ""
+end
+rm -o -s "$[TWLN_DIR]/0003000542383841 NINTENDO DSi (TWL-B88A) (DSi Exclusive) (W).cia"
+rm -o -s "$[TWLN_DIR]/DS Download Play (NTR-HNDA).cia"
+rm -o -s "$[TWLN_DIR]/0003000f484e4841.cia"
+rm -o -s "$[TWLN_DIR]/0003000f484e4c41.cia"
+mv -o -s -n -w "$[GM9OUT_TEMP_DIR]" "$[GM9OUT]"
+if find "$[TWLN_DIR]/dsiware_missing_titles.txt" NULL
+echo "$[TWLN_DIR]/\ndsiware_missing_titles.txt\n \nBuild error(s) encountered."
+textview "$[TWLN_DIR]/dsiware_missing_titles.txt"
+end
+if find -f "$[TWLN_DIR]/*.cia" NULL
+echo "$[TWLN_DIR]\nDSiWare backup success."
+elif find -f "$[TWLN_DIR]/extracted saves/*" NULL
+echo "$[TWLN_DIR]\nDSiWare backup success."
+else
+echo "$[TWLN_DIR]\nDSiWare backup failed."
+end
+goto mm_Console_Options
+@DSIWARE_Convert_CIAs_(legit_to_standard)
+echo "This converts DSiWare games that were dumped as legit\nCIAs into standard CIAs. Use this if FBI can't install \nthem, or they're not available to redownload at eShop." 
+if not dirsel "Select the 'dsiware' folder." "$[GM9OUT]" TWLN_DIR
+goto CHOICE_DSiWare_CIAs_&_Saves
+end
+if not find "$[TWLN_DIR]/*.cia" NULL
+echo "$[TWLN_DIR]\nNo CIAs found."
+goto CHOICE_DSiWare_CIAs_&_Saves
+end
+findnot "$[GM9OUT]/dummy_???.bin" LITMUS_FILE
+fdummy "$[LITMUS_FILE]" "C800000"
+if fget "$[LITMUS_FILE]@C7FFFFF:01" NULL
+rm -o -s "$[LITMUS_FILE]"
+set LITMUS_FILE ""
+else
+rm -o -s "$[LITMUS_FILE]"
+set LITMUS_FILE ""
+echo "Insufficient memory.\n200 MB of free space is required."
+goto mm_Console_Options
+end
+if findnot "$[TWLN_DIR]/1. cias (system)" NULL
+mkdir "$[TWLN_DIR]/1. cias (system)"
+end
+if findnot "$[TWLN_DIR]/2. cias (standard)" NULL
+mkdir "$[TWLN_DIR]/2. cias (standard)"
+end
+if findnot "$[TWLN_DIR]/3. cias (converted)" NULL
+mkdir "$[TWLN_DIR]/3. cias (converted)"
+end
+if findnot "$[TWLN_DIR]/4. cias (legit)" NULL
+mkdir "$[TWLN_DIR]/4. cias (legit)"
+end
+if findnot "$[TWLN_DIR]/5. tickets (legit)" NULL
+mkdir "$[TWLN_DIR]/5. tickets (legit)"
+end
+mv -o -s -n -w "$[TWLN_DIR]/DS Download Play (NTR-HNDA).legit.cia" "$[TWLN_DIR]/1. cias (system)/DS Download Play (NTR-HNDA).legit.cia"
+@REPEAT_SORT_0000000X
+if find "$[TWLN_DIR]/0000000*.legit.cia" CIA_FILE
+strsplit CIA_FILE "$[CIA_FILE]" "/"
+mv -o -s -n -w "$[TWLN_DIR]/$[CIA_FILE]" "$[TWLN_DIR]/1. cias (system)/$[CIA_FILE]"
+set CIA_FILE ""
+goto REPEAT_SORT_0000000X
+end
+@REPEAT_SORT_SYSTEM
+set CIA_FILE ""
+if find "$[TWLN_DIR]/00040010*.cia" CIA_FILE # System Applications
+elif find "$[TWLN_DIR]/0004001B*.cia" CIA_FILE # System Data Archives
+elif find "$[TWLN_DIR]/00040030*.cia" CIA_FILE # System Applets
+elif find "$[TWLN_DIR]/0004009B*.cia" CIA_FILE # Shared Data Archives
+elif find "$[TWLN_DIR]/000400DB*.cia" CIA_FILE # System Data Archives
+elif find "$[TWLN_DIR]/00040130*.cia" CIA_FILE # System Modules
+elif find "$[TWLN_DIR]/00040138*.cia" CIA_FILE # System Firmware
+elif find "$[TWLN_DIR]/00048005*.cia" CIA_FILE # TWL System Applications
+elif find "$[TWLN_DIR]/0004800F*.cia" CIA_FILE # TWL System Data Archives
+elif find "$[TWLN_DIR]/00030005*.cia" CIA_FILE # TWL System Applications (renamed '00048005*.cia')
+elif find "$[TWLN_DIR]/0003000F*.cia" CIA_FILE # TWL System Data Archives (renamed '0004800F*.cia')
+end
+if not chk "$[CIA_FILE]" ""
+strsplit CIA_FILE "$[CIA_FILE]" "/"
+mv -o -s -n -w "$[TWLN_DIR]/$[CIA_FILE]" "$[TWLN_DIR]/1. cias (system)/$[CIA_FILE]"
+goto REPEAT_SORT_SYSTEM
+end
+@REPEAT_SORT_LEGIT
+if find "$[TWLN_DIR]/*.legit.cia" CIA_FILE
+strsplit CIA_FILE "$[CIA_FILE]" "/"
+mv -o -s -n -w "$[TWLN_DIR]/$[CIA_FILE]" "$[TWLN_DIR]/4. cias (legit)/$[CIA_FILE]"
+set CIA_FILE ""
+goto REPEAT_SORT_LEGIT
+end
+@REPEAT_SORT_STANDARD
+if find "$[TWLN_DIR]/*.cia" CIA_FILE
+strsplit CIA_FILE "$[CIA_FILE]" "/"
+mv -o -s -n -w "$[TWLN_DIR]/$[CIA_FILE]" "$[TWLN_DIR]/2. cias (standard)/$[CIA_FILE]"
+set CIA_FILE ""
+goto REPEAT_SORT_STANDARD
+end
+cp -o -s -n -w "$[TWLN_DIR]/4. cias (legit)" "$[TWLN_DIR]"
+@REPEAT_CONVERT_STANDARD
+if find "$[TWLN_DIR]/*.legit.cia" CIA_FILE
+strsplit CIA_FILE "$[CIA_FILE]" "/"
+strsplit -b CIA_FILE "$[CIA_FILE]" "."
+strsplit -b CIA_FILE "$[CIA_FILE]" "."
+if imgmount "$[TWLN_DIR]/$[CIA_FILE].legit.cia"
+fget "G:/ticket.bin@1D8:04" DEVICE_ID
+fget "G:/ticket.bin@1DC:08" TITLE_ID
+cp -o -s -n -w "G:/ticket.bin" "$[TWLN_DIR]/5. tickets (legit)/$[TITLE_ID].$[DEVICE_ID].tik"
+set DEVICE_ID ""
+set TITLE_ID ""
+imgumount
+end	
+decrypt -o -s "$[TWLN_DIR]/$[CIA_FILE].legit.cia"
+fill -n "$[TWLN_DIR]/$[CIA_FILE].legit.cia@2A44:100" "FF"
+fill -n "$[TWLN_DIR]/$[CIA_FILE].legit.cia@2BC0:3C" "FF"
+fill -n "$[TWLN_DIR]/$[CIA_FILE].legit.cia@2C10:0C" "00"
+fill -n "$[TWLN_DIR]/$[CIA_FILE].legit.cia@2C26:01" "00"
+fill -n "$[TWLN_DIR]/$[CIA_FILE].legit.cia@2C31:01" "00"
+fill -n "$[TWLN_DIR]/$[CIA_FILE].legit.cia@2C5C:04" "00"
+fill -n "$[TWLN_DIR]/$[CIA_FILE].legit.cia@2D10:20" "FF"
+mv -o -s -n -w "$[TWLN_DIR]/$[CIA_FILE].legit.cia" "$[TWLN_DIR]/3. cias (converted)/$[CIA_FILE].cia"
+set CIA_FILE ""
+goto REPEAT_CONVERT_STANDARD
+end
+if not find "$[TWLN_DIR]/1. cias (system)/*" NULL
+rm -o -s "$[TWLN_DIR]/1. cias (system)"
+end
+if not find "$[TWLN_DIR]/2. cias (standard)/*" NULL
+rm -o -s "$[TWLN_DIR]/2. cias (standard)"
+end
+if not find "$[TWLN_DIR]/4. cias (legit)/*" NULL
+rm -o -s "$[TWLN_DIR]/4. cias (legit)"
+end
+if not find "$[TWLN_DIR]/5. tickets (legit)/*" NULL
+rm -o -s "$[TWLN_DIR]/5. tickets (legit)"
+end
+if not find "$[TWLN_DIR]/3. cias (converted)/*" NULL
+rm -o -s "$[TWLN_DIR]/3. cias (converted)"
+echo "$[TWLN_DIR]\nNo legit game CIAs found."
+else
+echo "$[TWLN_DIR]\nCIAs conversion complete."
+end
+
+set LITMUS_FILE ""
+set CIA_FILE ""
+set TWLN_DIR ""
+set DEVICE_ID ""
+goto mm_Console_Options
+
+@cons_Bypass_Initial_Setup
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nBypass Initial Setup"
+if not fget "1:/data/$[SYSID0]/sysdata/00010017/00000000@3FFFF:01" NULL
+echo "1:/data/<ID0>/sysdata/00010017/00000000\nFile is too small."
+goto mm_Console_Options
+end
+set MAGIC_CHECK ""
+fget "1:/data/$[SYSID0]/sysdata/00010017/00000000@100:04" MAGIC_CHECK
+if not chk "$[MAGIC_CHECK]" "44495341" # 'DISA'
+set MAGIC_CHECK ""
+echo "1:/data/<ID0>/sysdata/00010017/00000000\nFailed to find magic 'DISA'."
+goto mm_Console_Options
+else
+set MAGIC_CHECK ""
+end
+imgumount
+if not imgmount "1:/data/$[SYSID0]/sysdata/00010017/00000000"
+echo "1:/data/<ID0>/sysdata/00010017/00000000\nNot mountable."
+goto mm_Console_Options
+end
+if findnot "D:/partitionA.bin" NULL
+imgumount
+echo "D:/partitionA.bin\nFile is missing."
+goto mm_Console_Options
+end
+if not find "1:/title/00040138/00000002/content/*.app" O3DS_NATIVE_FIRM
+set OFFSET "3278"
+goto STANDARD_STUCK_SCENARIO
+end
+@SHAGET_O3DS_NATIVE_FIRM_SHA
+set O3DS_NATIVE_FIRM_SHA ""
+if not shaget "$[O3DS_NATIVE_FIRM]" O3DS_NATIVE_FIRM_SHA
+goto SHAGET_O3DS_NATIVE_FIRM_SHA
+end
+if chk "$[O3DS_NATIVE_FIRM_SHA]" "6B20DCF8BA8D4CD522EF6DA1D3F28C0199090B1FCBE5B707439612035574B3B4" # Ver. 2.1.0-3  |  v3553 (3.30.1)
+set OFFSET "320C"
+elif chk "$[O3DS_NATIVE_FIRM_SHA]" "6CA05CDBA41976F516D2D8DC54EC18B8163F480DD4ED5D45E458BDEE7A369419" # Ver. 3.0.0-5  |  v5647 (5.32.15)
+set OFFSET "320C"
+elif chk "$[O3DS_NATIVE_FIRM_SHA]" "2A1346E9D7BE09538146F1E0F80D9F08DF98F8A68E58D2A4938BE720DFEEA965" # Ver. 4.0.0-7  |  v6677 (6.33.5)
+set OFFSET "3230"
+elif chk "$[O3DS_NATIVE_FIRM_SHA]" "C22AAF690AF58112522BB45C6D7CD0F24FC78C6F877D2FC491D2FFF864EA3961" # Ver. 4.2.0-9  |  v7712 (7.34.0)
+set OFFSET "3230"
+elif chk "$[O3DS_NATIVE_FIRM_SHA]" "204D968961214D985C73B8D6311A315BECD6BD44A6EBD01F94A6F6602DA82045" # Ver. 5.0.0-11 |  v8758 (8.35.6)
+set OFFSET "323C"
+elif chk "$[O3DS_NATIVE_FIRM_SHA]" "FBEA45B5C27425FB673102BB5191021B742D3C17213277764A43B8F333F77129" # Ver. 5.1.0-11 |  v9792 (9.36.0)
+set OFFSET "323C"
+elif chk "$[O3DS_NATIVE_FIRM_SHA]" "8526E2D5EF4C94020AD8CCC7322C7213C7A29903B690C9183C84F4B804D9270A" # Ver. 6.0.0-11 | v10833 (10.37.1)
+set OFFSET "323C"
+elif chk "$[O3DS_NATIVE_FIRM_SHA]" "B8F437305BF021E32E80BC32B4CE92DA52DFB4B5069880567615FE5291DBDE7A" # Ver. 6.3.0-12 | v11872 (11.38.0)
+set OFFSET "323C"
+elif chk "$[O3DS_NATIVE_FIRM_SHA]" "EAB12F31A46E556F215AF54A6F2D477457A7E58BC6A2EE0671C6A52B5B233CB1" # Ver. 7.0.0-13 | v12916 (12.39.4)
+set OFFSET "3248"
+elif chk "$[O3DS_NATIVE_FIRM_SHA]" "BDC5B608FC580011D905C9D270BBCEC350EACDB36EDABA89DB9D10B4D9F1523E" # Ver. 7.2.0-17 | v13956 (13.40.4)
+set OFFSET "3248"
+else
+set OFFSET "3278"
+end
+@STANDARD_STUCK_SCENARIO
+set O3DS_NATIVE_FIRM ""
+set O3DS_NATIVE_FIRM_SHA ""
+set HEXVALUE ""
+if fget "D:/partitionA.bin@$[OFFSET]:01" HEXVALUE
+end
+if chk "$[HEXVALUE]" "00"
+elif chk "$[HEXVALUE]" "01"
+set HEXVALUE ""
+set OFFSET ""
+imgumount
+echo "1:/data/<ID0>/sysdata/00010017/00000000\nProfile already set."
+goto MENU
+else
+imgumount
+echo "1:/data/<ID0>/sysdata/00010017/00000000\n \nConfiguration savegame.\nUnexpected value at offset 0x$[OFFSET].\nD:/partitionA.bin\n \nExpected: 00 -or- 01\nActual: $[HEXVALUE]"
+set HEXVALUE ""
+set OFFSET ""
+goto mm_Console_Options
+end
+if not allow "D:/partitionA.bin"
+set HEXVALUE ""
+set OFFSET ""
+imgumount
+echo "Permissions denied. Aborting!"
+goto mm_Console_Options
+else
+fset "D:/partitionA.bin@$[OFFSET]" "01"
+set HEXVALUE ""
+imgumount
+fixcmac -o -s "1:/data/$[SYSID0]/sysdata/00010017/00000000"
+echo "1:/data/<ID0>/sysdata/00010017/00000000\nBypass profile setup success."
+end
+if not chk "$[OFFSET]" "320C" # 2.1.0 specific.
+set OFFSET ""
+goto mm_Console_Options
+end
+set OFFSET ""
+if findnot "1:/boot.firm" NULL
+inject -o -s -n "$[CURRDIR]/Gm9FullScript.gm9@4DE00:35A00" "1:/boot.firm@000" 
+end
+
+@mm_Miscellaneous_Options
+
+set PREVIEW_MODE "GM9FULLSCRIPT \nMisellaneous Options"
+
+labelsel -s -o "Select an option" misc_*
+goto beginning
+
+
+
+@misc_Reset_NVRAM_Image
+label -o -s -k "Create a new 'nvram.bin' image?" NVRAM_*
+goto NVRAM_B_Return_to_Menu_Options
+@NVRAM_A_NVRAM_Reset_Instructions
+goto CHOICE_Reset_NVRAM_image
+@NVRAM_B_Return_to_Menu_Options
+goto mm_Miscellaneous_Options
+@NVRAM_START_Continue
+imgumount
+rm -o -s "9:/nvram.bin"
+cp -n "M:/nvram.mem" "9:/nvram.bin"
+fill -n "9:/nvram.bin@300:1FB00" "FF"
+fill -n "9:/nvram.bin@1FE00:200" "00"
+fset "9:/nvram.bin@1FE00" "05"
+fset "9:/nvram.bin@1FE02" "0F0101"
+fset "9:/nvram.bin@1FE64" "01FC"
+fset "9:/nvram.bin@1FE72" "6F9D01013F"
+fset "9:/nvram.bin@1FEFE" "CBB6"
+fset "9:/nvram.bin@1FF00" "05"
+fset "9:/nvram.bin@1FF02" "0F0101"
+fset "9:/nvram.bin@1FF64" "01FC"
+fset "9:/nvram.bin@1FF72" "6F9D01013F"
+fset "9:/nvram.bin@1FFFE" "CBB6"
+if findnot "0:/3ds" NULL
+mkdir "0:/3ds"
+end
+if findnot "0:/3ds/3DS_NVRAMtool" NULL
+mkdir "0:/3ds/3DS_NVRAMtool"
+end
+set NVRAM_BIN ""
+findnot "0:/3ds/3DS_NVRAMtool/$[DATESTAMP]_$[SERIAL]_nvram_???.bin" NVRAM_BIN
+cp -o -s -n "M:/nvram.mem" "$[NVRAM_BIN]"
+echo "Backup image created succesfully:\n$[NVRAM_BIN]"
+set NVRAM_BIN ""
+if find "0:/3ds/3DS_NVRAMtool/nvram.bin" NULL
+set NVRAM_BIN ""
+findnot "0:/3ds/3DS_NVRAMtool/nvram_???.bin" NVRAM_BIN
+mv -o -s -n "0:/3ds/3DS_NVRAMtool/nvram.bin" "$[NVRAM_BIN]"
+set NVRAM_BIN ""
+end
+mv -o -s -n "9:/nvram.bin" "0:/3ds/3DS_NVRAMtool/nvram.bin"
+echo "Reformatted image created succesfully:\n0:/3ds/3DS_NVRAMtool/nvram.bin"
+goto mm_Miscellaneous_Options
+
+@mm_Exit
