@@ -470,7 +470,7 @@ set PREVIEW_MODE "Operation cancelled."
 echo "Operation cancelled."
 goto mm_NAND_Management_Options
 @BEGIN_EMMC_TEST
-set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nCheck EMMC Status \n \nDO NOT TURN OFF THE CONSOLE NOW"
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nCheck EMMC Status \n \nPlease do not turn off the power now."
 set NAND_EMMC_SHA ""
 set NAND_SDMC_SHA ""
 set LITMUS_FILE ""
@@ -975,12 +975,11 @@ echo "Security checks failed! \nProvided .sha file could not be verified! \nAbor
 
 goto mm_Boot9Strap_Options
 
-end 
-
+end
 if chk $[ONTYPE] "N3DS"
 if not sha S:/sector0x96.bin 82F2730D2C2DA3F30165F987FDCCAC5CBAB24B4E5F65C981CD7BE6F438E6D9D3
 if not find 0:/boot9strap/secret_sector.bin SECTOR
-echo "Security checks failed! \nSecret sector is corrupted. \nOriginal secret_sector not found in\n0:/boot9strap folder! \nAborting to avoid a brick!"
+echo "Security checks failed! \nSector0x96 is corrupted. \nOriginal secret_sector not found in\n0:/boot9strap folder! \nAborting to avoid a brick!"
 goto mm_Boot9Strap_Options
 end
 end
@@ -1043,6 +1042,7 @@ else
 goto b9sinstall_well
 end
 
+
 @b9sinstall_sector_fail2
 if chk $[ONTYPE] "N3DS"
 goto b9sinstall_sector_em
@@ -1053,27 +1053,27 @@ end
 @b9sinstall_emergency_routine
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \n \nDO NOT TURN OFF THE CONSOLE NOW"
 if not cp -w -n 0:/boot9strap/firm0_backup.bin S:/firm0.bin
-echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nYou have to restore the FIRM partitions manually! \nCheck for firm0 and firm1 backup files into the \n"0:/boot9strap" folder and inject them to \nFIRM0 and FIRM1. \nThe script failed to do these steps because of an \nunknown error."
+echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nYou have to restore the FIRM partitions manually! \nCheck for firm0 and firm1 backup files into the \n0:/boot9strap folder and inject them to \nFIRM0 and FIRM1. \nThe script failed to do \nthese steps because of an \nunknown error."
 goto mm_Exit
 end
 if not cp -w -n 0:/boot9strap/firm1_backup.bin S:/firm1.bin
-echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nTo save your console, \nyou have to restore the FIRM partitions manually! \nCheck for firm0 and firm1 backup files into the \n"0:/boot9strap" folder and inject them to \nFIRM0 and FIRM1. \nThe script failed to do these steps because of an \nunknown error."
+echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nYou have to restore the FIRM partitions manually! \nCheck for firm0 and firm1 backup files into the \n0:/boot9strap folder and inject them to \nFIRM0 and FIRM1. \nThe script failed to do \nthese steps because of an \nunknown error."
 goto mm_Exit
 end
-echo "Boot9Strap Install failed! \nEmercency routines execution success! \nNewly installed FIRM partitions \ncould not be verified! \nScript entered emercency mode \and automatically restored \nthe FIRM partitions backup. \nConsole saved from a brick due to possibly corrupted \nFIRM partitions. \nThis should not have happened :/."
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap"
+echo "Boot9Strap Install failed! \nEmercency routines execution success! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should have happened :/. \nScript entered emercency mode \and automatically restored \nthe FIRM partitions backup \nto avoid a brick due to corrupted \nFIRM0 and FIRM1."
 goto mm_Boot9Strap_Options
 
 @b9sinstall_sector_em
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \n \nDO NOT TURN OFF THE CONSOLE NOW"
 fdummy $[GM9OUT]/instructions.txt CFF
-set $[GM9OUT]/instructions.txt INST
-dumptxt -p $[INST] "Reminder: Turning off or rebooting the console before completing these steps = brick"
+set INST "$[GM9OUT]/instructions.txt"
+dumptxt -p $[INST] "Reminder: Turning off/rebooting the console before completing steps here = BRICK GUARANTEED"
 dumptxt -p $[INST] "Using a corrupted NAND backup = brick"
 dumptxt -p $[INST] "Doing these steps wrongly = brick"
 dumptxt -p $[INST] "Be careful"
 dumptxt -p $[INST] "Instructions:"
-dumptxt -p $[INST] "If you need to unmount your sd, DO NOT turn off your console, press R+B and then remove the SD card, you can reinsert it whenever you want."
+dumptxt -p $[INST] "If you need to unmount your SD, DO NOT turn off your console, press R+B and then remove the SD card, you can reinsert it whenever you want."
 dumptxt -p $[INST] "0 Plug in the AC charger and DO NOT unplug it until the end of the process."
 dumptxt -p $[INST] "1 Get your console's NAND backup"
 dumptxt -p $[INST] "2 Select it and press Y to copy it"
@@ -1087,7 +1087,7 @@ dumptxt -p $[INST] "8 Press START to reboot the console"
 dumptxt -p $[INST] "9 If everything was successfull, you will have booted into the home menu"
 dumptxt -p $[INST] "10 Note that, if the NAND backup didn't have Boot9Strap, the console won't have Boot9Strap"
 echo "Boot9Strap Install failed!!! \nThis really should not have happenend :/."
-echo "If you turn off or reboot the console, \nyou'll BRICK, so DO NOT."
+echo "If you turn off or reboot the console \nbefore completing the instructions \nyou'll BRICK GUARANTEED \n so DO NOT."
 echo "A guide on how to \nsave the console has been written to \n$[INST]"
 echo "Follow the guide very carefully"
 goto mm_Exit
@@ -1149,28 +1149,30 @@ goto mm_Boot9Strap_Options
 end
 
 @b9s_Uninstall_Boot9Strap
-if not ask "WARNING: \nby proceeding, you will uninstall the Boot9strap \nfrom your console reverting it to stock. \nMake sure you ran the Safety test to ensure \nthat your console won't brick after running this \nProceed?"
+if not ask "WARNING: \nby proceeding, you will completely uninstall \nthe Boot9strap \nfrom your console reverting it to stock. \nMake sure you ran the Safety test to ensure \nthat your console won't \nbrick after running this. \nProceed?"
 echo "User aborted"
 goto mm_Boot9Strap_Options
 end
-if not chk $[HAX] "ntrboot"
-if not ask "WARNING!!! \nNtrboot not detected. \nIf you brick your device, you won't be able \nto restore it without \nntrboot or a hardmod! \nProceed anyway?"
+if chk $[HAX] "ntrboot"
+goto ntrbootok
+end
+if not ask "WARNING!!! \nNtrboot not detected. \nIf you brick your device \nyou will be able \nto restore it only with \nntrboot or a hardmod! \nProceed anyway?"
 echo "User aborted"
 goto mm_Boot9Strap_Options
 end
-end
+@ntrbootok
 if not chk $[HAX] "N3DS"
 goto unistall_hax_old
 end
 if chk $[ONTYPE] "N3DS"
 if not sha S:/sector0x96.bin 82F2730D2C2DA3F30165F987FDCCAC5CBAB24B4E5F65C981CD7BE6F438E6D9D3
-if not find 0:/boot9strap/secret_sector.bin SECTOR
-echo "Security checks failed! \nSecret sector is corrupted. \nYou have to provide it in the \n"0:/boot9strap" folder, aborting!"
-end
-cp -w S:/sector0x96.bin $[SECTOR]
-cp -w $[SECTOR] S:/sector0x96.bin
+if not sha 0:/boot9strap/secret_sector.bin 82F2730D2C2DA3F30165F987FDCCAC5CBAB24B4E5F65C981CD7BE6F438E6D9D3
+echo "Security checks failed! \nSecret sector is corrupted. \nOriginal secret_sector.bin \nnot found in \n0:/boot9strap folder.\n Aborting!"
+goto mm_Boot9Strap_Options
 end
 end
+end
+set SECTOR "0:/boot9strap/secret_sector.bin"
 if not find 1:/title/00040138/20000002/content/????????.app NATIVENEW
 echo "NATIVE_FIRM not found! \nAborting."
 goto mm_Boot9Strap_Options
@@ -1184,6 +1186,7 @@ imgumount
 goto un_hax
 
 @unistall_hax_old
+set SECTOR "0:/boot9strap/secret_sector.bin"
 if not find 1:/title/00040138/00000002/content/????????.app NATIVEOLD
 echo "NATIVE_FIRM not found! \nAborting."
 goto mm_Boot9Strap_Options
@@ -1208,19 +1211,25 @@ end
 rm -s -o 1:/boot.firm
 rm -s -o 1:/gm9
 rm -s -o 1:/rw/luma
+if not find $[SECTOR]
+cp -w -n S:/sector0x96.bin $[SECTOR]
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nUninstall Boot9Strap \n \nPlease do not turn off the console now"
 if not cp -w -n $[NATIVE_FIRM] S:/firm0.bin
-echo "Boot9Strap unistall failed! \nPlease try again."
+echo "Boot9Strap uninstall failed! \nPlease try again."
 goto mm_Boot9Strap_Options
 end
 if not cp -w -n $[NATIVE_FIRM] S:/firm1.bin
-echo "Boot9Strap unistall failed! \nPlease try again."
+echo "Boot9Strap uninstall failed! \nPlease try again."
 goto mm_Boot9Strap_Options
 end
 shaget S:/nand.bin@57FFE00:200 PRE_STAGE2_HASH
 if not sha S:/nand.bin@B800000:200 $[PRE_STAGE2_HASH]
 fget S:/nand.bin@57FFE00:1 PRE_STAGE2
 fill S:/nand.bin@B7FFE00:89C00 $[PRE_STAGE2]
+end
+if not cp -w -n $[SECTOR] S:/sector0x96.bin
+echo "Boot9Strap uninstall failed! \nPlease try again."
+goto mm_Boot9Strap_Options
 end
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nUninstall Boot9Strap"
 echo "Boot9Strap uninstall success!"
@@ -1251,7 +1260,7 @@ echo "CIA build success!"
 goto mm_Cartridge_Options
 
 @cart_Dump_Cartridge_to_.3ds
-set PREVIEW_MODE "GM9FULLSCRIPT \nCartridge Optionn \nDump Cartridge to .3ds"
+set PREVIEW_MODE "GM9FULLSCRIPT \nCartridge Options \nDump Cartridge to .3ds"
 if not ask "Dump cartridge game file to .3ds to \n$[GM9OUT]?"
 echo "User aborted"
 goto mm_Cartridge_Options
@@ -3966,7 +3975,7 @@ end
 @redpostset
 cp -s -o 1:/data/$[SYSID0]/sysdata/00010038/00000000 9:/nnid
 cp -s -o 1:/private/movable.sed 9:/movable.sed
-mv -s -o 1:/data/$[SYSID0]/sysdata/0t0010038/00000000 1:/data/$[SYSID0]/sysdata/00010038/10000000
+mv -s -o 1:/data/$[SYSID0]/sysdata/00010038/00000000 1:/data/$[SYSID0]/sysdata/00010038/10000000
 if not fset 1:/private/movable.sed@119 $[GREENPOST]
 goto formatfail
 end
@@ -3987,9 +3996,8 @@ echo "Console format failed!"
 goto mm_Console_Options
 
 
-
 @cons_Show_Parental_Controls_PIN
- set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nShow Parental Controls PIN"
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nShow Parental Controls PIN"
 if findnot "1:/data/$[SYSID0]/sysdata/00010017/00000000" NULL
 echo "1:/data/<ID0>/sysdata/00010017/00000000\nFile is missing."
 goto mm_Console_Options
@@ -4119,6 +4127,7 @@ goto mm_Console_Options
 end
 
 @cons_Movable.sed_KeyY_Fix
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nMovable.sed KeyY Fix"
 echo "Info about this function(1/2):\nIf the entire CTRNAND was erased and then restored \nwith CTRTransfer, there's a chance your library of \ngames may no longer be recognizable by the 2DS/3DS.\nThis is due to a mismatch in encryption between the\n'KeyY' in the 'movable.sed' and the '<ID0>' subfolder \nfound in the 'Nintendo 3DS' folder. It is possible to  \nrestore the original 'KeyY' tied to that '<ID0>'\nsubfolder as long as the user profile with those games\ndid not come from a 'System Transfer'"
 echo "Info about this function (2/2):\nThis function fixes only fix 'KeyY' changed from 'Format System Memory'.\nTitles not shown on 'HOME Menu' due to missing tickets \ndo not fall under this category. To check for this,    \nlook for greyed out X markings at: System Settings > \nData Management > Nintendo 3DS > Software. To restore \nlegit tickets of eShop purchases, use 'FBI' to install \nthem if they were previously backed up. For nonlegit \ntitles, use 'faketik' to install spoofed tickets."
 if not ask "Continue with finding the correct 'KeyY'?"
@@ -5680,11 +5689,11 @@ goto mm_Console_Options
 @DSIWARE_Convert_CIAs_(legit_to_standard)
 echo "This converts DSiWare games that were dumped as legit\nCIAs into standard CIAs. Use this if FBI can't install \nthem, or they're not available to redownload at eShop." 
 if not dirsel "Select the 'dsiware' folder." "$[GM9OUT]" TWLN_DIR
-goto CHOICE_DSiWare_CIAs_&_Saves
+goto cons_DSiWare_CIAs_&_Saves
 end
 if not find "$[TWLN_DIR]/*.cia" NULL
 echo "$[TWLN_DIR]\nNo CIAs found."
-goto CHOICE_DSiWare_CIAs_&_Saves
+goto cons_DSiWare_CIAs_&_Saves
 end
 findnot "$[GM9OUT]/dummy_???.bin" LITMUS_FILE
 fdummy "$[LITMUS_FILE]" "C800000"
@@ -5899,8 +5908,6 @@ set OFFSET ""
 goto mm_Console_Options
 end
 set OFFSET ""
-if findnot "1:/boot.firm" NULL
-inject -o -s -n "$[CURRDIR]/Gm9FullScript.gm9@4DE00:35A00" "1:/boot.firm@000" 
 end
 
 @cons_Rebuild_3DS_Database
@@ -5908,33 +5915,37 @@ set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nRebuild 3DS Database"
 labelsel -o -s "Rebuild 3DS Database Options\nPress (B) to return to Menu Options." DATABASE_OPTIONS_*
 goto mm_Console_Options
 @DATABASE_OPTIONS_(A)_Quick
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nRebuild 3DS Database \nQuick"
 if not allow -a "0:/Nintendo 3DS"
 echo "Permissions denied! Aborting."
-goto CHOICE_Rebuild_3DS_Database
+goto cons_Rebuild_3DS_Database
 end
 echo "Option (A): Rebuild 3DS Database (Quick)\nThis fixes the SD card's 'title.db' and 'import.db' by\ngenerating stripped down CIAs. The 'title' folder is\nmoved to 'title_<ID0>', and the 'ticket.db' in CTRNAND\nis backed up. After installing the dummy CIAs, the\n'ticket.db' is restored to maintain legit tickets for\nNintendo eShop purchases and updates. The folder\n`cias (dummy)_<ID0>' is deleted to prevent accidental\nreinstallations. Titles in 'title_<ID0>' are moved"
 echo "Back to 'title' with their .cmd CMACs corrected. This\nmethod is the fastest of the three, but the sizes and\nblocks in 'FBI' & 'System Settings > Data Management`\nwill show up wrong (very small). Using this method is\nreversibly by restoring the files in 'dbs_cmd_<ID0>';\ndelete the .db and .cmd's in 'title' before replacing.\nNOTE: Fake DLCs are the slowest to create and install.
 labelsel -o -s "Rebuild 3DS Database (Quick)\nPress (B) to return to Database Options." DATABASE_QUICK_*
-goto CHOICE_Rebuild_3DS_Database
+goto cons_Rebuild_3DS_Database
 @DATABASE_OPTIONS_(B)_Full
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nRebuild 3DS Database \nFull"
 if not allow -a "0:/Nintendo 3DS"
 echo "[0:] SDCARD ()/Nintendo 3DS\nAccess denied."
-goto CHOICE_Rebuild_3DS_Database
+goto cons_Rebuild_3DS_Database
 end
 echo "Option (B): Rebuild 3DS Database (Full)\nThis fixes the SD card's 'title.db' and 'import.db' by\nbacking up the 'ticket.db' from CTRNAND, CIAs for all\nthe 3DS titles, and their decrypted saves. Titles that\nare successfully made into CIAs are then deleted from\nthe 'title' folder. This is to maintain card storage\nwithout running out of free space. External files and\ntitles not made into CIAs are moved to 'title_<ID0>'."
 echo "After installing the CIAs from 'cias (proper)_<ID0>',\nthe 'ticket.db' is restored to maintain legit tickets\nfor Nintendo eShop purchases and updates. Saves are\nindividually restored by verifying their presences for\neach installed title (ie, not "mass dumped"). 4 GB of\nfree space is required. NOTE: To prevent unintentional\nmisuse, the user is tasked in removing 'import.db' &\n'title.db' from '0:/Nintendo 3DS/<ID0>/<ID1>/dbs'."
 labelsel -o -s "Rebuild 3DS Database (Full)\nPress (B) to return to Database Options." DATABASE_FULL_*
-goto CHOICE_Rebuild_3DS_Database 
+goto cons_Rebuild_3DS_Database 
 @DATABASE_OPTIONS_(C)_Manual
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nRebuild 3DS Database \nManual"
 if not allow -a "0:/Nintendo 3DS"
 echo "Permissions denied! Aborting."
-goto CHOICE_Rebuild_3DS_Database
+goto cons_Rebuild_3DS_Database
 end
 echo "Option (C): Rebuild 3DS Database (Manual)\nThis fixes the SD card's 'title.db' and 'import.db' by\nbacking up the 'ticket.db' from CTRNAND, extracting\nthe decrypted saves for game titles, and recording the\nTitleIDs for everything in the 'title' folder. Titles\nare sorted by storing them in 'title_<ID0>' and then\nmoving them back to 'title'. This method is suited for\nthose who already have their collection previously\nbacked up as CIAs or don't have the free space to use"
 echo "Option (B). The user's responsibility is to manually\nprovide or produce CIAs for all titles found in '0:/\nNintendo 3DS/<ID0>/<ID1>/title'. After installing the\nCIAs, the 'ticket.db' is restored to maintain legit\ntickets for Nintendo eShop purchases & updates. Saves\nare individually restored by verifying their presences\nfor each installed title (ie, not "mass dump")."
 labelsel -o -s "Rebuild 3DS Database (Manual)\nPress (B) to return to Database Options." DATABASE_MANUAL_*
-goto CHOICE_Rebuild_3DS_Database
+goto cons_Rebuild_3DS_Database
 @DATABASE_QUICK_(1a)_Generate_Dummy_CIAs
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nRebuild 3DS Database \nQuick \nGenerate Dummy CIAs"
 echo "~ INSTRUCTIONS ~ Rebuild 3DS Database (Quick) ~\n1. Plug in the AC charger to keep the system charged.\n2. Set the volume slider to lowest screen brightness.\n3. Wait for 'Storage test success.' and press (A).\n4. Fold it closed if system has a clam shell design.\n5. DO NOT PRESS (B) AT ANY MOMENT! This interrupts the\nCIA building process. The system will shut off when\ndone. If an error occurs, see 'missing_titles.txt'.\n6. FBI > 'cias (dummy)_<ID0>' > 'Install all CIAs'\n7. Do not remove the 'cias (dummy)_<ID0>' folder.\n8. Run the '(2a) Restore Setup' option to complete.\n9. faketik - Restore tickets for nonlegit titles.\n10. Cthulhu - Unwrap all HOME Menu gift icons.\n11. Checkpoint/JKSM - Backup all saves + extdata. This\nbypasses anti-cheat save protection for certain games."
 if not ask "Continue with generating dummy CIAs?\nPress (B) to cancel attempt."
 goto DATABASE_OPTIONS_(A)_Quick
@@ -6399,6 +6410,7 @@ end
 end
 goto FIND_NEXT_3DS_TITLE_REVERSE
 @DATABASE_FULL_(1b)_Backup_CIAs_&_Saves
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nRebuild 3DS Database \nFull \nBackup CIAs and Saves"
 echo "~ INSTRUCTIONS ~ Rebuild 3DS Database (Full) ~\n1. Plug in the AC charger to keep the system charged.\n2. Set the volume slider to lowest screen brightness.\n3. Wait for 'Storage test success.' and press (A).\n4. Fold it closed if system has a clam shell design.\n5. DO NOT PRESS (B) AT ANY MOMENT! This interrupts the\nCIA & SAV processes. The system will shut off when\ndone. If an error occurs, see 'missing_titles.txt'.\n6. FBI > 'cias (proper)_<ID0>' > 'Install all CIAs' or\n'Install and delete all CIAs' for limited SD space.\n7. Run the '(2b) Restore Saves' option to complete.\n8. faketik - Restore tickets for nonlegit titles.\n9. Cthulhu - Unwrap all HOME Menu software gift icons.\n10. Checkpoint/JKSM - Backup all saves + extdata. This\nbypasses anti-cheat save protection for certain games."
 if not ask "Continue with backing up CIAs and saves?\nPress (B) to cancel attempt."
 goto DATABASE_OPTIONS_(B)_Full
@@ -6608,6 +6620,7 @@ end
 rm -o -s "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]/$[TID_LOW]"
 goto FIND_NEXT_3DS_TITLE_FULL
 @DATABASE_FULL_(2b)_Restore_Saves
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nRebuild 3DS Database \nFull \nRestore Saves"
 if not ask "Continue with restoring saves?\nPress (B) to cancel attempt."
 goto DATABASE_OPTIONS_(B)_Full
 end
@@ -6693,6 +6706,7 @@ mv -o -s -n -w "$[GM9OUT]/saves_$[SYSID0]/[A] SYSNAND SD (decrypted)/title/$[TID
 goto FIND_NEXT_3DS_SAVE_FULL
 end
 @DATABASE_MANUAL_(1c)_Backup_Saves
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nRebuild 3DS Database \nManual \nBackup Saves"
 echo "~ INSTRUCTIONS ~ Rebuild 3DS Database (Manual) ~\n1. Plug in the AC charger to keep the system charged.\n2. Set the volume slider to lowest screen brightness.\n3. Wait for 'Storage test success.' and press (A).\n4. After the saves are extracted, look for the log\ndump file called 'installed_titles_list.txt'.\n5. Dump/supply/collect all the CIAs as per titleIDs.\nDO NOT REMOVE OR ADD ADDITIONAL TITLES! The CIAs\nmust match 1-to-1 with those in the 'Nintendo 3DS'.\n6. FBI - Install the CIAs (no more, no less).\n7. Run the '(2c) Restore Saves' option to complete.\n8. faketik - Restore tickets for nonlegit titles.\n9. Cthulhu - Unwrap all HOME Menu software gift icons.\n10. Checkpoint/JKSM - Backup all saves + extdata. This\nbypasses anti-cheat save protection for certain games."
 if not ask "Continue with backing up saves?\nPress (B) to cancel attempt."
 goto DATABASE_OPTIONS_(C)_Manual
@@ -6986,6 +7000,7 @@ rm -o -s "$[GM9OUT]/00000000"
 mv -o -s -n -w "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title/$[TID_HIGH]/$[TID_LOW]" "0:/Nintendo 3DS/$[SYSID0]/$[SYSID1]/title_$[SYSID0]/$[TID_HIGH]/$[TID_LOW]" 
 goto FIND_NEXT_3DS_TITLE_MANUAL
 @DATABASE_MANUAL_(2c)_Restore_Saves
+set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nRebuild 3DS Database \nManual \nRestore Saves"
 if not ask "Continue with restoring saves?\nPress (B) to cancel attempt."
 goto DATABASE_OPTIONS_(C)_Manual
 end
