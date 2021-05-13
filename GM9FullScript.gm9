@@ -3,6 +3,9 @@ if chk $[RDTYPE] "devkit"
 echo "Console is a developer unit. \nScript is intended to run on stock units only. \nAborting."
 goto mm_Exit
 end
+if chk $[HAX] "a9lh"
+echo "Warning: \nArm9LoaderHax detected. \nSome functions in this script may not work as expected."
+end
 if chk $[GM9VER] "v2.0.0"
 goto beginning 
 end
@@ -45,15 +48,15 @@ end
 goto beginning
 
 @gm9ver
-echo "GodMode9 1.9.1 or higher is required. For safety reasons,\nif the running GodMode9 version is lower than 1.9.1, \nthe script will prevent himself from running \nto avoid unexptected errors due to missing commands. \nPlease download the latest GodMode9 version to use this script."
-echo "HOW TO UPDATE GODMODE9: \nDownload the latest GodMode9 version at \nhttps://github.com/d0k3/GodMode9/releases/latest \nOpen the archive and extract \nthe gm9 folder \nto the SDCARD root, replacing existing files. \nEntre folder Luma/payloads on SDCARD and extract here the \nGodMode9.firm file. \nInsert the SDCARD into the console and boot up GodMode9. \nYou won't see this error message anymore."
+echo "GodMode9 1.9.1 or higher is required. For safety reasons,\nif the running GodMode9 version is lower than 1.9.1, \nthe script will prevent himself from running \nto avoid unexptected errors \ndue to missing commands. \nPlease download the latest GodMode9 \nversion to use this script."
+echo "HOW TO UPDATE GODMODE9: \nDownload the latest GodMode9 version at \nhttps://github.com/d0k3/GodMode9/releases/latest \nOpen the archive and extract \nthe gm9 folder \nto the SDCARD root \nreplacing existing files. \nEntre folder Luma/payloads on SDCARD and extract here the \nGodMode9.firm file. \nInsert the SDCARD into the console \nand boot up GodMode9. \nYou won't see this error message anymore."
 goto mm_Exit
 
 @beginning
 
 set PREVIEW_MODE "GM9FULLSCRIPT"
 labelsel -s "Select an option." mm_*
-goto bebinning
+goto beginning
 
 @mm_NAND_Management_Options
 
@@ -185,7 +188,7 @@ echo "Permissions denied. Aborting!"
 goto a_Restore_Options
 end
 imgmount $[BACK]
-set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nFull sysNAND Restore \nPlease do not turn off the console"
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nFull sysNAND Restore \n \nPlease do not turn off the console"
 if not inject -n I:/nand_minsize.bin S:/nand.bin
 set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nFull sysNAND Restore"
 imgumount
@@ -298,31 +301,27 @@ goto mm_NAND_Management_Options
 
 end
 
-if not ask "WARNING: \nYou are going to copy your emuNAND content to sysNAND. \nNEVER use this if emuNAND is not perfectly fine! \nProceed?"
+if not ask "WARNING: \nYou are going to copy your emuNAND content to sysNAND.\nProceed?"
 echo "User aborted."
 goto mm_NAND_Management_Options
 end
-if not find E:/nand_minsize.bin EMU
-echo "EmuNAND not found. Aborting!"
+if not allow S:/ctrnand_full.bin
+echo "Permissions denied! Aborting."
 goto mm_NAND_Management_Options
 end
-if not verify E:/nand_minsize.bin
-echo "EmuNAND verification failed! \nAborting to avoid a brick"
-goto mm_NAND_Management_Options
-end
-if not allow S:/nand.bin
-echo "Permissions denied. Aborting!"
-goto mm_NAND_Management_Options
-end
-set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nTransfer emuNAND to sysNAND \nPlease do not turn off the console"
-if not inject -n E:/nand_minsize.bin S:/nand.bin
-set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nTransfer emuNAND to sysNAND"
+if not cp -w -n E:/ctrnand_full.bin S:/ctrnand_full.bin
 echo "Transfer failed!"
 goto mm_NAND_Management_Options
 end
-set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nTransfer emuNAND to sysNAND"
-echo "Transfer success!"
+if not cp -w -n E:/twln.bin S:/twln.bin
+echo "Transfer failed!"
 goto mm_NAND_Management_Options
+end
+if not cp -w -n E:/twlp.bin S:/twlp.bin
+echo "Transfer failed!"
+goto mm_NAND_Management_Options
+end
+rm -o -s 1:/data/$[SYSID0]/sysdata/00010011/00000000
 
 @a_Check_EMMC_Status
 set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nCheck EMMC Status"
@@ -471,7 +470,7 @@ set PREVIEW_MODE "Operation cancelled."
 echo "Operation cancelled."
 goto mm_NAND_Management_Options
 @BEGIN_EMMC_TEST
-set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nCheck EMMC Status \n \nDO NOT TURN OFF THE POWER NOW"
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nCheck EMMC Status \n \nDO NOT TURN OFF THE CONSOLE NOW"
 set NAND_EMMC_SHA ""
 set NAND_SDMC_SHA ""
 set LITMUS_FILE ""
@@ -994,44 +993,38 @@ if not cp -w -n S:/firm0.bin 0:/boot9strap/firm0_backup.bin
 echo "FIRM partitions backup failed! Aborting!"
 goto mm_Boot9Strap_Options
 end
-shaget 0:/boot9strap/firm0_backup.bin B9SBACKSHA
-shaget S:/firm0.bin FIRM0SHA
-if not chk $[FIRM0SHA] [B9SBACKSHA]
-echo "FIRM partitions backup could not be verified! \nAborting!"
-goto mm_Boot9Strap_Options
-end
 if not cp -w -n S:/firm1.bin 0:/boot9strap/firm1_backup.bin
 echo "FIRM partitions backup failed! Aborting!"
 goto mm_Boot9Strap_Options
 end
-shaget 0:/boot9strap/firm1backup.bin B9SBACKSHA
-shaget S:/firm1.bin FIRM1SHA
-if not chk $[FIRM1SHA] [B9SBACKSHA]
-echo "FIRM partitions backup could not be verified! \nAborting!"
-goto mm_Boot9Strap_Options
-end
+set SECTOR 0:/boot9strap/secret_sector.bin
 if not find 0:/boot9strap/secret_sector.bin SECTOR
 cp -w S:/sector0x96.bin $[SECTOR]
 end
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \n \nPlease do not turn off the console now."
 if not cp -w -n $[BOOT9STRAP] S:/firm0.bin
 goto b9sinstall_emergency_routine
 end
 if not cp -w -n $[BOOT9STRAP] S:/firm1.bin
 goto b9sinstall_emergency_routine
 end
-if not cp -w -n $[SECTOR] S:/sector0x96.bin
-goto b9sinstall_sector_fail
-end
-@b9sinstall_good
 fset S:/firm0.bin@100 B6724531C448657A2A2EE306457E350A10D544B42859B0E5B0BED27534CCCC2A4D47EDEA60A7DD99939950A6357B1E35DFC7FAC773B7E12E7C1481234AF141B31CF08E9F62293AA6BAAE246C15095F8B78402A684D852C680549FA5B3F14D9E838A2FB9C09A15ABB40DCA25E40A3DDC1F58E79CEC901974363A946E99B4346E8
 fset S:/firm0.bin@180 A372B6CD55A707E1EAB9BEC0200B5BA0B661236A8708D704517F43C6C38EE9560111E1405E5E8ED356C49C4FF6823D1219AFAEEB3DF3C36B62BBA88FC15BA8648F9333FD9FC092B8146C3D908F73155D48BE89D72612E18E4AA8EB9B7FD2A5F7328C4ECBFB0083833CBD5C983A25CEB8B941CC68EB017CE87F5D793ACA09ACF7
 inject -n S:/firm0.bin@100:100 S:/firm1.bin@100
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap"
 if not sha S:/firm0.bin A7FB4D394743399DE16960D0675C1E7E85EFBBCE0988B1AE900DA0148C78310A
 goto b9sinstall_emergency_routine
 end
 if not sha S:/firm1.bin A7FB4D394743399DE16960D0675C1E7E85EFBBCE0988B1AE900DA0148C78310A
 goto b9sinstall_emergency_routine
 end
+if chk [ONTYPE] "N3DS"
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \n \nPlease do not turn off the console now"
+end
+if not cp -w -n $[SECTOR] S:/sector0x96.bin
+goto b9sinstall_sector_fail
+end
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap"
 if not sha S:/sector0x96.bin 82F2730D2C2DA3F30165F987FDCCAC5CBAB24B4E5F65C981CD7BE6F438E6D9D3
 goto b9sinstall_sector_fail2
 end
@@ -1042,12 +1035,13 @@ goto mm_Boot9Strap_Options
 
 @b9sinstall_sector_fail
 if chk $[ONTYPE] "O3DS"
-goto b9sinstall_good
+goto b9sinstall_well
 end
 if not sha S:/sector0x96.bin 82F2730D2C2DA3F30165F987FDCCAC5CBAB24B4E5F65C981CD7BE6F438E6D9D3
 goto b9sinstall_sector_em
 else
-goto b9sinstall_good
+goto b9sinstall_well
+end
 
 @b9sinstall_sector_fail2
 if chk $[ONTYPE] "N3DS"
@@ -1057,6 +1051,7 @@ goto b9sinstall_well
 end
 
 @b9sinstall_emergency_routine
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \n \nDO NOT TURN OFF THE CONSOLE NOW"
 if not cp -w -n 0:/boot9strap/firm0_backup.bin S:/firm0.bin
 echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nYou have to restore the FIRM partitions manually! \nCheck for firm0 and firm1 backup files into the \n"0:/boot9strap" folder and inject them to \nFIRM0 and FIRM1. \nThe script failed to do these steps because of an \nunknown error."
 goto mm_Exit
@@ -1066,9 +1061,11 @@ echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly 
 goto mm_Exit
 end
 echo "Boot9Strap Install failed! \nEmercency routines execution success! \nNewly installed FIRM partitions \ncould not be verified! \nScript entered emercency mode \and automatically restored \nthe FIRM partitions backup. \nConsole saved from a brick due to possibly corrupted \nFIRM partitions. \nThis should not have happened :/."
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap"
 goto mm_Boot9Strap_Options
 
 @b9sinstall_sector_em
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \n \nDO NOT TURN OFF THE CONSOLE NOW"
 fdummy $[GM9OUT]/instructions.txt CFF
 set $[GM9OUT]/instructions.txt INST
 dumptxt -p $[INST] "Reminder: Turning off or rebooting the console before completing these steps = brick"
@@ -1211,6 +1208,7 @@ end
 rm -s -o 1:/boot.firm
 rm -s -o 1:/gm9
 rm -s -o 1:/rw/luma
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nUninstall Boot9Strap \n \nPlease do not turn off the console now"
 if not cp -w -n $[NATIVE_FIRM] S:/firm0.bin
 echo "Boot9Strap unistall failed! \nPlease try again."
 goto mm_Boot9Strap_Options
@@ -1224,7 +1222,8 @@ if not sha S:/nand.bin@B800000:200 $[PRE_STAGE2_HASH]
 fget S:/nand.bin@57FFE00:1 PRE_STAGE2
 fill S:/nand.bin@B7FFE00:89C00 $[PRE_STAGE2]
 end
-echo "Boot9Strap unistall success!"
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nUninstall Boot9Strap"
+echo "Boot9Strap uninstall success!"
 goto mm_Boot9Strap_Options
 end
 
@@ -5904,13 +5903,13 @@ if findnot "1:/boot.firm" NULL
 inject -o -s -n "$[CURRDIR]/Gm9FullScript.gm9@4DE00:35A00" "1:/boot.firm@000" 
 end
 
-cons_Rebuild_3DS_Database
+@cons_Rebuild_3DS_Database
 set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nRebuild 3DS Database"
 labelsel -o -s "Rebuild 3DS Database Options\nPress (B) to return to Menu Options." DATABASE_OPTIONS_*
 goto mm_Console_Options
 @DATABASE_OPTIONS_(A)_Quick
 if not allow -a "0:/Nintendo 3DS"
-echo "[0:] SDCARD ()/Nintendo 3DS\nAccess denied."
+echo "Permissions denied! Aborting."
 goto CHOICE_Rebuild_3DS_Database
 end
 echo "Option (A): Rebuild 3DS Database (Quick)\nThis fixes the SD card's 'title.db' and 'import.db' by\ngenerating stripped down CIAs. The 'title' folder is\nmoved to 'title_<ID0>', and the 'ticket.db' in CTRNAND\nis backed up. After installing the dummy CIAs, the\n'ticket.db' is restored to maintain legit tickets for\nNintendo eShop purchases and updates. The folder\n`cias (dummy)_<ID0>' is deleted to prevent accidental\nreinstallations. Titles in 'title_<ID0>' are moved"
@@ -5928,7 +5927,7 @@ labelsel -o -s "Rebuild 3DS Database (Full)\nPress (B) to return to Database Opt
 goto CHOICE_Rebuild_3DS_Database 
 @DATABASE_OPTIONS_(C)_Manual
 if not allow -a "0:/Nintendo 3DS"
-echo "[0:] SDCARD ()/Nintendo 3DS\nAccess denied."
+echo "Permissions denied! Aborting."
 goto CHOICE_Rebuild_3DS_Database
 end
 echo "Option (C): Rebuild 3DS Database (Manual)\nThis fixes the SD card's 'title.db' and 'import.db' by\nbacking up the 'ticket.db' from CTRNAND, extracting\nthe decrypted saves for game titles, and recording the\nTitleIDs for everything in the 'title' folder. Titles\nare sorted by storing them in 'title_<ID0>' and then\nmoving them back to 'title'. This method is suited for\nthose who already have their collection previously\nbacked up as CIAs or don't have the free space to use"
@@ -5941,7 +5940,7 @@ if not ask "Continue with generating dummy CIAs?\nPress (B) to cancel attempt."
 goto DATABASE_OPTIONS_(A)_Quick
 end
 if not allow -a "A:/"
-echo "[A:] SYSNAND SD\nAccess denied."
+echo "Permissions denied! Aborting."
 goto DATABASE_OPTIONS_(A)_Quick
 end
 if findnot "0:/Nintendo 3DS" NULL
@@ -6241,7 +6240,7 @@ if not ask "Continue with finalizing restoration?\nPress (B) to cancel attempt."
 goto DATABASE_OPTIONS_(A)_Quick
 end
 if not allow "1:/dbs/ticket.db"
-echo "[1:] SYSNAND CTRNAND/dbs/ticket.db\nAccess denied."
+echo "Permissions denied! Aborting."
 goto DATABASE_OPTIONS_(A)_Quick
 end
 if findnot "0:/Nintendo 3DS" NULL
@@ -6405,7 +6404,7 @@ if not ask "Continue with backing up CIAs and saves?\nPress (B) to cancel attemp
 goto DATABASE_OPTIONS_(B)_Full
 end
 if not allow -a "A:/"
-echo "[A:] SYSNAND SD\nAccess denied."
+echo "Permissions denied! Aborting."
 goto DATABASE_OPTIONS_(B)_Full
 end
 if find "A:/dbs/import.db" NULL
@@ -6613,7 +6612,7 @@ if not ask "Continue with restoring saves?\nPress (B) to cancel attempt."
 goto DATABASE_OPTIONS_(B)_Full
 end
 if not allow "1:/dbs/ticket.db"
-echo "[1:] SYSNAND CTRNAND/dbs/ticket.db\nAccess denied."
+echo "Permissions denied! Aborting."
 goto DATABASE_OPTIONS_(B)_Full
 end
 if findnot "$[GM9OUT]/saves_$[SYSID0]" NULL
@@ -6699,7 +6698,7 @@ if not ask "Continue with backing up saves?\nPress (B) to cancel attempt."
 goto DATABASE_OPTIONS_(C)_Manual
 end
 if not allow -a "A:/"
-echo "[A:] SYSNAND SD\nAccess denied."
+echo "Permissions denied! Aborting."
 goto DATABASE_OPTIONS_(C)_Manual
 end
 if findnot "0:/Nintendo 3DS" NULL
@@ -6991,7 +6990,7 @@ if not ask "Continue with restoring saves?\nPress (B) to cancel attempt."
 goto DATABASE_OPTIONS_(C)_Manual
 end
 if not allow "1:/dbs/ticket.db"
-echo "[1:] SYSNAND CTRNAND/dbs/ticket.db\nAccess denied."
+echo "Permissions denied! Aborting."
 goto DATABASE_OPTIONS_(C)_Manual
 end
 if findnot "$[GM9OUT]/saves_$[SYSID0]" NULL
@@ -7082,6 +7081,7 @@ goto beginning
 
 
 @misc_Remap_Rosalina_Combo
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nRemap Rosalina Combo"
 if findnot "0:/luma/config.bin" NULL
 echo "0:/luma/config.bin\nis missing."
 goto mm_Miscellaneous_Options
@@ -7228,7 +7228,7 @@ goto mm_Miscellaneous_Options
 set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nReset NVRAM Image"
 echo "~ INSTRUCTIONS ~\n1. HOME Menu > Homebrew Launcher > 3DS_NVRAMtool.\n2. Press the (B) button once to 'write 00000000'.\n3. Exit the app. Check if DS or DSiWare games work.\n4. System Settings > Other Settings. Change these:\n- Profile: User Name, Birthday, Region Settings\n- Date & Time: Today's Date, Current Time\n5. Nintendo DS Profile: change the Message and Color."
 echo "~ DESCRIPTION ~\nThis creates a system reformatted 'nvram.bin' image.\nFlash this with '3DS_NVRAMtool' to fix a softbricked\nDS(i) mode caused by corrupt settings in the NVRAM.\nwww.github.com/zoogie/Stuff/tree/master/3DS_NVRAMtool\nhttps://3ds.hacks.guide/troubleshooting\nhttps://quantumcat1.github.io/troubleshooting"
-label -o -s -k "Create a new 'nvram.bin' image?" NVRAM_*
+labelsel -o -s -k "Create a new 'nvram.bin' image?" NVRAM_*
 goto NVRAM_B_Return_to_Menu_Options
 @NVRAM_A_NVRAM_Reset_Instructions
 goto misc_Reset_NVRAM_image
