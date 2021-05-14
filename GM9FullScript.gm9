@@ -3,9 +3,6 @@ if chk $[RDTYPE] "devkit"
 echo "Console is a developer unit. \nScript is intended to run on stock units only. \nAborting."
 goto mm_Exit
 end
-if chk $[HAX] "a9lh"
-echo "Warning: \nArm9LoaderHax detected. \nSome functions in this script may not work as expected."
-end
 if chk $[GM9VER] "v2.0.0"
 goto beginning 
 end
@@ -169,7 +166,8 @@ echo "User aborted."
 goto a_Restore_Options
 end
 if not chk $[HAX] "ntrboot"
-echo "WARNING: \nNtrboot not detected. In case of a brick, \nyou won't be able to restore your console. \nNever use this with an emuNAND image.\nYou may brick your device."
+echo "Ntrboot is required to run this function. \nAborting."
+goto a_Restore_Options
 end
 if not filesel "Choose a NAND Backup." $[GM9OUT]/*nand_??.bin BACK
 echo "User aborted."
@@ -325,13 +323,9 @@ rm -o -s 1:/data/$[SYSID0]/sysdata/00010011/00000000
 
 @a_Check_EMMC_Status
 set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nCheck EMMC Status"
-if not ask "!!!!WARNING!!!! \nThis function will test the EMMC status to see \nif it has hardware problems. \nThis operation has a chance of bricking the NAND chip. \nProceed at your own risk. \nPlease run this only if these operations \nhaven't fixed your console: \nsysNAND Full Restore; CTRTransfer; \nCTRTransfer D9 Type \nProceed?"
-echo "User aborted"
-goto mm_NAND_Management_Options
-end
 echo "~ INFORMATIONS ~\n1. DO NOT use this if the 2DS/3DS is perfectly fine.\n2. DO NOT use this while the battery life is low.\n3. Plug in the AC charger for extra safety precaution.\n4. Leave undisturbed. Allow ~30 minutes to complete.\n5. In the event of an emergency situation such as the\nbattery is about to die, press the (B) button to\nabort and cancel the test early."
 echo "6. If the 3DS softbricks due to an unexpected crash,\nrestore the firmware with the 'nand_minsize.bin'.\nThis image can be found backed up at '0:/gm9/out'.\n7. For 'bootrom 8046' (Blue Screens of Death), launch\nGodMode9 with a ntrboot compatible DS flashcart.\nhttps://3ds.hacks.guide/ntrboot"
-label -k -o -s  "Select what to do." EMMC02_*
+labelsel -k -o -s  "Select what to do." EMMC02_*
 @EMMC02_B_Return_Back
 goto mm_NAND_Management_Options
 @EMMC02_START_Continue
@@ -690,13 +684,14 @@ if not find 0:/gm9/out/*ctrtransfer_?3ds.bin CTRIMAGE
 echo "$[GM9OUT] \nNo usable entries found."
 goto mm_CTRNAND_Options
 end
-find 0:/gm9/out/*ctrtransfer_?3ds.bin CTRIMAGE
+set CTRIMAGE 0:/gm9/out/*ctrtransfer_?3ds.bin 
 if not filesel "Choose a CTRTransfer Image." $[CTRIMAGE] CTRIMAGE
+
 echo "User aborted"
 goto mm_CTRNAND_Options
 end
 imgmount $[CTRIMAGE]
-if not find 7:/title/00000002/content/????????.app UHFDEUYRG
+if not find 7:/title/00000002/content/????????.app NULL
 set IMGOLDNEW "N3DS" 
 else
 set IMGOLDNEW "O3DS"
@@ -804,7 +799,7 @@ end
 filesel "Choose a CTRTransfer Image." $[CTRD9IMAGE] CTRD9IMAGE
 
 imgmount $[CTRD9IMAGE]
-if not find 7:/title/00000002/content/????????.app UHFDRUYR
+if not find 7:/title/00000002/content/????????.app NULL
 set IMGD9OLDNEW "N3DS" 
 else
 
@@ -921,14 +916,16 @@ rm -s -o 7:/gm9
 rm -s -o 7:/rw/luma
 
 rm -s -o 7:/boot.firm
-echo "CTRNand image building success!"
+imgumount
+echo "CTRNand image build success!"
+goto mm_CTRNAND_Options
+
+else
+
+echo "CTRNand image build failed!"
 goto mm_CTRNAND_Options
 
 end
-
-echo "CTRNand image building failed!"
-goto mm_CTRNAND_Options
-
 
 @mm_Boot9Strap_Options
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options"
@@ -943,7 +940,7 @@ goto mm_Boot9Strap_Options
 end
 if not fdummy 0:/test.bin 800cff
 rm -s -o 0:/test.bin
-echo "Security checks failed! \nSDCARD has not required free space! \nAborting!"
+echo "Security checks failed! \n8.0032 Megabytes of free \nspace on SDCARD are required!\nAborting."
 goto mm_Boot9Strap_Options
 end
 rm -s -o 0:/test.bin
@@ -1066,6 +1063,7 @@ goto mm_Boot9Strap_Options
 
 @b9sinstall_sector_em
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \n \nDO NOT TURN OFF THE CONSOLE NOW"
+mv -s -o 0:/instructions.txt 0:/instructions(not the emercency routine one).txt
 fdummy $[GM9OUT]/instructions.txt CFF
 set INST "$[GM9OUT]/instructions.txt"
 dumptxt -p $[INST] "Reminder: Turning off/rebooting the console before completing steps here = BRICK GUARANTEED"
@@ -1087,8 +1085,8 @@ dumptxt -p $[INST] "8 Press START to reboot the console"
 dumptxt -p $[INST] "9 If everything was successfull, you will have booted into the home menu"
 dumptxt -p $[INST] "10 Note that, if the NAND backup didn't have Boot9Strap, the console won't have Boot9Strap"
 echo "Boot9Strap Install failed!!! \nThis really should not have happenend :/."
-echo "If you turn off or reboot the console \nbefore completing the instructions \nyou'll BRICK GUARANTEED \n so DO NOT."
-echo "A guide on how to \nsave the console has been written to \n$[INST]"
+echo "If you turn off or reboot the console \nbefore completing the instructions \nyou'll BRICK 100%\nThe brick that will occur \nif you power off/reboot the console \nwould be recoverable \nonly with ntrboot or a hardmod. \nSo DO NOT TURN OFF/REBOOT THE CONSOLE NOW"
+echo "A guide on how to \nrestore the console \nhas just been written to \n$[INST]"
 echo "Follow the guide very carefully"
 goto mm_Exit
 
@@ -1112,14 +1110,15 @@ echo "Boot9Strap 1.3 \nYou have the latest version."
 goto b9sverdone
 end
 imgumount 
-echo "You do not have Boot9Strap. \nIf you think you have it, \nReinstall it."
+echo "You do not have Boot9Strap. \nIf you think you have it, \nreinstall it now."
 goto mm_Boot9Strap_Options
 @b9sverdone
 imgumount
 goto mm_Boot9Strap_Options
 
 @b9s_Safety_test
-if not ask "!!! CAREFUL !!!\nThis script will temporarily boot the\nconsole STOCK to check if it will work\nproperly after CFW is uninstalled.\n \nYou should only be using this script\nwhile following the instructions on\n3ds.hacks.guide/uninstall-cfw.\n \nThe console will remain in 'stock mode'\nuntil it is rebooted. Note that entering\nand exiting DS mode or System Settings\nwill reboot the console.\n \nUpdating from this environment may\nlead to UNINTENDED CONSEQUENCES!\n \nContinue?"
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nSafety test"
+if not ask "!!! CAREFUL !!!\nThis script will temporarily boot the\nconsole STOCK to check if it will work\nproperly after CFW is uninstalled.\n \nYou should only be using this script\nwhile following the instructions on\nhttps://3ds.hacks.guide/uninstall-cfw.\n \nThe console will remain in 'stock mode'\nuntil it is rebooted. Note that entering\nand exiting DS mode or System Settings\nwill reboot the console.\n \nUpdating from this environment may\nlead to UNINTENDED CONSEQUENCES!\n \nContinue?"
 
 echo "User aborted."
 goto mm_Boot9Strap_Options
@@ -1149,6 +1148,7 @@ goto mm_Boot9Strap_Options
 end
 
 @b9s_Uninstall_Boot9Strap
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nUninstall Boot9Strap"
 if not ask "WARNING: \nby proceeding, you will completely uninstall \nthe Boot9strap \nfrom your console reverting it to stock. \nMake sure you ran the Safety test to ensure \nthat your console won't \nbrick after running this. \nProceed?"
 echo "User aborted"
 goto mm_Boot9Strap_Options
@@ -7111,7 +7111,7 @@ else
 echo "0:/luma/config.bin\nFile is smaller than 32 bytes.\n \nIf this is Luma3DS v7.1, please update."
 goto mm_Miscellaneous_Options
 end
-echo "Reassign the button for 'Rosalina menu' if the default\ncombo can't be used due to broken buttons.\nDefault: (L)-shoulder + (DOWN) d-pad + (SELECT)\n'Miscellaneous options...' > 'Change the menu combo' > \ninput combo preference > 'Save settings'
+echo "Reassign the button for 'Rosalina menu' if the default\ncombo can't be used due to broken buttons.\nDefault: (L)-shoulder + (DOWN) d-pad + (SELECT)\n'Miscellaneous options...' > 'Change the menu combo' > \ninput combo preference > 'Save settings'"
 labelsel -k -o -s "Remap Rosalina combo\nPress (B) to return to Menu Options." BUTTON_*
 goto CANCEL_REMAP_BUTTON
 @BUTTON_L
