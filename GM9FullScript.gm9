@@ -130,13 +130,17 @@ if not shaget I:/nand_hdr.bin IMAGENCSD
 echo "NAND Backup is corrupted! \nAborting to avoid a brick."
 goto a_Restore_Options
 end
-if not chk $[LOCALNCSD] $[IMAGENCSD]
+if chk $[LOCALNCSD] $[IMAGENCSD]
+goto goodncsd
+end
 echo "WARNING: \nNCSD differs beetwen image and local! \nElevated permissions required. \nProoceed at your own risk"
 if not allow S:/nand_hdr.bin
 echo "Permissions denied. Aborting!"
-inject -n I:/nand_hdr.bin S:/nand_hdr.bin
+goto a_Restore_Options
 end
-end
+if not inject -n I:/nand_hdr.bin S:/nand_hdr.bin
+echo "Safe SysNAND Restore failed! \nPlease try again."
+@goodncsd
 if not cp -w I:/ctrnand_full.bin S:/ctrnand_full.bin
 imgumount
 echo "Safe sysNAND restore failed!"
@@ -3982,7 +3986,9 @@ end
 if not fset 1:/private/movable.sed@121 $[REDPOST]
 goto formatfail
 end
-fixcmac -s -o "1:/private/movable.sed"
+if not fixcmac "1:/private/movable.sed"
+goto formatfail
+end
 fixcmac -s -o "1:/"
 rm -s -o A:/*
 rm -s -o 2:/title/00030004
@@ -4342,7 +4348,7 @@ set LOOP_BREAK "NO_1"
 goto CONTINUE_FINDING_KEY_Y_FORWARDS
 end
 @ASK_IF_WANT_TO_CANCEL_FORWARDS
-if ask "Would you like to end the search run?\n \nPress (A) to continue.\nPress (B) to cancel."
+if ask "Would you like to continue the search run?\n \nPress (A) to continue.\nPress (B) to cancel the search."
 set LOOP_BREAK "NO_1"
 goto SHAGET_MOVABLE_FORWARDS
 else
