@@ -1,4 +1,5 @@
 set PREVIEW_MODE "GM9FULLSCRIPT \nInitialising, please wait..."
+set GM9IN "0:/gm9/in"
 if chk $[RDTYPE] "devkit"
 echo "Console is a developer unit. \nScript is intended to run on stock units only. \nAborting."
 goto mm_Exit
@@ -45,7 +46,7 @@ end
 goto beginning
 
 @gm9ver
-echo "GodMode9 1.9.1 or higher is required. For safety reasons,\nif the running GodMode9 version is lower than 1.9.1, \nthe script will prevent himself from running \nto avoid unexptected errors \ndue to missing commands. \nPlease download the latest GodMode9 \nversion to use this script."
+echo "GodMode9 1.9.1 or higher is required. For safety reasons,\nif the running GodMode9 version is lower than 1.9.1, \nthe script will prevent himself \nfrom running \nto avoid unexptected errors \ndue to missing commands. \nPlease download the latest GodMode9 \nversion to use this script."
 echo "HOW TO UPDATE GODMODE9: \nDownload the latest GodMode9 version at \nhttps://github.com/d0k3/GodMode9/releases/latest \nOpen the archive and extract \nthe gm9 folder \nto the SDCARD root \nreplacing existing files. \nEntre folder Luma/payloads on SDCARD and extract here the \nGodMode9.firm file. \nInsert the SDCARD into the console \nand boot up GodMode9. \nYou won't see this error message anymore."
 goto mm_Exit
 
@@ -76,10 +77,10 @@ goto mm_NAND_Management_Options
 end
 if cp -w -h S:/nand_minsize.bin 0:/gm9/out/$[DATESTAMP]_$[SERIAL]_sysnand_00.bin
 echo "SysNAND backup success!"
-goto mm_NAND_Management_Options
+goto a_Backup_Options
 end
 echo "SysNAND backup failed!"
-goto mm_NAND_Management_Options
+goto a_Backup_Options
 
 @bo_EmuNAND_Backup
 set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nBackup options \nEmuNAND Backup" 
@@ -89,11 +90,10 @@ goto mm_NAND_Management_Options
 end
 if cp -w -h E:/nand_minsize.bin 0:/gm9/out/$[DATESTAMP]_$[SERIAL]_emunand_00.bin
 echo "EmuNAND backup success!"
-goto mm_NAND_Management_Options
+goto a_Backup_Options
 end
 echo "EmuNAND backup failed!"
-goto mm_NAND_Management_Options
-
+goto a_Backup_Options
 
 @a_Restore_Options
 set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nRestore Options" 
@@ -130,17 +130,14 @@ if not shaget I:/nand_hdr.bin IMAGENCSD
 echo "NAND Backup is corrupted! \nAborting to avoid a brick."
 goto a_Restore_Options
 end
-if chk $[LOCALNCSD] $[IMAGENCSD]
-goto goodncsd
-end
+if not chk $[LOCALNCSD] $[IMAGENCSD]
 echo "WARNING: \nNCSD differs beetwen image and local! \nElevated permissions required. \nProoceed at your own risk"
 if not allow S:/nand_hdr.bin
 echo "Permissions denied. Aborting!"
 goto a_Restore_Options
 end
-if not inject -n I:/nand_hdr.bin S:/nand_hdr.bin
-echo "Safe SysNAND Restore failed! \nPlease try again."
-@goodncsd
+inject -n I:/nand_hdr.bin S:/nand_hdr.bin
+end
 if not cp -w I:/ctrnand_full.bin S:/ctrnand_full.bin
 imgumount
 echo "Safe sysNAND restore failed!"
@@ -165,12 +162,12 @@ goto @a_Restore_Options
 @ro_Full_sysNAND_Restore
 set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nRestore Options \nFull SysNAND Restore"
 
-if not ask "WARNING: \nsystem exploit will not be protected. \nProoced at your own risk."
-echo "User aborted."
-goto a_Restore_Options
-end
 if not chk $[HAX] "ntrboot"
 echo "Ntrboot is required to run this function. \nAborting."
+goto a_Restore_Options
+end
+if not ask "WARNING: \nsystem exploit will not be protected. \nProoced at your own risk."
+echo "User aborted."
 goto a_Restore_Options
 end
 if not filesel "Choose a NAND Backup." $[GM9OUT]/*nand_??.bin BACK
@@ -659,7 +656,7 @@ dumptxt -p "$[E]" "DATE [YYMMDD]: $[DATESTAMP]"
 dumptxt -p "$[E]" "TIME [HHMMSS]: $[TIMESTAMP]"
 mv -o -s -n -w "$[E]" "$[GM9OUT]/eMMC_test_report.txt"
 textview "$[GM9OUT]/eMMC_test_report.txt"
-set PREVIEW_MODE "Results can be found at:\n$[GM9OUT]/eMMC_test_report.txt"
+set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nCheck EMMC Status"
 echo "Results can be found at:\n$[GM9OUT]/eMMC_test_report.txt"
 set PREVIEW_COLOR_COMMENT "606070"
 set PREVIEW_MODE "FULL"
@@ -734,16 +731,15 @@ imgumount
 echo "User aborted."
 goto mm_CTRNAND_Options
 end
+if not find 1:/ NULL
+echo "CTRNAND is unmountable! \nDo CTRTransfer D9 Type."
+goto mm_CTRNAND_Options
+end
 if not allow 1:/private/movable.sed
 imgumount
 echo "Permissions denied. Aborting!"
 goto mm_CTRNAND_Options
 end
-if not fdummy 1:/test.bin FF
-echo "CTRNAND is unmountable! \nDo CTRTransfer D9 Type."
-goto mm_CTRNAND_Options
-end
-rm -s -o 1:/test.bin
 mv -w -o -s 7:/rw/sys/SecureInfo_B 7:/rw/sys/SecureInfo_A
 
 mv -w -o -s 7:/rw/sys/SecureInfo_C 7:/rw/sys/SecureInfo_A
@@ -944,7 +940,7 @@ goto mm_Boot9Strap_Options
 end
 if not fdummy 0:/test.bin 800cff
 rm -s -o 0:/test.bin
-echo "Security checks failed! \n8.0032 Megabytes of free \nspace on SDCARD are required!\nAborting."
+echo "Security checks failed! \n8.5 Megabytes of free \nspace on SDCARD are required!\nAborting."
 goto mm_Boot9Strap_Options
 end
 rm -s -o 0:/test.bin
@@ -954,14 +950,14 @@ goto mm_Boot9Strap_Options
 end
 if not find $[BOOT9STRAP].sha B9SHA
 
-echo "Boot9strap .sha file not found! \nAborting."
+echo "Security checks failed! \nBoot9Strap FIRM verification \ncould not be performed! \nAborting."
 
 goto mm_Boot9Strap_Options
 
 end
 
 if not sha $[BOOT9STRAP] $[B9SHA]
-echo "Security checks failed! \nBoot9Strap FIRM could not be verified! \nAborting!"
+echo "Security checks failed! \nBoot9Strap FIRM verification failed! \nAborting!"
 goto mm_Boot9Strap_Options
 end
 if not sha $[BOOT9STRAP] 79C68585B4BA1D7C4A91B858861553E768C6576B92E303810B33219736B3598B
@@ -971,16 +967,10 @@ echo "Security checks failed! \nProvided FIRM is outdated or unknown! \nAborting
 goto mm_Boot9Strap_Options
 
 end
-if not sha $[B9SHA] 9D0A138BB4FA8292C7431C10471D8453D1D506F8A7B54FCD1E089727845F4F77
-echo "Security checks failed! \nProvided .sha file could not be verified! \nAborting!"
-
-goto mm_Boot9Strap_Options
-
-end
 if chk $[ONTYPE] "N3DS"
 if not sha S:/sector0x96.bin 82F2730D2C2DA3F30165F987FDCCAC5CBAB24B4E5F65C981CD7BE6F438E6D9D3
 if not find 0:/boot9strap/secret_sector.bin SECTOR
-echo "Security checks failed! \nSector0x96 is corrupted. \nOriginal secret_sector not found in\n0:/boot9strap folder! \nAborting to avoid a brick!"
+echo "Security checks failed! \nSector0x96 is corrupted. \nOriginal secret_sector.bin not found in\n0:/boot9strap folder! \nAborting to avoid a brick!"
 goto mm_Boot9Strap_Options
 end
 end
@@ -998,7 +988,7 @@ echo "FIRM partitions backup failed! Aborting!"
 goto mm_Boot9Strap_Options
 end
 set SECTOR 0:/boot9strap/secret_sector.bin
-if not find 0:/boot9strap/secret_sector.bin SECTOR
+if not find $[SECTOR]
 cp -w S:/sector0x96.bin $[SECTOR]
 end
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \n \nPlease do not turn off the console now."
@@ -1054,11 +1044,11 @@ end
 @b9sinstall_emergency_routine
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \n \nDO NOT TURN OFF THE CONSOLE NOW"
 if not cp -w -n 0:/boot9strap/firm0_backup.bin S:/firm0.bin
-echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nYou have to restore the FIRM partitions manually! \nCheck for firm0 and firm1 backup files into the \n0:/boot9strap folder and inject them to \nFIRM0 and FIRM1. \nThe script failed to do \nthese steps because of an \nunknown error."
+echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nScript entered emercency mode but \nfailed to restore FIRM partitions \nbackup automatically due to \nan unknown error! \nLook at the firm0_backup.bin and \nfirm1_backup.bin files into the \n0:/boot9strap folder and inject them to \nFIRM0 and FIRM1."
 goto mm_Exit
 end
 if not cp -w -n 0:/boot9strap/firm1_backup.bin S:/firm1.bin
-echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nYou have to restore the FIRM partitions manually! \nCheck for firm0 and firm1 backup files into the \n0:/boot9strap folder and inject them to \nFIRM0 and FIRM1. \nThe script failed to do \nthese steps because of an \nunknown error."
+echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nScript entered emercency mode but \nfailed to restore FIRM partitions \nbackup automatically due to \nan unknown error! \nLook at the firm0_backup.bin and \nfirm1_backup.bin files into the \n0:/boot9strap folder and inject them to \nFIRM0 and FIRM1."
 goto mm_Exit
 end
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap"
@@ -1067,7 +1057,7 @@ goto mm_Boot9Strap_Options
 
 @b9sinstall_sector_em
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \n \nDO NOT TURN OFF THE CONSOLE NOW"
-mv -s -o 0:/instructions.txt 0:/instructions(not the emercency routine one).txt
+mv -s -o 0:/instructions.txt 0:/not_the_real_instructions.txt
 fdummy $[GM9OUT]/instructions.txt CFF
 set INST "$[GM9OUT]/instructions.txt"
 dumptxt -p $[INST] "Reminder: Turning off/rebooting the console before completing steps here = BRICK GUARANTEED"
@@ -1088,9 +1078,9 @@ dumptxt -p $[INST] "7 When done, press A to relock the NAND"
 dumptxt -p $[INST] "8 Press START to reboot the console"
 dumptxt -p $[INST] "9 If everything was successfull, you will have booted into the home menu"
 dumptxt -p $[INST] "10 Note that, if the NAND backup didn't have Boot9Strap, the console won't have Boot9Strap"
-echo "Boot9Strap Install failed!!! \nThis really should not have happenend :/."
+echo "Boot9Strap Install failed! \nThis really should not have happenend :/."
 echo "If you turn off or reboot the console \nbefore completing the instructions \nyou'll BRICK 100%\nThe brick that will occur \nif you power off/reboot the console \nwould be recoverable \nonly with ntrboot or a hardmod. \nSo DO NOT TURN OFF/REBOOT THE CONSOLE NOW"
-echo "A guide on how to \nrestore the console \nhas just been written to \n$[INST]"
+echo "Script entered emercency mode and wrote \na guide on how to \nrestore the console \nto \n$[INST]"
 echo "Follow the guide very carefully"
 goto mm_Exit
 
@@ -1137,8 +1127,11 @@ set D 0
 
 end
 
-find 1:/title/00040138/$[D]0000002/content/????????.app A
+if not find 1:/title/00040138/$[D]0000002/content/????????.app A
 
+echo "NATIVE_FIRM not found! Aborting."
+goto mm_Boot9Strap_Options
+end
 imgmount $[A]
 
 if not verify G:/exefs/.firm
@@ -1183,7 +1176,7 @@ goto mm_Boot9Strap_Options
 end
 imgmount $[NATIVENEW]
 if not cp -w G:/exefs/.firm $[GM9OUT]/NATIVE_FIRM.firm
-echo "Boot9Strap unistall failed! \nPlease try again."
+echo "Boot9Strap uninstall failed! \nPlease try again."
 goto mm_Boot9strap_Options
 end
 imgumount
@@ -1197,7 +1190,7 @@ goto mm_Boot9Strap_Options
 end
 imgmount $[NATIVEOLD]
 if not cp -w G:/exefs/.firm $[GM9OUT]/NATIVE_FIRM.firm
-echo "Boot9Strap unistall failed! \nPlease try again."
+echo "Boot9Strap uninstall failed! \nPlease try again."
 goto mm_Boot9strap_Options
 end
 imgumount
