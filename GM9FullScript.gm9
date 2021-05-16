@@ -72,8 +72,7 @@ goto mm_NAND_Management_Options
 @bo_SysNAND_Backup
 set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nBackup options \nSysNAND Backup" 
 if not ask "Backup sysNAND to $[GM9OUT]?"
-echo "User aborted."
-goto mm_NAND_Management_Options
+goto a_Backup_Options
 end
 if cp -w -h S:/nand_minsize.bin 0:/gm9/out/$[DATESTAMP]_$[SERIAL]_sysnand_00.bin
 echo "SysNAND backup success!"
@@ -85,8 +84,7 @@ goto a_Backup_Options
 @bo_EmuNAND_Backup
 set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nBackup options \nEmuNAND Backup" 
 if not ask "Backup emuNAND to $[GM9OUT]?"
-echo "User aborted."
-goto mm_NAND_Management_Options
+goto a_Backup_Options
 end
 if cp -w -h E:/nand_minsize.bin 0:/gm9/out/$[DATESTAMP]_$[SERIAL]_emunand_00.bin
 echo "EmuNAND backup success!"
@@ -114,7 +112,6 @@ goto a_Restore_Options
 
 end
 if not filesel "Choose a NAND Backup." $[GM9OUT]/*nand_??.bin BACK
-echo "User aborted."
 goto a_Restore_Options
 end
 if not ask "Safe restore \n$[BACK] \nto sysNAND?"
@@ -124,6 +121,10 @@ if not allow 1:/private/movable.sed
 echo "Permissions denied, aborting."
 goto a_Restore_Options
 end
+labelsel -s -o -k "Confirmation" saferes_*
+@saferes_B_Return_Back
+goto a_Restore_Options
+@saferes_START_Proceed
 imgmount $[BACK]
 shaget -s -o S:/nand_hdr.bin LOCALNCSD
 if not shaget I:/nand_hdr.bin IMAGENCSD
@@ -167,11 +168,9 @@ echo "Ntrboot is required to run this function. \nAborting."
 goto a_Restore_Options
 end
 if not ask "WARNING: \nsystem exploit will not be protected. \nProoced at your own risk."
-echo "User aborted."
 goto a_Restore_Options
 end
 if not filesel "Choose a NAND Backup." $[GM9OUT]/*nand_??.bin BACK
-echo "User aborted."
 goto a_Restore_Options
 end
 if not verify $[BACK]
@@ -179,13 +178,21 @@ echo "NAND verification failed! \nAborting to avoid a brick."
 goto a_Restore_Options
 end
 if not ask "Full restore \n$[BACK]\nto sysNAND?"
+
 echo "User aborted"
+
 goto a_Restore_Options
+
 end
+
 if not allow S:/nand.bin
 echo "Permissions denied. Aborting!"
 goto a_Restore_Options
 end
+labelsel -s -o -k "Confirmation" fullres_*
+@fullres_B_Return_Back
+goto a_Restore_Options
+@fullres_START_Proceed
 imgmount $[BACK]
 set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nFull sysNAND Restore \n \nPlease do not turn off the console"
 if not inject -n I:/nand_minsize.bin S:/nand.bin
@@ -222,8 +229,6 @@ goto a_Restore_Options
 end
 
 if not ask "Restore \n$[BACK]\nto emuNAND?"
-
-echo "User aborted."
 
 goto a_Restore_Options
 
@@ -268,7 +273,6 @@ goto a_Restore_Options
 @a_Transfer_sysNAND_to_emuNAND
 set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nTransfer sysNAND to emuNAND"
 if not ask "This will copy your sysNAND content to emuNAND. \nProceed?"
-echo "User aborted."
 goto mm_NAND_Management_Options
 end
 if not find E:/nand.bin NULL
@@ -301,13 +305,24 @@ goto mm_NAND_Management_Options
 end
 
 if not ask "WARNING: \nYou are going to copy your emuNAND content to sysNAND.\nProceed?"
-echo "User aborted."
 goto mm_NAND_Management_Options
 end
+if not find E:/nand.bin NULL
+
+echo "EmuNAND not found! Aborting!"
+
+goto mm_NAND_Management_Options
+
+end
+
 if not allow S:/ctrnand_full.bin
 echo "Permissions denied! Aborting."
 goto mm_NAND_Management_Options
 end
+labelsel -s -o -k "Confirmation" systrans_*
+@systrans_B_Return_Back
+goto a_Restore_Options
+@systrans_START_Proceed
 if not cp -w -n E:/ctrnand_full.bin S:/ctrnand_full.bin
 echo "Transfer failed!"
 goto mm_NAND_Management_Options
@@ -324,7 +339,7 @@ rm -o -s 1:/data/$[SYSID0]/sysdata/00010011/00000000
 
 @a_Check_EMMC_Status
 set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nCheck EMMC Status"
-echo "~ INFORMATIONS ~\n1. DO NOT use this if the 2DS/3DS is perfectly fine.\n2. DO NOT use this while the battery life is low.\n3. Plug in the AC charger for extra safety precaution.\n4. Leave undisturbed. Allow ~30 minutes to complete.\n5. In the event of an emergency situation such as the\nbattery is about to die, press the (B) button to\nabort and cancel the test early."
+echo "~ INFORMATIONS ~\nThis will check the EMMC Status \nfor hardware problems \nUse this as the last possibility \nto try to fix the console. \n1. DO NOT use this if the 2DS/3DS is perfectly fine.\n2. DO NOT use this while the battery life is low.\n3. Plug in the AC charger for extra safety precaution.\n4. Leave undisturbed. Allow ~30 minutes to complete.\n5. In the event of an emergency situation such as the\nbattery is about to die, press the (B) button to\nabort and cancel the test early."
 echo "6. If the 3DS softbricks due to an unexpected crash,\nrestore the firmware with the 'nand_minsize.bin'.\nThis image can be found backed up at '0:/gm9/out'.\n7. For 'bootrom 8046' (Blue Screens of Death), launch\nGodMode9 with a ntrboot compatible DS flashcart.\nhttps://3ds.hacks.guide/ntrboot"
 labelsel -k -o -s  "Select what to do." EMMC02_*
 @EMMC02_B_Return_Back
@@ -454,7 +469,7 @@ labelsel -k -o -s "Enter the Security Code." INPUT10_*
 goto CANCEL_EMMC_TEST
 @INPUT10_A_
 set PREVIEW_MODE "<UP><UP><DOWN><DOWN><LEFT><RIGHT><LEFT><RIGHT><B><A>"
-labelsel -k -o -s "Press start to begin to process." INPUT11_*
+labelsel -k -o -s "Confirmation." INPUT11_*
 @INPUT11_B_Cancel
 goto CANCEL_EMMC_TEST
 @INPUT11_START_Begin
@@ -688,7 +703,6 @@ end
 set CTRIMAGE 0:/gm9/out/*ctrtransfer_?3ds.bin 
 if not filesel "Choose a CTRTransfer Image." $[CTRIMAGE] CTRIMAGE
 
-echo "User aborted"
 goto mm_CTRNAND_Options
 end
 imgmount $[CTRIMAGE]
@@ -726,12 +740,12 @@ echo "CTRNand image is incomplete! \nAborting"
 
 goto mm_CTRNAND_Options
 end
-if not ask "CTRTransfer /n$[CTRIMAGE]?"
+if not ask "CTRTransfer \n$[CTRIMAGE]?"
 imgumount
 echo "User aborted."
 goto mm_CTRNAND_Options
 end
-if not find 1:/ NULL
+if not find 1:/* NULL
 echo "CTRNAND is unmountable! \nDo CTRTransfer D9 Type."
 goto mm_CTRNAND_Options
 end
@@ -789,14 +803,15 @@ goto mm_CTRNAND_Options
 set PREVIEW_MODE "GM9FULLSCRIPT \nCTRNAND Options \nCTRTransfer D9 Type"
 
 if not ask "The CTRTransfer D9 Type is a CTRTransfer \nbased on the Decrypt9 old CTRTransfer method \nwhich flashes the entire CTRNAND. \nThis script tries to preserve user data if possible. \nDo this only if a normal CTRTransfer \ndidn't fix your problem. \nProceed"
-echo "User aborted."
 goto mm_CTRNAND_Options
 end
 if not find 0:/gm9/out/*ctrtransfer_?3ds.bin CTRD9IMAGE
 echo "$[GM9OUT] \nNo usable entries found."
 goto mm_CTRNAND_Options
 end
-filesel "Choose a CTRTransfer Image." $[CTRD9IMAGE] CTRD9IMAGE
+if not filesel "Choose a CTRTransfer Image." $[CTRD9IMAGE] CTRD9IMAGE
+goto mm_CTRNAND_Options
+end
 
 imgmount $[CTRD9IMAGE]
 if not find 7:/title/00000002/content/????????.app NULL
@@ -903,8 +918,7 @@ goto mm_CTRNAND_Options
 @ctr_Make_CTRNAND_Transferable_Image
 set PREVIEW_MODE "GM9FULLSCRIPT \nCTRNAND Options \nMake CTRNAND Transferable Image"
 if not ask "This will make a .bin CTRNAND image \nthat can be used to perform a CTRTransfer. \nProceed?"
-echo "User aborted."
-goto beginning
+goto mm_CTRNAND_Options
 
 end
 if cp -h -w S:/ctrnand_full.bin $[GM9OUT]/$[REGION]_ctrtransfer_$[ODTYPE].bin
@@ -935,15 +949,8 @@ goto beginning
 @b9s_Install_Boot9Strap
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap"
 if not ask "This will install Boot9Strap on your device. \nProceed?"
-echo "User aborted"
 goto mm_Boot9Strap_Options
 end
-if not fdummy 0:/test.bin 800cff
-rm -s -o 0:/test.bin
-echo "Security checks failed! \n8.5 Megabytes of free \nspace on SDCARD are required!\nAborting."
-goto mm_Boot9Strap_Options
-end
-rm -s -o 0:/test.bin
 if not find 0:/boot9strap/boot9strap.firm BOOT9STRAP
 echo "Boot9Strap FIRM not found. \nAborting!"
 goto mm_Boot9Strap_Options
@@ -988,19 +995,16 @@ echo "FIRM partitions backup failed! Aborting!"
 goto mm_Boot9Strap_Options
 end
 set SECTOR 0:/boot9strap/secret_sector.bin
-if not find $[SECTOR]
+if not find 0/boot9strap/secret_sector.bin SECTOR
 cp -w S:/sector0x96.bin $[SECTOR]
 end
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \n \nPlease do not turn off the console now."
 if not cp -w -n $[BOOT9STRAP] S:/firm0.bin
 goto b9sinstall_emergency_routine
 end
-if not cp -w -n $[BOOT9STRAP] S:/firm1.bin
-goto b9sinstall_emergency_routine
-end
-fset S:/firm0.bin@100 B6724531C448657A2A2EE306457E350A10D544B42859B0E5B0BED27534CCCC2A4D47EDEA60A7DD99939950A6357B1E35DFC7FAC773B7E12E7C1481234AF141B31CF08E9F62293AA6BAAE246C15095F8B78402A684D852C680549FA5B3F14D9E838A2FB9C09A15ABB40DCA25E40A3DDC1F58E79CEC901974363A946E99B4346E8
-fset S:/firm0.bin@180 A372B6CD55A707E1EAB9BEC0200B5BA0B661236A8708D704517F43C6C38EE9560111E1405E5E8ED356C49C4FF6823D1219AFAEEB3DF3C36B62BBA88FC15BA8648F9333FD9FC092B8146C3D908F73155D48BE89D72612E18E4AA8EB9B7FD2A5F7328C4ECBFB0083833CBD5C983A25CEB8B941CC68EB017CE87F5D793ACA09ACF7
-inject -n S:/firm0.bin@100:100 S:/firm1.bin@100
+fset -s -o S:/firm0.bin@100 B6724531C448657A2A2EE306457E350A10D544B42859B0E5B0BED27534CCCC2A4D47EDEA60A7DD99939950A6357B1E35DFC7FAC773B7E12E7C1481234AF141B31CF08E9F62293AA6BAAE246C15095F8B78402A684D852C680549FA5B3F14D9E838A2FB9C09A15ABB40DCA25E40A3DDC1F58E79CEC901974363A946E99B4346E8
+fset -s -o S:/firm0.bin@180 A372B6CD55A707E1EAB9BEC0200B5BA0B661236A8708D704517F43C6C38EE9560111E1405E5E8ED356C49C4FF6823D1219AFAEEB3DF3C36B62BBA88FC15BA8648F9333FD9FC092B8146C3D908F73155D48BE89D72612E18E4AA8EB9B7FD2A5F7328C4ECBFB0083833CBD5C983A25CEB8B941CC68EB017CE87F5D793ACA09ACF7
+inject -n -s -o S:/firm0.bin S:/firm1.bin
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap"
 if not sha S:/firm0.bin A7FB4D394743399DE16960D0675C1E7E85EFBBCE0988B1AE900DA0148C78310A
 goto b9sinstall_emergency_routine
@@ -1028,7 +1032,7 @@ if chk $[ONTYPE] "O3DS"
 goto b9sinstall_well
 end
 if not sha S:/sector0x96.bin 82F2730D2C2DA3F30165F987FDCCAC5CBAB24B4E5F65C981CD7BE6F438E6D9D3
-goto b9sinstall_sector_em
+goto b9sinstall_emercency_routine
 else
 goto b9sinstall_well
 end
@@ -1036,53 +1040,29 @@ end
 
 @b9sinstall_sector_fail2
 if chk $[ONTYPE] "N3DS"
-goto b9sinstall_sector_em
+goto b9sinstall_emercency_routine
 else
 goto b9sinstall_well
 end
 
 @b9sinstall_emergency_routine
-set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \n \nDO NOT TURN OFF THE CONSOLE NOW"
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \nEmercency Mode is Active\nRestoring FIRM Paritions \n \nDO NOT TURN OFF THE CONSOLE NOW"
 if not cp -w -n 0:/boot9strap/firm0_backup.bin S:/firm0.bin
 echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nScript entered emercency mode but \nfailed to restore FIRM partitions \nbackup automatically due to \nan unknown error! \nLook at the firm0_backup.bin and \nfirm1_backup.bin files into the \n0:/boot9strap folder and inject them to \nFIRM0 and FIRM1."
 goto mm_Exit
 end
 if not cp -w -n 0:/boot9strap/firm1_backup.bin S:/firm1.bin
-echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nScript entered emercency mode but \nfailed to restore FIRM partitions \nbackup automatically due to \nan unknown error! \nLook at the firm0_backup.bin and \nfirm1_backup.bin files into the \n0:/boot9strap folder and inject them to \nFIRM0 and FIRM1."
+echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nScript entered emercency mode but \nfailed to restore FIRM partitions \nbackup automatically due to \nan unknown error! \nLook at the firm0_backup.bin and \nfirm1_backup.bin files into the \n0:/boot9strap folder and inject them to \nFIRM0 and FIRM1 to avoid a brick."
 goto mm_Exit
 end
+if chk $[ONTYPE] "N3DS"
+if not cp -w -n $[SECTOR] S:/sector0x96.bin
+echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed Sector0x96 \ncould not be verified! \nThis really should not have happened :/. \nScript entered emercency mode but \nfailed to restore Sector0x96 \nbackup automatically due to \nan unknown error! \nLook at secret_sector.bin file in the \n0:/boot9strap\nfolder and inject it to \nS:/sector0x96 to avoid a brick." 
+end
+end
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap"
-echo "Boot9Strap Install failed! \nEmercency routines execution success! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should have happened :/. \nScript entered emercency mode \and automatically restored \nthe FIRM partitions backup \nto avoid a brick due to corrupted \nFIRM0 and FIRM1."
+echo "Boot9Strap Install failed! \nEmercency routines execution success! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should have happened :/. \nScript entered emercency mode \nand automatically restored \nthe FIRM partitions backup \nto avoid a brick due to corrupted \nFIRM0 and FIRM1."
 goto mm_Boot9Strap_Options
-
-@b9sinstall_sector_em
-set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \n \nDO NOT TURN OFF THE CONSOLE NOW"
-mv -s -o 0:/instructions.txt 0:/not_the_real_instructions.txt
-fdummy $[GM9OUT]/instructions.txt CFF
-set INST "$[GM9OUT]/instructions.txt"
-dumptxt -p $[INST] "Reminder: Turning off/rebooting the console before completing steps here = BRICK GUARANTEED"
-dumptxt -p $[INST] "Using a corrupted NAND backup = brick"
-dumptxt -p $[INST] "Doing these steps wrongly = brick"
-dumptxt -p $[INST] "Be careful"
-dumptxt -p $[INST] "Instructions:"
-dumptxt -p $[INST] "If you need to unmount your SD, DO NOT turn off your console, press R+B and then remove the SD card, you can reinsert it whenever you want."
-dumptxt -p $[INST] "0 Plug in the AC charger and DO NOT unplug it until the end of the process."
-dumptxt -p $[INST] "1 Get your console's NAND backup"
-dumptxt -p $[INST] "2 Select it and press Y to copy it"
-dumptxt -p $[INST] "(If you copy the wrong file, just press SELECT to clear clipboard, then follow the instructions from step 1)"
-dumptxt -p $[INST] "3 Enter S:/ drive"
-dumptxt -p $[INST] "4 Press Y to paste the file"
-dumptxt -p $[INST] "5 Press A to inject the backup to nand_minsize.bin"
-dumptxt -p $[INST] "6 Unlock the NAND if needed"
-dumptxt -p $[INST] "7 When done, press A to relock the NAND"
-dumptxt -p $[INST] "8 Press START to reboot the console"
-dumptxt -p $[INST] "9 If everything was successfull, you will have booted into the home menu"
-dumptxt -p $[INST] "10 Note that, if the NAND backup didn't have Boot9Strap, the console won't have Boot9Strap"
-echo "Boot9Strap Install failed! \nThis really should not have happenend :/."
-echo "If you turn off or reboot the console \nbefore completing the instructions \nyou'll BRICK 100%\nThe brick that will occur \nif you power off/reboot the console \nwould be recoverable \nonly with ntrboot or a hardmod. \nSo DO NOT TURN OFF/REBOOT THE CONSOLE NOW"
-echo "Script entered emercency mode and wrote \na guide on how to \nrestore the console \nto \n$[INST]"
-echo "Follow the guide very carefully"
-goto mm_Exit
 
 @b9s_Check_Boot9Strap_Version
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nCheck Boot9Strap Version"
@@ -1114,7 +1094,6 @@ goto mm_Boot9Strap_Options
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nSafety test"
 if not ask "!!! CAREFUL !!!\nThis script will temporarily boot the\nconsole STOCK to check if it will work\nproperly after CFW is uninstalled.\n \nYou should only be using this script\nwhile following the instructions on\nhttps://3ds.hacks.guide/uninstall-cfw.\n \nThe console will remain in 'stock mode'\nuntil it is rebooted. Note that entering\nand exiting DS mode or System Settings\nwill reboot the console.\n \nUpdating from this environment may\nlead to UNINTENDED CONSEQUENCES!\n \nContinue?"
 
-echo "User aborted."
 goto mm_Boot9Strap_Options
 end
 if chk $[ONTYPE] "N3DS"
@@ -1147,14 +1126,12 @@ end
 @b9s_Uninstall_Boot9Strap
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nUninstall Boot9Strap"
 if not ask "WARNING: \nby proceeding, you will completely uninstall \nthe Boot9strap \nfrom your console reverting it to stock. \nMake sure you ran the Safety test to ensure \nthat your console won't \nbrick after running this. \nProceed?"
-echo "User aborted"
 goto mm_Boot9Strap_Options
 end
 if chk $[HAX] "ntrboot"
 goto ntrbootok
 end
 if not ask "WARNING!!! \nNtrboot not detected. \nIf you brick your device \nyou will be able \nto restore it only with \nntrboot or a hardmod! \nProceed anyway?"
-echo "User aborted"
 goto mm_Boot9Strap_Options
 end
 @ntrbootok
@@ -1194,6 +1171,7 @@ echo "Boot9Strap uninstall failed! \nPlease try again."
 goto mm_Boot9strap_Options
 end
 imgumount
+goto un_hax
 
 @un_hax
 set NATIVE_FIRM 0:/gm9/out/NATIVE_FIRM.firm
@@ -1205,12 +1183,15 @@ if not allow S:/firm0.bin
 echo "Permissions denied. Aborting!"
 goto mm_Boot9Strap_Options
 end
+labelsel -s -o -k "Confirmation" b9sun_*
+@b9sun_B_Return_Back
+goto mm_Boot9Strap_Options
+@b9sun_START_Proceed
 rm -s -o 1:/boot.firm
 rm -s -o 1:/gm9
 rm -s -o 1:/rw/luma
-if not find $[SECTOR]
-cp -w -n S:/sector0x96.bin $[SECTOR]
-set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nUninstall Boot9Strap \n \nPlease do not turn off the console now"
+cp -k -n S:/sector0x96.bin $[SECTOR]
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nUninstall Boot9strap \n \nPlease do not turn off the console now"
 if not cp -w -n $[NATIVE_FIRM] S:/firm0.bin
 echo "Boot9Strap uninstall failed! \nPlease try again."
 goto mm_Boot9Strap_Options
@@ -1231,7 +1212,6 @@ end
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nUninstall Boot9Strap"
 echo "Boot9Strap uninstall success!"
 goto mm_Boot9Strap_Options
-end
 
 
 @mm_Cartridge_Options
@@ -1242,7 +1222,6 @@ goto beginning
 @cart_Dump_Cartridge_to_.cia
 set PREVIEW_MODE "GM9FULLSCRIPT \nCartridge Options \nDump cartridge to .cia"
 if not ask "Dump cartridge game file to .cia to \n$[GM9OUT]?"
-echo "User aborted"
 goto mm_Cartridge_Options
 end
 if not find C:/*.trim.3ds 3DSFILE
@@ -1259,7 +1238,6 @@ goto mm_Cartridge_Options
 @cart_Dump_Cartridge_to_.3ds
 set PREVIEW_MODE "GM9FULLSCRIPT \nCartridge Options \nDump Cartridge to .3ds"
 if not ask "Dump cartridge game file to .3ds to \n$[GM9OUT]?"
-echo "User aborted"
 goto mm_Cartridge_Options
 end
 if not find C:/*.3ds 3DSDUMP
@@ -1276,7 +1254,6 @@ goto mm_Cartridge_Options
 @cart_Dump_Cartridge_to_.nds
 set PREVIEW_MODE "GM9FULLSCRIPT \nCartridge Options \nDump Cartridge to .nds"
 if not ask "Dump cartridge game file to .nds to \n$[GM9OUT]?"
-echo "User aborted."
 goto mm_Cartridge_Options
 end
 if not find C:/*.nds NDSGAME
@@ -1298,7 +1275,6 @@ goto beginning
 @dump_Dump_firm0.bin
 set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump firm0.bin"
 if not ask "Dump firm0.bin to $[GM9OUT]?"
-echo "User aborted"
 goto mm_Dump_Options
 end
 if not cp -w S:/firm0.bin $[GM9OUT]/firm0.bin 
@@ -1311,7 +1287,6 @@ goto mm_Dump_Options
 @dump_Dump_firm1.bin
 set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump firm1.bin"
 if not ask "Dump firm1.bin to $[GM9OUT]?"
-echo "User aborted"
 goto mm_Dump_Options
 end
 if not cp -w S:/firm1.bin $[GM9OUT]/firm1.bin
@@ -1324,7 +1299,6 @@ goto mm_Dump_Options
 @dump_Dump_essential.exefs
 set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump essential.exefs"
 if not ask "Dump essential.exefs to $[GM9OUT]?"
-echo "User aborted"
 goto mm_Dump_Options
 end
 if not cp -w S:/essential.exefs $[GM9OUT]/essential.exefs
@@ -1337,7 +1311,6 @@ goto mm_Dump_Options
 @dump_Dump_SecureInfo
 set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump SecureInfo"
 if not ask "Dump SecureInfo to $[GM9OUT]?"
-echo "User aborted"
 goto mm_Dump_Options
 end
 if not cp -w 1:/rw/sys/SecureInfo_A $[GM9OUT]/SecureInfo_A
@@ -1350,7 +1323,6 @@ goto mm_Dump_Options
 @dump_Dump_movable.sed
 set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump movable.sed"
 if not ask "Dump movable.sed to $[GM9OUT]?"
-echo "User aborted"
 goto mm_Dump_Options
 end
 if not cp -w 1:/private/movable.sed $[GM9OUT]/movable.sed
@@ -1363,7 +1335,6 @@ goto mm_Dump_Options
 @dump_Dump_boot9.bin
 set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump boot9.bin"
 if not ask "Dump boot9.bin to $[GM9OUT]?"
-echo "User aborted"
 goto mm_Dump_Options
 end
 if not cp -w M:/boot9.bin $[GM9OUT]/boot9.bin
@@ -1376,7 +1347,6 @@ goto mm_Dump_Options
 @dump_Dump_otp.bin
 set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump otp.bin"
 if not ask "Dump otp.bin to $[GM9OUT]?"
-echo "User aborted"
 goto mm_Dump_Options
 end
 if not cp -w M:/otp.mem $[GM9OUT]/otp.bin
@@ -1389,7 +1359,6 @@ goto mm_Dump_Options
 @dump_Dump_LocalFriendCodeSeed_B
 set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump LocalFriendCodeSeed_B"
 if not ask "Dump LocalFriendCodeSeed_B to $[GM9OUT]?"
-echo "User aborted"
 goto mm_Dump_Options
 end
 if not cp -w 1:/rw/sys/LocalFriendCodeSeed_B $[GM9OUT]/LocalFriendCodeSeed_B
@@ -1402,7 +1371,6 @@ goto mm_Dump_Options
 @dump_Dump_agbsave.bin
 set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump agbsave.bin"
 if not ask "Dump agbsave.bin to $[GM9OUT]?"
-echo "User aborted"
 goto mm_Dump_Options
 end
 if not cp -w S:/agbsave.bin $[GM9OUT]/agbsave.bin
@@ -1415,7 +1383,6 @@ goto mm_Dump_Options
 @dump_Dump_nnid.bin
 set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump nnid.bin"
 if not ask "Dump nnid.bin (nnid info file) to $[GM9OUT]?"
-echo "User aborted"
 goto mm_Dump_Options
 end
 if not cp -w 1:/data/$[SYSID0]/sysdata/00010038/00000000 $[GM9OUT]/nnid.bin
@@ -1433,7 +1400,6 @@ goto beginning
 @fbi_Inject_FBI_to_H&S
 set PREVIEW_MODE "GM9FULLSCRIPT \nFBI Inject Options \nInject FBI to H&S"
 if not ask "Inject FBI to H&S?"
-echo "User aborted."
 goto mm_FBI_Inject_Options
 end
 if not find $[GM9OUT]/FBI.cia FBISRC
@@ -1635,7 +1601,6 @@ goto beginning
 @plai_Setup_Luma3DS_to_CTRNAND
 set PREVIEW_MODE "GM9FULLSCRIPT \nScripts from Plailect's Guide \nSetup Luma3DS to CTRNAND"
 if not ask "Copy Luma3DS filed to CTRNAND?"
-echo "User aborted."
 goto mm_Scripts_from_Plailect's_Guide
 end
 if not allow 1:/title
@@ -1661,9 +1626,9 @@ goto mm_Scripts_from_Plailect's_Guide
 @plai_Cleanup_SDCARD
 set PREVIEW_MODE "GM9FULLSCRIPT \nScripts from Plailect's Guide \nCleanup SDCARD"
 if not ask "This will clean the SDCARD \nfrom setup files. \nContinue?"
-echo "User aborted."
 goto mm_Scripts_from_Plailect's_Guide
 end
+
 if not allow -a 0:/
 echo "Permissions denied. Aborting!"
 goto mm_Scripts_from_Plailect's_Guide
@@ -1672,6 +1637,10 @@ if not allow -a A:/
 echo "Permissions denied. Aborting!"
 goto mm_Scripts_from_Plailect's_Guide
 end
+labelsel -s -o -k "Confirmation" sdclean_*
+@sdclean_B_Return_Back
+goto mm_Scripts_from_Plailect's_Guide
+@sdclean_START_Proceed
 rm -s -o 0:/arm11code.bin
 rm -o -s 0:/arm9.bin
 rm -o -s 0:/arm11.bin
@@ -1706,6 +1675,8 @@ rm -o -s 0:/gm9/scripts/setup_ctrnand_luma3ds.gm9
 rm -o -s 0:/gm9/scripts/cleanup_sd_card.gm9
 rm -o -s 0:/arm9loaderhax.bin
 rm -o -s 0:/files9/aeskeydb.bin
+rm -s -o 0:/SafeA9LHInstaller.dat
+rm -s -o 0:/a9lh/*
 rm -o -s 0:/steelhax
 rm -o -s 0:/movable.sed
 rm -o -s 0:/3ds/steelhax_installer/*
@@ -1720,20 +1691,23 @@ rm -o -s 0:/3ds/slotTool.3dsx
 rm -o -s 0:/usm.bin
 rm -o -s "A:/Nintendo DSiWare/F00D43D5.bin"
 rm -o -s 0:/browserhax_hblauncher_ropbin_payload.bin
-rm -o -s 0:/arm11code.bin
+rm -o -s 0:/oterapp.bin
 echo "SD cleanup success!."
 goto mm_Scripts_from_Plailect's_Guide
 
 @plai_Remove_NNID
 set PREVIEW_MODE "GM9FULLSCRIPT \nScripts from Plailect's Guide \nRemove NNID"
 if not ask "This will remove NNID from your console \nProceed?"
-echo "User aborted."
 goto mm_Scripts_from_Plailect's_Guide
 end
 if not allow -a 1:/
 echo "Permissions denied. Aborting!"
 goto mm_Scripts_from_Plailect's_Guide
 end
+labelsel -s -o -k "Confirmation" nnidrem_*
+@nnidrem_B_Return_Back
+goto mm_Scripts_from_Plailect's_Guide
+@nnidrem_START_Proceed
 if find 1:/data/$[SYSID0]/sysdata/00010038/10000000 NONNID
 echo "NNID is not linked! Aborting!"
 goto mm_Scripts_from_Plailect's_Guide
@@ -1745,7 +1719,6 @@ goto mm_Scripts_from_Plailect's_Guide
 @plai_Remove_ExtData
 set PREVIEW_MODE "GM9FULLSCRIPT \nScripts from Plailect's Guide \nRemove ExtData"
 if not ask "This will remove the HOME Menu ExtData.\nProceed?"
-echo "User aborted."
 goto mm_Scripts_from_Plailect's_Guide
 end
 if not allow -a A:/
@@ -1765,7 +1738,6 @@ goto mm_Scripts_from_Plailect's_Guide
 @plai_CTRTransfer_Ticket_Copy
 set PREVIEW_MODE "GM9FULLSCRIPT \nScripts from Plailect's Guide \nCTRTransfer Ticket Copy"
 if not ask "This will copy CTRTransfer tickets. \nProceed?"
-echo "User aborted"
 goto mm_Scripts_from_Plailect's_Guide 
 end
 if not allow -a 1:/
@@ -1795,7 +1767,6 @@ goto beginning
 @inject_Inject_SecureInfo
 set PREVIEW_MODE "GM9FULLSCRIPT \nInject Options \nInject SecureInfo"
 if not ask "Inject SecureInfo from \n$[GM9OUT]?"
-echo "User aborted"
 goto mm_Inject_Options
 end
 if not find $[GM9OUT]/SecureInfo_A SECUREINJ
@@ -1816,7 +1787,6 @@ goto mm_Inject_Options
 @inject_Inject_movable.sed
 set PREVIEW_MODE "GM9FULLSCRIPT \nInject Options \nInject movable.sed"
 if not ask "Inject movable.sed from \n$[GM9OUT]? \n(if the provided movable.sed \n isn't your console's movable.sed, \nyou'll have problems afterwards!)"
-echo "User aborted"
 goto mm_Inject_Options
 end
 if not find $[GM9OUT]/movable.sed MOVABLEINJ
@@ -1837,7 +1807,6 @@ goto mm_Inject_Options
 @inject_Inject_LocalFriendCodeSeed_B
 set PREVIEW_MODE "GM9FULLSCRIPT \nInject Options \nInject LocalFriendCodeSeed_B"
 if not ask "Inject LocalFriendCodeSeed_B from \n$[GM9OUT]?\n(If you inject another console's \nLocalFriendCodeSeed_B and then you remove Boot9Strap, \nthe result will be a brick!) \n(If you are unbanning the console, \ninjecting another console's LocalFriendCodeSeed_B \nis mandatory, so proceed at your own risk.) "
-echo "User aborted"
 goto mm_Inject_Options
 end
 if not find $[GM9OUT]/LocalFriendCodeSeed_B FRIENDINJ
@@ -1858,7 +1827,6 @@ goto mm_Inject_Options
 @inject_Inject_Agbsave.bin
 set PREVIEW_MODE "GM9FULLSCRIPT \nInject Options \nInject agbsave.bin"
 if not ask "Inject agbsave.bin from \n$[GM9OUT]?"
-echo "User aborted"
 goto mm_Inject_Options
 end
 if not find $[GM9OUT]/agbsave.bin AGBINJ
@@ -1879,7 +1847,6 @@ goto mm_Inject_Options
 @inject_Inject_Nnid.bin
 set PREVIEW_MODE "GM9FULLSCRIPT \nInject Options \nInject nnid.bin"
 if not ask "Inject nnid from \n$[GM9OUT]? \n(Will restore nnid that was linked \nwhen the backup was made.)"
-echo "User aborted"
 goto mm_Inject_Options
 end
 if not find $[GM9OUT]/nnid.bin NNIDINJ
@@ -1906,10 +1873,7 @@ goto beginning
 @cons_Console_Format
 set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nConsole Format"
 if not ask "WARNING: \nby proceeding you'll format your console \nlike the system settings does \nBy proceedng you'll lose ALL your save data.\nProceed?"
-echo "User aborted"
-
-goto
-mm_Console_Options
+goto mm_Console_Options
 
 end
 
@@ -1919,6 +1883,10 @@ echo "Permissions denied. Aborting!"
 goto mm_Console_Options
 
 end
+labelsel -s -o -k "Confirmation" formatcons_*
+@formatcons_B_Return_Back
+goto a_Restore_Options
+@formatcons_START_Proceed
 
 if not fget 1:/private/movable.sed@119:01 GREENPRE
 echo "Unable to retrieve data from Movable.sed! \nAborting!"
@@ -5688,11 +5656,11 @@ goto mm_Console_Options
 @DSIWARE_Convert_CIAs_(legit_to_standard)
 echo "This converts DSiWare games that were dumped as legit\nCIAs into standard CIAs. Use this if FBI can't install \nthem, or they're not available to redownload at eShop." 
 if not dirsel "Select the 'dsiware' folder." "$[GM9OUT]" TWLN_DIR
-goto cons_DSiWare_CIAs_&_Saves
+goto mm_Console_Options
 end
 if not find "$[TWLN_DIR]/*.cia" NULL
 echo "$[TWLN_DIR]\nNo CIAs found."
-goto cons_DSiWare_CIAs_&_Saves
+goto mm_Console_Options
 end
 findnot "$[GM9OUT]/dummy_???.bin" LITMUS_FILE
 fdummy "$[LITMUS_FILE]" "C800000"
@@ -5881,7 +5849,7 @@ set HEXVALUE ""
 set OFFSET ""
 imgumount
 echo "1:/data/<ID0>/sysdata/00010017/00000000\nProfile already set."
-goto MENU
+goto mm_Console_Options
 else
 imgumount
 echo "1:/data/<ID0>/sysdata/00010017/00000000\n \nConfiguration savegame.\nUnexpected value at offset 0x$[OFFSET].\nD:/partitionA.bin\n \nExpected: 00 -or- 01\nActual: $[HEXVALUE]"
@@ -5926,7 +5894,7 @@ goto cons_Rebuild_3DS_Database
 @DATABASE_OPTIONS_(B)_Full
 set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nRebuild 3DS Database \nFull"
 if not allow -a "0:/Nintendo 3DS"
-echo "[0:] SDCARD ()/Nintendo 3DS\nAccess denied."
+echo "Permissions denied. Aborting!"
 goto cons_Rebuild_3DS_Database
 end
 echo "Option (B): Rebuild 3DS Database (Full)\nThis fixes the SD card's 'title.db' and 'import.db' by\nbacking up the 'ticket.db' from CTRNAND, CIAs for all\nthe 3DS titles, and their decrypted saves. Titles that\nare successfully made into CIAs are then deleted from\nthe 'title' folder. This is to maintain card storage\nwithout running out of free space. External files and\ntitles not made into CIAs are moved to 'title_<ID0>'."
@@ -7154,7 +7122,7 @@ echo "If region changing or tickets for system titles were\nalready missing befo
 echo "Keeping the original\n`ticket.db' maintains dumpability of the user's\nunique legit tickets such as purchased eShop titles.\nIn order to access FBI to install the system tickets,\n'Homebrew Launcher' can be opened from 'Nintendo 3DS\nCamera' even if it is missing in HOME Menu."
 echo "~ HOME MENU ~\n1. Press (L)+(R) buttons to access the camera applet.\n2. Click on the bottom screen's 'Nintendo 3DS Camera'.\n3. If injected, this should open 'Homebrew Launcher'.\n4. FBI - Install all DSiWare CIAs & system tickets.\n5. faketik - Restore tickets for nonlegit titles.\n6. Cthulhu - Unwrap all HOME Menu software.\n7. TWLFix-CFW - Delete all TWL system titles."
 echo "~ GODMODE9 ~\n8. Restore the DSiWare saves with this script.\n\n~ RECOVERY MODE or SYSTEM SETTINGS ~\n9. Update to the latest 3DS firmware to fix DS mode."
-if not ask "Rosalina inject 'Homebrew Launcher' \nto 'Nintendo 3DS Camera'?\n \nSee above for additonal instructions."
+if not ask "Rosalina inject 'Homebrew Launcher' \nto 'Nintendo 3DS Camera'?"
 goto CANCEL_HBL_INJECTION
 end
 if findnot "0:/luma/config.bin" NULL
@@ -7243,9 +7211,9 @@ set PREVIEW_MODE "GM9FULLSCRIPT \nConsole Options \nReset NVRAM Image"
 echo "~ INSTRUCTIONS ~\n1. HOME Menu > Homebrew Launcher > 3DS_NVRAMtool.\n2. Press the (B) button once to 'write 00000000'.\n3. Exit the app. Check if DS or DSiWare games work.\n4. System Settings > Other Settings. Change these:\n- Profile: User Name, Birthday, Region Settings\n- Date & Time: Today's Date, Current Time\n5. Nintendo DS Profile: change the Message and Color."
 echo "~ DESCRIPTION ~\nThis creates a system reformatted 'nvram.bin' image.\nFlash this with '3DS_NVRAMtool' to fix a softbricked\nDS(i) mode caused by corrupt settings in the NVRAM.\nwww.github.com/zoogie/Stuff/tree/master/3DS_NVRAMtool\nhttps://3ds.hacks.guide/troubleshooting\nhttps://quantumcat1.github.io/troubleshooting"
 labelsel -o -s -k "Create a new 'nvram.bin' image?" NVRAM_*
-goto NVRAM_B_Return_to_Menu_Options
+goto NVRAM_B_Return_to_Miscellaneous_Options
 @NVRAM_A_NVRAM_Reset_Instructions
-goto misc_Reset_NVRAM_image
+goto misc_Reset_NVRAM_Image
 @NVRAM_B_Return_to_Miscellaneous_Options
 goto mm_Miscellaneous_Options
 @NVRAM_START_Continue
@@ -7285,4 +7253,56 @@ mv -o -s -n "9:/nvram.bin" "0:/3ds/3DS_NVRAMtool/nvram.bin"
 echo "Reformatted image created succesfully:\n0:/3ds/3DS_NVRAMtool/nvram.bin"
 goto mm_Miscellaneous_Options
 
+@misc_SecureInfo-A_Fix
+if not ask "This will check the 0x100 of the SecureInfo_A \n(the region value) \nand fix it if needed \nProceed?"
+goto mm_Miscellaneous_Options
+end
+if chk $[REGION] "JPN"
+set SECREG "00"
+end
+if chk $[REGION] "USA"
+set SECREG "01"
+end
+if chk $[REGION] "EUR"
+set SECREG "02"
+end
+if chk $[REGION] "CHN"
+set SECREG "04"
+end
+if chk $[REGION] "KOR"
+set SECREG "05"
+end
+if chk $[REGION] "TWN"
+set SECREG "06"
+end
+if chk $[REGION] "UNK"
+echo "Region is unknown! Can't proceed!"
+goto mm_Miscellaneous_Options
+end
+if not find 1:/rw/sys/SecureInfo_A SECINFO
+echo "SecureInfo_A not found!"
+goto mm_Miscellaneous_Options
+end
+if not fget 1:/rw/sys/SecureInfo_A@101:01 SECVALUE
+echo "Unable to retrieve needed data! Aborting."
+goto mm_Miscellaneous_Options
+end
+if chk $[SECREG] $[SECVALUE]
+echo "SecureInfo_A value is correct. \nNo modifications required."
+goto mm_Miscellaneous_Options
+end
+if not ask "SecureInfo_A value in incorrect! Fix it now?"
+goto mm_Miscellaneous_Options
+end
+if not allow 1:/rw/sys/SecureInfo_A
+echo "Permissions denied! Aborting."
+goto mm_Miscellaneous_Options
+if not fset 1:/rw/sys/SecureInfo_A@101 $[SECREG]
+echo "SecureInfo_A fix failed!"
+goto mm_Miscellaneous_Options
+end
+echo "SecureInfo_A fix success!"
+goto mm_Miscellaneous_Options
+
 @mm_Exit
+chk -s "cla" "uz"
