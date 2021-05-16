@@ -102,3 +102,58 @@ twln.bin (3DS' TWL mode)
 twlp.bin (TWL photo)
 
 
+CHECK EMMC STATUS
+
+This function is mode for unbrick purposes, it is not for the faint of hearth
+This function does some write tests to sysNAND's "nand.bin" and checks it for hardware problems.
+This function is the most delicate in the script.
+Please use this only if every other unbrick attemp failed or didn't fix your console.
+To make sure user knows what he is doing, the script asks to insert a security code before proceeding (the the konami code)
+
+
+CTRTansfer
+
+First of all, the script asks to user to select a CTRTransfer image, it mounts it and it checks if CTRNAND image is corrupted or incomplete, is yes, the scripts prevents the CTRTransfer from being performed.
+Then the script checks if the CTRTransfer image's type (O3DS or N3DS) is the some type of the console, if not, the scripts prevents the CTRTransfer from being performed.
+Then the script makes a backup of the console's tickets (ticket.db) named "ticket.bak" to the RAMDRIVE
+Then the script deletes these folders in the CTRNAND 
+
+dbs
+
+title
+
+Then the script injects these parts of the CTRTransfer image to CTRNAND
+
+dbs/* (everything inside the dbs folder)
+
+title/* (everything inside the title folder)
+
+Then the scripts moves the "ticket.bak" file from the RAMDRIVE to the "dbs" folder.
+
+
+CTRTRansfer D9 Type
+
+This function is inspired by the old Decrypt9 CTRTransfer method that flashes the entire ctrnand_full.bin and restores only the essential files.
+This script try to preserve as much as user files as it can
+First of all, the script checks if the essential files backup exists, if not, it prevents the function from running.
+Then the script checks if the CTRTransfer image's type (O3DS or N3DS) is the some type of the console, if not, the scripts prevents the CTRTransfer from being performed.
+Then the script copies these files and folders to RAMDRIVE:
+
+data (folder)
+
+movable.sed
+
+LocalFriendCodeSeed_B
+
+
+Then the scripts injects the entire CTRTransfer image to sysNAND's ctrnand_full.bin
+Then the script restores this files from the backup that has been made
+
+data (folder)
+
+movable.sed
+
+LocalFriendCodeSeed_B
+
+
+
