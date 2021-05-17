@@ -8,7 +8,7 @@ I recommend reading this before using the script.
 
 First, I'll explain some script's special functions that make it more safe and noob-friendly
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 CONFIRMATION
 
@@ -49,13 +49,13 @@ When launched, the script checks if the running GodMode9 Version is 1.9.1 or hig
 Now, i'll explain all the script functions.
 I'll explain the function in order to make it understandable to everyone, and then i'll give a little bit more in-depth explanation.
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 SYSNAND BACKUP
 
 Creates a NAND backup.
 
-This makes a copy of sysNAND's nand_minsize.bin in the gm9/out folder called "$[DATESTAMP]_$[SERIAL]_sysnand_00.bin"
+This makes a copy of sysNAND's nand_minsize.bin in the gm9/out folder called "(DATESTAMP)_(SERIAL)_sysnand_00.bin"
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -63,7 +63,7 @@ EMUNAND BACKUP
 
 Creates and emuNAND backup
 
-This makes a copy of emuNAND's nand_minsize.bin in the gm9/out folder called "$[DATESTAMP]_$[SERIAL]_emunand_00.bin"
+This makes a copy of emuNAND's nand_minsize.bin in the gm9/out folder called "(DATESTAMP)_(SERIAL)_emunand_00.bin"
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -198,7 +198,7 @@ MAKE CTRNAND TRANSFERABLE IMAGE
 
 Makes a .bin image wich can be used to perform a CTRTransfer.
 
-This function copies the "ctrnand_full.bin" file to gm9/out calling it "$[REGION]_ctrtransfer_$[OLD/NEW].bin", mountes it, and removes from the image useless Luma3DS files.
+This function copies the "ctrnand_full.bin" file to gm9/out calling it "(REGION)_ctrtransfer_(OLD/NEW)3ds.bin", mountes it, and removes from the image useless Luma3DS files.
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -255,3 +255,118 @@ If the console is an O3DS, it copies the Sector0x96 to boot9strap folder because
 Then the script copies the secret_sector.bin to Sector0x96.
 
 Then the script deletes Luma3DS files in the CTRNAND.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DUMP CARTRIDGE TO .CIA
+
+Dumps the title in the cartridge that is inserted as a .cia file, ready to be installed.
+
+This function builds a .cia file on the .trim.3ds file found in the cartridge drive to gm9/out.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DUMP CARTRIDGE TO .3DS
+
+Dumps the title in the cartridge that is inserted as a .3ds encrypted file, wich can be installed with GodMode9, or converted as .cia file with 3dsconv or GodMode9.
+
+This function copies the .3ds file found in the cartridge drive to gm9/out
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DUMP CARTRIDGE TO .NDS
+
+Dumps the title in the cartridge that is inserted as a .nds file
+
+This function copies the .nds file found in the cartridge drive to gm9/out
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DUMP FIRM0.BIN
+
+Dumps the FIRM0.bin file to gm9/out
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DUMP FIRM1.BIN
+
+Dumps the FIRM1.bin file to gm9/out
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DUMP ESSENTIAL.EXEFS
+
+Dumps the essential.exefs file is it exists to gm9/out
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DUMP SECUREINFO_A
+
+Dumps the SecureInfo_A file to gm9/out
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DUMP MOVABLE.SED
+
+Dumps the movable.sed file to gm9/out
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DUMP BOOT9.BIN
+
+Dumps the boot9.bin file to gm9/out
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DUMP OTP.BIN
+
+Dumps the otp.bin file to gm9/out
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DUMP LOCALFRIENDCODESEED_B
+
+Dumps the LocalFriendCodeSeed_B file to gm9/out
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DUMP AGBSAVE.BIN
+
+Dumps the agbsave.bin file to gm9/out
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DUMP NNID.BIN
+
+Dumps the nnid.bin file to gm9/out
+
+This function dump the nnid management file in CTRNAND (nand:/data/(SYSID0)/sysdata/?0010038/00000000) to gm9/out renaming it to "nnid.bin"
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+INJECT FBI TO H&S
+
+Injects the fbi.cia file to Health & Safety app.
+
+First, the script makes the user select the fbi.cia file.
+
+Then, the script checks the console's region to know where to find the H&S .app.
+
+Then, the script makes two backups of the H&S .app (one to the inject, one to restore it when needed)
+
+Then, the script mountes the fbi.cia file, and inject some parts of it to the H&S .app backup
+
+Then the script encrypts the H&S .app backup and injects it to the real H&S backup
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+RESTORE H&S
+
+Restores the H&S app from the fbi injection
+
+First, the script checks the console's region to know where to find the H$S .app.
+
+Then the script injects the H&S backup made at the time of injection, and injects it to the H&S .app.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
