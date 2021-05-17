@@ -14,7 +14,7 @@ CONFIRMATION
 
 Before running some functions that are particulary delicate, the script asks another confirmations by pressing START, to avoid user to casually pressing A fast and running the function without being sure of what he is exactly going to do
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 WARNING WHEN DOING DELICATE STEPS
 
@@ -22,7 +22,7 @@ When the script is editing crucial files in the NAND, it warns the user saying "
 As soon as the script cleared the delicate step, that will disappear.
 With this, user knows exactly when the scripts is doing delicate steps.
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 EMERCENCY ROUTINES
 
@@ -32,18 +32,19 @@ DO NOT TURN OFF THE CONSOLE NOW" in the upper screen to make the user know that 
 
 Now, let's see what the script does when launched.
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 CONSOLE'S TYPE CHECK
 
 When launched, the script checks if the console is a devkit, if yes, it prevents itself from running because this script is retail consoles only.
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 GODMODE9 VERSION CHECK:
 
 When launched, the script checks if the running GodMode9 Version is 1.9.1 or higher, if not, it prevents itself from runnning to avoid unexpected errors due to missing commands, the script also explains to user how to update GodMode9 to use the script.
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Now, i'll explain all the script functions.
 I'll explain the function in order to make it understandable to everyone, and then i'll give a little bit more in-depth explanation.
@@ -56,6 +57,7 @@ Creates a NAND backup.
 
 This makes a copy of sysNAND's nand_minsize.bin in the gm9/out folder called "$[DATESTAMP]_$[SERIAL]_sysnand_00.bin"
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 EMUNAND BACKUP 
 
@@ -63,7 +65,7 @@ Creates and emuNAND backup
 
 This makes a copy of emuNAND's nand_minsize.bin in the gm9/out folder called "$[DATESTAMP]_$[SERIAL]_emunand_00.bin"
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 SAFE SYSNAND RESTORE
 
@@ -82,7 +84,7 @@ twlp.bin (TWL photo)
 
 bonus.bin (bonus drive) 
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 FULL SYSNAND RESTORE
 
@@ -92,7 +94,7 @@ A full restore is risky, if done with a corrupted NAND backup or with an emuNAND
 For safety reasons, the script will prevent the function from running if the console isn't running from ntrboot entrypoint, as it is the only way to unbrick the console in case of a brick (excluding hardmod, which in 2021 is a pretty died method).
 Then the script makes the user select a NAND backup, verify it to check if it's corrupted, mounts it, and then injects the backup's "nand_minsize.bin" to sysNAND's "nand.bin"
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 EMUNAND RESTORE
 
@@ -101,14 +103,14 @@ Restores an emuNAND backup, emuNAND is not vital, so no brick risk here.
 The script makes the user select a NAND backup, mounts it, and then injects the backup's "nand_minsize.bin" to emuNAND's "nand.bin".
 No checks here, as the emuNAND is not vital.
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 TRANSFER SYSNAND TO EMUNAND
 EmuNAND restore, but we use as backup image the sysNAND.
 
 The script injects the sysNAND's "nand_minsize.bin" to emuNAND's "nand.bin"
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 TRANSFER EMUNAND TO SYSNAND
 
@@ -127,7 +129,7 @@ twln.bin (3DS' TWL mode)
 
 twlp.bin (TWL photo)
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 CHECK EMMC STATUS
 
@@ -139,7 +141,7 @@ This function is the most delicate in the script.
 Please use this only if every other unbrick attemp failed or didn't fix your console.
 To make sure user knows what he is doing, the script asks to insert a security code before proceeding (the the konami code)
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 CTRTransfer
 
@@ -162,7 +164,7 @@ title/* (everything inside the title folder)
 
 Then the scripts moves the "ticket.bak" file from the RAMDRIVE to the "dbs" folder.
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 CTRTRANSFER D9 TYPE
 
@@ -190,7 +192,7 @@ movable.sed
 
 LocalFriendCodeSeed_B
 
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 MAKE CTRNAND TRANSFERABLE IMAGE
 
@@ -198,8 +200,7 @@ Makes a .bin image wich can be used to perform a CTRTransfer.
 
 This function copies the "ctrnand_full.bin" file to gm9/out calling it "$[REGION]_ctrtransfer_$[OLD/NEW].bin", mountes it, and removes from the image useless Luma3DS files.
 
-
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Install Boot9Strap
 
@@ -221,4 +222,36 @@ Then the script checks the sha of the newly installed files, if one of the check
 
 The emercency routine, if triggered, restores the FIRM0, FIRM1, and Sector0x96 backups to sysNAND, reverting it at it's earlier state to avoid a brick; if this process fails, the script tells to user what to do.
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+CHECK BOOT9STRAP VERSION
+
+Shows wich Boot9Strap version does the console have
+
+This function mountes FIRM0 and checks the sha of the header.bin file, wich determines the Boot9Strap version
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+SAFETY CHECK
+
+Boots the console stock mode to see if it will work properly after B9S uninstall
+
+This function mountes the NATIVE_FIRM NCCH (nand/title/00040138/?0000002/????????.app), and boots the .firm file booting the stock mode 
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+UNINSTALL BOOT9STRAP
+
+Removes Boot9Strap and deletes Luma3DS related files in the NAND
+
+Then the script checks if the console is an N3DS, if yes, it checks if the Sector0x96 is corrupted, if yes, it searchs for a clean secret_sector.bin in the boot9strap folder, if it doesn't find it, the process is aborted to avoid a brick.
+
+Then the script mountes the NATIVE_FIRM NCCH (nand/title/00040138/?0000002/????????.app), and copies the .firm to gm9/out
+
+Then the script copies the NATIVE_FIRM to FIRM0 and FIRM1 uninstalling cfw
+
+If the console is an O3DS, it copies the Sector0x96 to boot9strap folder because we need it there for the next step.
+
+Then the script copies the secret_sector.bin to Sector0x96.
+
+Then the script deletes Luma3DS files in the CTRNAND.
