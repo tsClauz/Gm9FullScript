@@ -202,7 +202,7 @@ This function copies the "ctrnand_full.bin" file to gm9/out calling it "(REGION)
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-Install Boot9Strap
+INSTALL BOOT9STRAP
 
 Installs Boot9Strap to sysNAND safely, security checks and emercency routine included.
 
@@ -370,3 +370,4 @@ Then the script injects the H&S backup made at the time of injection, and inject
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+SETUP LUMA3DS TO CTRNAND
