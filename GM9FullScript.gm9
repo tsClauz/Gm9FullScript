@@ -1,51 +1,68 @@
 set PREVIEW_MODE "GM9FULLSCRIPT \nInitialising, please wait..."
+set SCRIPTGIT "https://github.com/clauz07/Gm9FullScript"
+
 set GM9IN "0:/gm9/in"
-if chk $[RDTYPE] "devkit"
-echo "Console is a developer unit. \nScript is intended to run on stock units only. \nAborting."
-goto mm_Exit
-end
-if chk $[GM9VER] "v2.0.0"
-goto beginning 
-end
-if chk $[GM9VER] "v1.9.3"
-goto beginning 
-end
-if chk $[GM9VER] "v1.9.2"
-goto beginning 
-end
-if chk $[GM9VER] "v1.9.1"
-goto beginning 
+if not chk $[RDTYPE] "retail"
+goto devkit
 end
 if chk $[GM9VER] "v1.9.0"
 goto gm9ver 
-end
-if chk $[GM9VER] "v1.8.0"
+elif chk $[GM9VER] "v1.8.0"
 goto gm9ver 
-end
-if chk $[GM9VER] "v1.7.1"
+elif chk $[GM9VER] "v1.7.1"
 goto gm9ver 
-end
-if chk $[GM9VER] "v1.7.0"
+elif chk $[GM9VER] "v1.7.0"
 goto gm9ver 
-end
-if chk $[GM9VER] "v1.6.3"
+elif chk $[GM9VER] "v1.6.3"
 goto gm9ver 
-end
-if chk $[GM9VER] "v1.6.2"
+elif chk $[GM9VER] "v1.6.2"
 goto gm9ver 
-end
-if chk $[GM9VER] "v1.6.1"
+elif chk $[GM9VER] "v1.6.1"
 goto gm9ver 
-end
-if chk $[GM9VER] "v1.6.0"
+elif chk $[GM9VER] "v1.6.0"
 goto gm9ver 
-end
-if chk $[GM9VER] ""
+elif chk $[GM9VER] "v1.5.1"
 goto gm9ver 
+elif chk $[GM9VER] "v1.5.0"
+
+goto gm9ver
+
+elif chk $[GM9VER] "v1.4.3"
+
+goto gm9ver
+
+elif chk $[GM9VER] "v1.4.2"
+
+goto gm9ver
+elif chk $[GM9VER] "v1.4.1"
+goto gm9ver
+elif chk $[GM9VER] "v1.4.0"
+goto gm9ver
+elif chk $[GM9VER] "v1.3.8"
+goto gm9ver
+elif chk $[GM9VER] "v1.3.7"
+goto gm9ver
+elif chk $[GM9VER] "v1.3.1"
+goto gm9ver
+
+elif chk $[GM9VER] "v1.3.0"
+goto gm9ver
+
+elif chk $[GM9VER] "v1.2.8"
+goto gm9ver
+elif chk $[GM9VER] "v1.2.7"
+goto gm9ver
 end
 goto beginning
 
+@devkit
+set PREVIEW_MODE "GM9FULLSCRIPT \nRead the message below."
+
+echo "Console is a developer unit. \nScript is intended to run on stock units only. \nAborting."
+goto mm_Exit
+
 @gm9ver
+set PREVIEW_MODE "GM9FULLSCRIPT \nRead the message below."
 echo "GodMode9 1.9.1 or higher is required. For safety reasons,\nif the running GodMode9 version is lower than 1.9.1, \nthe script will prevent himself \nfrom running \nto avoid unexptected errors \ndue to missing commands. \nPlease download the latest GodMode9 \nversion to use this script."
 echo "HOW TO UPDATE GODMODE9: \nDownload the latest GodMode9 version at \nhttps://github.com/d0k3/GodMode9/releases/latest \nOpen the archive and extract \nthe gm9 folder \nto the SDCARD root \nreplacing existing files. \nEntre folder Luma/payloads on SDCARD and extract here the \nGodMode9.firm file. \nInsert the SDCARD into the console \nand boot up GodMode9. \nYou won't see this error message anymore."
 goto mm_Exit
@@ -155,7 +172,6 @@ echo "Safe sysNAND restore failed!"
 goto a_Restore_Options
 end
 cp -w -s -o I:/bonus.bin S:/bonus.bin
-cp -w -s -o I:/agbsave.bin S:/agbsave.bin
 imgumount
 echo "Safe sysNAND restore success!"
 goto @a_Restore_Options 
@@ -768,7 +784,7 @@ echo "CTRTransfer failed!"
 goto mm_CTRNAND_Options
 end
 rm -o -s 1:/dbs/ticket.bak
-if not mv 1:/dbs/ticket.db 1:/ticket.bak
+if not mv 1:/dbs/ticket.db 9:/ticket.bak
 imgumount
 echo "CTRTransfer failed!"
 goto mm_CTRNAND_Options
@@ -791,6 +807,11 @@ echo "CTRTransfer failed!"
 goto mm_CTRNAND_Options
 end
 if not cp -n -w 7:/title 1:/title
+imgumount
+echo "CTRTransfer failed!"
+goto mm_CTRNAND_Options
+end
+if not mv 9:/ticket.bak 1:/dbs/ticket.bak
 imgumount
 echo "CTRTransfer failed!"
 goto mm_CTRNAND_Options
@@ -896,7 +917,7 @@ imgmount $[CTRD9IMAGE]
 if not find 7:/rw/sys/SecureInfo_A
 mv -w -o -s 7:/rw/sys/SecureInfo_B 7:/rw/sys/SecureInfo_A
 
-mv -w -o -s 7:/rw/sys/SecureInfo_C 7:/rw/sys/SecureInfo_A
+rm -w -o -s 7:/rw/sys/SecureInfo_C 7:/rw/sys/SecureInfo_A
 
 end
 if not cp -w 7:/rw/sys/SecureInfo_A 1:/rw/sys/SecureInfo_A
@@ -1046,7 +1067,7 @@ goto b9sinstall_well
 end
 
 @b9sinstall_emergency_routine
-set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \nEmercency Mode is Active\nRestoring FIRM Paritions \n \nDO NOT TURN OFF THE CONSOLE NOW"
+set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap \nEmercency Mode is Active \n \nDO NOT TURN OFF THE CONSOLE NOW"
 if not cp -w -n 0:/boot9strap/firm0_backup.bin S:/firm0.bin
 echo "Boot9Strap Install failed! \nEmercency routines execution failed! \nNewly installed FIRM partitions \ncould not be verified! \nThis really should not have happened :/. \nScript entered emercency mode but \nfailed to restore FIRM partitions \nbackup automatically due to \nan unknown error! \nLook at the firm0_backup.bin and \nfirm1_backup.bin files into the \n0:/boot9strap folder and inject them to \nFIRM0 and FIRM1."
 goto mm_Exit
@@ -1308,7 +1329,7 @@ end
 echo "Dump success!"
 goto mm_Dump_Options
 
-@dump_Dump_SecureInfo
+@dump_Dump_SecureInfo-A
 set PREVIEW_MODE "GM9FULLSCRIPT \nDump Options \nDump SecureInfo"
 if not ask "Dump SecureInfo to $[GM9OUT]?"
 goto mm_Dump_Options
@@ -1413,6 +1434,15 @@ goto mm_FBI_Inject_Options
 end
 end
 end
+if not allow -a 1:/
+echo "Permissions denied. Aborting!"
+goto mm_FBI_Inject_Options
+end
+labelsel -s -o -k "Confirmation" hsinj_*
+@hsinj_B_Return_Back
+goto mm_FBI_Inject_Options
+@hsinj_START_Proceed
+
 if chk $[REGION] "USA"
 if chk $[ONTYPE] "n3ds"
 find -f 1:/title/00040010/20021300/content/*.app H&SPATH
@@ -1454,11 +1484,7 @@ echo "Unknown region. Aborting!"
 rm -o -s $[GM9TEMP]
 goto mm_FBI_Inject_Options
 end
-if not allow -a 1:/
-echo "Permissions denied. Aborting!"
 rm -o -s $[GM9TEMP]
-goto mm_FBI_Inject_Options
-end
 strsplit -b H&SBAK $[H&SPATH] "."
 set H&SBAK "$[H&SBAK].bak"
 if find $[H&SBAK] NULL
@@ -1600,7 +1626,7 @@ goto beginning
 
 @plai_Setup_Luma3DS_to_CTRNAND
 set PREVIEW_MODE "GM9FULLSCRIPT \nScripts from Plailect's Guide \nSetup Luma3DS to CTRNAND"
-if not ask "Copy Luma3DS filed to CTRNAND?"
+if not ask "Copy Luma3DS files to CTRNAND?"
 goto mm_Scripts_from_Plailect's_Guide
 end
 if not allow 1:/title
@@ -1885,14 +1911,14 @@ goto mm_Console_Options
 end
 labelsel -s -o -k "Confirmation" formatcons_*
 @formatcons_B_Return_Back
-goto a_Restore_Options
+goto mm_Console_Options
 @formatcons_START_Proceed
 
-if not fget 1:/private/movable.sed@119:01 GREENPRE
+if not fget 1:/private/movable.sed@118:01 GREENPRE
 echo "Unable to retrieve data from Movable.sed! \nAborting!"
 goto mm_Console_Options
 end
-if not fget 1:/private/movable.sed@121:01 REDPRE
+if not fget 1:/private/movable.sed@120:01 REDPRE
 echo "Unable to retrieve data from Movable.sed! \nAborting!"
 goto mm_Console_Options
 end
@@ -4118,6 +4144,10 @@ elif not allow -a "1:/"
 echo "Permissions denied. Aborting!"
 goto mm_Console_Options
 end
+labelsel -s -o -k "Confirmation" mov_*
+@mov_B_Return_Back
+goto mm_Console_Options
+@mov_START_Proceed
 set LITMUS_FILE ""
 if findnot "$[GM9OUT]/dummy_???.bin" LITMUS_FILE
 strsplit LITMUS_FILE "$[LITMUS_FILE]" "/"
@@ -5653,6 +5683,7 @@ else
 echo "$[TWLN_DIR]\nDSiWare backup failed."
 end
 goto mm_Console_Options
+
 @DSIWARE_Convert_CIAs_(legit_to_standard)
 echo "This converts DSiWare games that were dumped as legit\nCIAs into standard CIAs. Use this if FBI can't install \nthem, or they're not available to redownload at eShop." 
 if not dirsel "Select the 'dsiware' folder." "$[GM9OUT]" TWLN_DIR
@@ -5863,13 +5894,16 @@ set OFFSET ""
 imgumount
 echo "Permissions denied. Aborting!"
 goto mm_Console_Options
-else
+end
+labelsel -s -o -k "Confirmation" initial_*
+@initial_B_Return_Back
+goto mm_Console_Options
+@initial_START_Proceed
 fset "D:/partitionA.bin@$[OFFSET]" "01"
 set HEXVALUE ""
 imgumount
 fixcmac -o -s "1:/data/$[SYSID0]/sysdata/00010017/00000000"
 echo "1:/data/<ID0>/sysdata/00010017/00000000\nBypass profile setup success."
-end
 if not chk "$[OFFSET]" "320C" # 2.1.0 specific.
 set OFFSET ""
 goto mm_Console_Options
@@ -5921,6 +5955,10 @@ if not allow -a "A:/"
 echo "Permissions denied! Aborting."
 goto DATABASE_OPTIONS_(A)_Quick
 end
+labelsel -s -o -k "Confirmation" quick_*
+@quick_B_Return_Back
+goto mm_Console_Options
+@quick_START_Proceed
 if findnot "0:/Nintendo 3DS" NULL
 echo "0:/Nintendo 3DS\n \nDirectory not found."
 goto DATABASE_OPTIONS_(A)_Quick
@@ -6386,6 +6424,10 @@ if not allow -a "A:/"
 echo "Permissions denied! Aborting."
 goto DATABASE_OPTIONS_(B)_Full
 end
+labelsel -s -o -k "Confirmation" full_*
+@full_B_Return_Back
+goto mm_Console_Options
+@full_START_Proceed
 if find "A:/dbs/import.db" NULL
 echo "Backup run cancelled.\nPlease read the option description."
 goto DATABASE_OPTIONS_(B)_Full
@@ -6682,6 +6724,10 @@ if not allow -a "A:/"
 echo "Permissions denied! Aborting."
 goto DATABASE_OPTIONS_(C)_Manual
 end
+labelsel -s -o -k "Confirmation" manual_*
+@manual_B_Return_Back
+goto mm_Console_Options
+@manual_START_Proceed
 if findnot "0:/Nintendo 3DS" NULL
 echo "0:/Nintendo 3DS\n \nDirectory not found."
 goto DATABASE_OPTIONS_(C)_Manual
@@ -7253,56 +7299,360 @@ mv -o -s -n "9:/nvram.bin" "0:/3ds/3DS_NVRAMtool/nvram.bin"
 echo "Reformatted image created succesfully:\n0:/3ds/3DS_NVRAMtool/nvram.bin"
 goto mm_Miscellaneous_Options
 
-@misc_SecureInfo-A_Fix
-if not ask "This will check the 0x100 of the SecureInfo_A \n(the region value) \nand fix it if needed \nProceed?"
+
+@misc_Rebuild_NAND's_NCSD
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nRebuild NAND's NCSD"
+if not ask "This will restore the orginal sysNAND's NCSD header \nProceed?"
 goto mm_Miscellaneous_Options
 end
-if chk $[REGION] "JPN"
-set SECREG "00"
-end
-if chk $[REGION] "USA"
-set SECREG "01"
-end
-if chk $[REGION] "EUR"
-set SECREG "02"
-end
-if chk $[REGION] "CHN"
-set SECREG "04"
-end
-if chk $[REGION] "KOR"
-set SECREG "05"
-end
-if chk $[REGION] "TWN"
-set SECREG "06"
-end
-if chk $[REGION] "UNK"
-echo "Region is unknown! Can't proceed!"
-goto mm_Miscellaneous_Options
-end
-if not find 1:/rw/sys/SecureInfo_A SECINFO
-echo "SecureInfo_A not found!"
-goto mm_Miscellaneous_Options
-end
-if not fget 1:/rw/sys/SecureInfo_A@101:01 SECVALUE
-echo "Unable to retrieve needed data! Aborting."
-goto mm_Miscellaneous_Options
-end
-if chk $[SECREG] $[SECVALUE]
-echo "SecureInfo_A value is correct. \nNo modifications required."
-goto mm_Miscellaneous_Options
-end
-if not ask "SecureInfo_A value in incorrect! Fix it now?"
-goto mm_Miscellaneous_Options
-end
-if not allow 1:/rw/sys/SecureInfo_A
+if not allow S:/nand.bin
 echo "Permissions denied! Aborting."
 goto mm_Miscellaneous_Options
-if not fset 1:/rw/sys/SecureInfo_A@101 $[SECREG]
-echo "SecureInfo_A fix failed!"
-goto mm_Miscellaneous_Options
 end
-echo "SecureInfo_A fix success!"
+labelsel -s -o -k "Confirmation" ncsd_*
+@ncsd_B_Return_Back
 goto mm_Miscellaneous_Options
+@ncsd_START_Proceed
+fset "S:/nand.bin@000" "6CF52F89F378120BFA4E1061D7361634D9A254A4F57AA5BD9F2C30934F0E68CB"
+fset "S:/nand.bin@020" "E6611D90D74CAAACB6A995565647333DC17092D320131089CCCD6331CB3A595D"
+fset "S:/nand.bin@040" "1BA299A32FF4D8E5DD1EB46A2A57935F6FE637322D3BC4F67CFED6C2254C089C"
+fset "S:/nand.bin@060" "62FA11D0824A844C79EE5A4F273D46C23BBBF0A2AF6ACADBE646F46B86D1289C"
+fset "S:/nand.bin@080" "7FF7E816CFDA4BC33DFF9D175AC69F72406C071B51F45A1ACB87F168C177CB9B"
+fset "S:/nand.bin@0A0" "E6C392F0341849AE5D510D26EEC1097BEBFB9D144A1647301BEAF9520D22C55A"
+fset "S:/nand.bin@0C0" "F46D49284CC7F9FBBA371A6D6E4C55F1E536D6237FFF54B3E9C11A20CFCCAC0C"
+fset "S:/nand.bin@0E0" "6B06F695766ACEB18BE33299A94CFCA7E258818652F7526B306B52E0AED04218"
+fill -n -o -s "S:/nand.bin@100:BE" "00"
+fset "S:/nand.bin@100" "4E435344"
+fset "S:/nand.bin@110" "0104030301"
+fset "S:/nand.bin@125" "8805"
+fset "S:/nand.bin@129" "8805"
+fset "S:/nand.bin@12C" "8001"
+fset "S:/nand.bin@130" "808905"
+fset "S:/nand.bin@135" "20"
+fset "S:/nand.bin@138" "80A905"
+fset "S:/nand.bin@13D" "20"
+fset "S:/nand.bin@140" "80C905"
+fset "S:/nand.bin@185" "04"
+fset "S:/nand.bin@18C" "01"
+if chk "$[ONTYPE]" "O3DS"
+fset "S:/nand.bin@106" "20"
+fset "S:/nand.bin@118" "0102020202"
+fset "S:/nand.bin@144" "80AE17"
+elif chk "$[ONTYPE]" "N3DS"
+fset "S:/nand.bin@106" "28"
+fset "S:/nand.bin@118" "0102020203"
+fset "S:/nand.bin@144" "80F620"
+end
+
+@misc_Incognito_Mode_Options
+set PREVIEW_MODE "GM9FULLSCRIPT /nMiscellaneous Options \nIncognito Mode Options"
+labelsel -s -o "Select an option" inc_*
+goto beginning
+
+@inc_Enable_Incognito_Mode
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nIncognito Mode Options \nEnable Incognito Mode"
+if not ask "This will enable Incognito mode. \nPlease proceed only if you know what you are doing! \nProceed?"
+goto misc_Incognito_Mode_Options
+end
+if not allow -a 1:
+echo "Permissions denied. Aborting."
+goto misc_Incognito_Mode_Options
+end
+labelsel -s -o -k "Confirmation" incon_*
+@incon_B_Return_Back
+goto misc_Incognito_Mode_Options
+@incon_START_Proceed
+if find 1:/data/$[SYSID0]/sysdata/00010022/00000001 NULL
+if not ask "!!WARNING!!\nSeems like Incognito mode is already enabled.\nOriginal activity log might get replaced.\nContinue anyway?"
+goto misc_Incognito_Mode_Options
+end
+end
+if ask "Do a backup of activity log in\n$[GM9OUT]?"
+findnot $[GM9OUT]/$[DATESTAMP]_$[SERIAL]_00000000_?? OUTPATH
+if cp 1:/data/$[SYSID0]/sysdata/00010022/00000000 $[OUTPATH]
+echo "Activity log backup created successfully in\n$[OUTPATH]"
+else
+if not ask "Backup failed. Continue anyway?"
+goto misc_Incognito_Mode_Options
+end
+end
+end
+mv -w -k -n 1:/data/$[SYSID0]/sysdata/00010022/00000000 1:/data/$[SYSID0]/sysdata/00010022/00000001
+echo "Incognito mode enabled."
+goto misc_Incognito_Mode_Options
+
+@inc_Disable_Incognito_Mode
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nIncognito Mode Options \nDisable Incognito Mode"
+if not find 1:/data/$[SYSID0]/sysdata/00010022/00000001 NULL
+echo "You are not in Incognito Mode. Aborting."
+goto misc_Incognito_Mode_Options
+end
+if not ask "Disable Incognito mode?"
+goto misc_Incognito_Mode_Options
+end
+if not allow -a 1:
+echo "Permissions denied! Aborting."
+goto misc_Incognito_Mode_Options
+end
+mv -w -k -n 1:/data/$[SYSID0]/sysdata/00010022/00000001 1:/data/$[SYSID0]/sysdata/00010022/00000000
+echo "Incognito mode disabled."
+goto misc_Incognito_Mode_Options
+
+@misc_Lazarus_3DS
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nLazarus 3DS"
+labelsel -o -s "Select an Option.\n \nThese scripts are as is. Nothing has been modified.\nFor full details on how to use these, visit the\nlazarus script repo." Lazarus3DS_*
+goto mm_Miscellaneous_Options
+
+@Lazarus3DS_Donor_Prep
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nLazarus 3DS \nDonor Prep"
+if not ask "This script prepares a 3DS for\nuse with the Lazarus3DS scripts.\n \nContinue?"
+goto misc_Lazarus_3DS
+end
+echo "Checking if Proper Files Exists."
+if not find 0:/donor/ticket_combo.db TICKETDB
+echo "Combo ticket.db not found!"
+goto misc_Lazarus_3DS
+end
+find 0:/donor/serial.bin NULL
+echo "Blank serial.bin not found!"
+goto misc_Lazarus_3DS
+end
+find 0:/donor/movable.sed NULL
+echo "0-key movable.sed not found!"
+goto misc_Lazarus_3DS
+end
+echo "Creating donor files.\nDo not interrupt!"
+if not cp -w S:/ctrnand_full.bin 0:/donor/ctrnand_full.bin
+echo "Interrupted. Aborting."
+goto misc_Lazarus_3DS
+end
+if not cp -w -h S:/nand_hdr.bin 0:/donor/nand_hdr.bin
+echo "Interrupted. Aborting."
+rm -o -s 0:/donor/ctrnand_full.bin
+goto misc_Lazarus_3DS
+end
+if not cp -w -h S:/twlmbr.bin 0:/donor/twlmbr.bin
+echo "Interrupted. Aborting."
+rm -o -s 0:/donor/ctrnand_full.bin
+rm -o -s 0:/donor/nand_hdr.bin
+goto misc_Lazarus_3DS
+end
+if not cp -w S:/twln.bin 0:/donor/twln.bin
+echo "Interrupted. Aborting."
+rm -o -s 0:/donor/ctrnand_full.bin
+rm -o -s 0:/donor/nand_hdr.bin
+rm -o -s 0:/donor/twlmbr.bin
+goto misc_Lazarus_3DS
+end
+if not cp -w S:/twlp.bin 0:/donor/twlp.bin
+echo "Interrupted. Aborting."
+rm -o -s 0:/donor/ctrnand_full.bin
+rm -o -s 0:/donor/nand_hdr.bin
+rm -o -s 0:/donor/twlmbr.bin
+rm -o -s 0:/donor/twln.bin
+goto misc_Lazarus_3DS
+end
+if not cp -w -h S:/sector0x96.bin 0:/donor/sector0x96.bin
+echo "Interrupted. Aborting."
+rm -o -s 0:/donor/ctrnand_full.bin
+rm -o -s 0:/donor/nand_hdr.bin
+rm -o -s 0:/donor/twlmbr.bin
+rm -o -s 0:/donor/twln.bin
+rm -o -s 0:/donor/twlp.bin
+goto misc_Lazarus_3DS
+end
+echo "Setting up Donated CTRNAND."
+imgmount 0:/donor/ctrnand_full.bin
+rm -o -s 7:/data/$[SYSID0]
+rm -o -s 7:/rw/luma
+rm -o -s 7:/boot.firm
+rm -o -s 7:/boot.firm.bak
+rm -o -s 7:/rw/sys/LocalFriendCodeSeed_A
+rm -o -s 7:/rw/sys/LocalFriendCodeSeed_B
+rm -o -s 7:/rw/sys/SecureInfo_C
+find 7:/rw/sys/SecureInfo_? SECUREINFO
+inject 0:/donor/serial.bin@ $[SECUREINFO]@102
+cp -w -n 0:/donor/movable.sed 7:/private/movable.sed
+rm -o -s 7:/ro/sys/HWCAL0.dat
+rm -o -s 7:/ro/sys/HWCAL1.dat
+cp -w -n $[TICKETDB] 7:/dbs/ticket.db
+imgumount
+echo "Setting up Donated TWLN."
+imgmount 0:/donor/twln.bin
+rm -o -s 7:/title/00030004
+rm -o -s 7:/shared2/0000
+imgumount
+echo "Setting up Donated TWLP."
+imgmount 0:/donor/twlp.bin
+rm -o -s 7:/photo/DCIM
+imgumount
+echo "Calculating Missing Hashes."
+shaget 0:/donor/ctrnand_full.bin 0:/donor/ctrnand_full.bin.sha
+shaget 0:/donor/twln.bin 0:/donor/twln.bin.sha
+shaget 0:/donor/twlp.bin 0:/donor/twlp.bin.sha
+echo "Wrapping Things up."
+rm -o -s 0:/gm9/scripts/Lazarus-Prep.gm9
+rm -o -s $[TICKETDB]
+rm -o -s 0:/donor/serial.bin
+rm -o -s 0:/donor/movable.sed
+echo "All done! Files located in 0:/donor/"
+goto misc_Lazarus_3DS
+
+@Lazarus3DS_Lazarus3DS
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nLazarus 3DS \nLazarus 3DS"  
+if not ask "This script revives bricked consoles and\nattempts to recover what data it can.\n \nOnly use this script on consoles\nthat will not boot.\n \nContinue?"
+echo "Aborted by user."
+goto misc_Lazarus_3DS
+end
+echo "Checking if Proper Files Exists."
+if not find 0:/pit/ctrnand_?3ds_??_*.bin CTRNAND
+echo "CTRNAND file not found!"
+goto misc_Lazarus_3DS
+end
+if not find 0:/pit/hdr_?3ds_all_*.bin HDR
+echo "NAND_HDR not found!"
+goto misc_Lazarus_3DS
+end
+if not find 0:/pit/twlmbr.bin TWLMBR
+echo "TWLMBR not found!"
+goto misc_Lazarus_3DS
+end
+if not find 0:/pit/twln_*.bin TWLN
+echo "TWLN not found!"
+goto misc_Lazarus_3DS
+end
+if not find 0:/pit/twlp.bin TWLP
+echo "TWLP not found!"
+goto misc_Lazarus_3DS
+end
+if not find 0:/pit/sighax_hdr_*.bin SIGHAX
+echo "SIGHAX_HDR not found!"
+goto misc_Lazarus_3DS
+end
+if not find 0:/pit/boot9stra*.firm B9S
+echo "Boot9strap file not found!"
+goto misc_Lazarus_3DS
+end
+if not find 0:/pit/sector0x9*.bin SECRET
+echo "sector0x96.bin not found!"
+goto misc_Lazarus_3DS
+end
+if not allow -a S:
+echo "Permission denied. Aborting!"
+goto misc_Lazarus_3DS
+end
+labelsel -s -o -k "Confirmation" laz_*
+@laz_B_Return_Back
+goto misc_Lazarus_3DS
+@laz_START_Proceed
+if not sha $[CTRNAND] $[CTRNAND].sha
+echo "Hash Check Failed on CTRNAND. Aborting."
+goto misc_Lazarus_3DS
+end
+if not sha $[HDR] $[HDR].sha
+echo "Hash Check Failed on NAND_HDR. Aborting."
+goto misc_Lazarus_3DS
+end
+if not sha $[TWLMBR] $[TWLMBR].sha
+echo "Hash Check Failed on TWLMBR. Aborting."
+goto misc_Lazarus_3DS
+end
+if not sha $[TWLN] $[TWLN].sha
+echo "Hash Check Failed on TWLN. Aborting."
+goto misc_Lazarus3DS_
+end
+if not sha $[TWLP] $[TWLP].sha
+echo "Hash Check Failed on TWLP. Aborting."
+goto misc_Lazarus_3DS
+end
+if not sha $[SIGHAX] $[SIGHAX].sha
+echo "Hash Check Failed on SIGHAX. Aborting."
+goto misc_Lazarus_3DS
+end
+if not sha $[B9S] $[B9S].sha
+echo "Hash Check Failed on Boot9strap file. Aborting."
+goto misc_Lazarus_3DS
+end
+if not sha $[SECRET] $[SECRET].sha
+echo "Hash Check Failed on sector0x96.bin. Aborting."
+goto misc_Lazarus_3DS
+end
+echo "Attempting to salvage what can be\nfrom bricked device."
+cp -w -o -s -n 1:/private/movable.sed 0:/pit/movable.sed
+cp -w -o -s -n 1:/dbs/ticket.db 0:/pit/ticket.db
+cp -w -o -s -n 1:/rw/sys/SecureInfo_A 0:/pit/SecureInfo_A
+cp -w -o -s -n 1:/rw/sys/SecureInfo_B 0:/pit/SecureInfo_B
+cp -w -o -s -n 1:/rw/sys/SecureInfo_C 0:/pit/SecureInfo_C
+cp -w -o -s -n 1:/data/$[SYSID0]/sysdata/00010017/00000000 0:/pit/configsave.bin
+cp -w -o -s -n 1:/data/$[SYSID0]/sysdata/00010032/00000000 0:/pit/friendsave.bin
+cp -w -o -s -n 1:/data/$[SYSID0]/sysdata/0001000f/00000000 0:/pit/seedsave.bin
+cp -w -o -s -n 1:/data/$[SYSID0]/sysdata/00010022/00000000 0:/pit/activitylog.bin
+find -o -s 1:/data/$[SYSID0]/sysdata/000202?8 MIIPLAZA
+set MIIPLAZA $[MIIPLAZA]/00000000
+cp -w -o -s -n $[MIIPLAZA] 0:/pit/miiplaza.bin
+find -o -s 1:/data/$[SYSID0]/sysdata/000202?d FACERAIDERS
+set FACERAIDERS $[FACERAIDERS]/00000000
+cp -w -o -s -n $[FACERAIDERS] 0:/pit/faceraiders.bin
+find -o -s 1:/data/$[SYSID0]/sysdata/000202?e ARGAMES
+set ARGAMES $[ARGAMES]/00000000
+cp -w -o -s -n $[ARGAMES] 0:/pit/argames.bin
+cp -w -o -s -n 1:/data/$[SYSID0]/extdata/00048000/f0000001 0:/pit/01
+cp -w -o -s -n 1:/data/$[SYSID0]/extdata/00048000/f0000002 0:/pit/02
+cp -w -o -s -n 1:/data/$[SYSID0]/extdata/00048000/f000000b 0:/pit/0b
+cp -w -o -s -n 1:/ro/sys/HWCAL0.dat 0:/pit/HWCAL0.dat
+cp -w -o -s -n 1:/ro/sys/HWCAL1.dat 0:/pit/HWCAL1.dat
+cp -w -o -s -n 2:/title/00030004 0:/pit/00030004
+cp -w -o -s -n 2:/shared2/0000 0:/pit/sounds.bin
+cp -w -o -s -n 3:/photo/DCIM 0:/pit/DCIM
+echo "Fixing System Files. Do not Interrupt!"
+cp -w -n $[HDR] S:/nand.bin
+cp -w -n $[SIGHAX] S:/nand_hdr.bin
+cp -w -n $[TWLMBR] S:/twlmbr.bin
+cp -w -n $[TWLN] S:/twln.bin
+cp -w -n $[TWLP] S:/twlp.bin
+cp -w -n $[CTRNAND] S:/ctrnand_full.bin
+cp -w -o -s -n 0:/pit/movable.sed 1:/private/movable.sed
+cp -w -o -s -n 0:/pit/ticket.db 1:/dbs/ticket.db
+cp -w -o -s -n 0:/pit/SecureInfo_A 1:/rw/sys/SecureInfo_A
+cp -w -o -s -n 0:/pit/SecureInfo_B 1:/rw/sys/SecureInfo_B
+cp -w -o -s -n 0:/pit/SecureInfo_C 1:/rw/sys/SecureInfo_C
+cp -w -o -s -n 0:/pit/seedsave.bin 1:/data/$[SYSID0]/sysdata/0001000f/00000000
+cp -w -o -s -n 0:/pit/configsave.bin 1:/data/$[SYSID0]/sysdata/00010017/00000000
+cp -w -o -s -n 0:/pit/friendsave.bin 1:/data/$[SYSID0]/sysdata/00010032/00000000
+cp -w -o -s -n 0:/pit/activitylog.bin 1:/data/$[SYSID0]/sysdata/00010022/00000000
+cp -w -o -s -n 0:/pit/miiplaza.bin 1:/data/$[SYSID0]/sysdata/00020208/00000000
+cp -w -o -s -n 0:/pit/miiplaza.bin 1:/data/$[SYSID0]/sysdata/00020218/00000000
+cp -w -o -s -n 0:/pit/miiplaza.bin 1:/data/$[SYSID0]/sysdata/00020228/00000000
+cp -w -o -s -n 0:/pit/faceraiders.bin 1:/data/$[SYSID0]/sysdata/0002020d/00000000
+cp -w -o -s -n 0:/pit/faceraiders.bin 1:/data/$[SYSID0]/sysdata/0002021d/00000000
+cp -w -o -s -n 0:/pit/faceraiders.bin 1:/data/$[SYSID0]/sysdata/0002022d/00000000
+cp -w -o -s -n 0:/pit/argames.bin 1:/data/$[SYSID0]/sysdata/0002020e/00000000
+cp -w -o -s -n 0:/pit/argames.bin 1:/data/$[SYSID0]/sysdata/0002021e/00000000
+cp -w -o -s -n 0:/pit/argames.bin 1:/data/$[SYSID0]/sysdata/0002022e/00000000
+cp -w -o -s -n 0:/pit/01 1:/data/$[SYSID0]/extdata/00048000/f0000001
+cp -w -o -s -n 0:/pit/02 1:/data/$[SYSID0]/extdata/00048000/f0000002
+cp -w -o -s -n 0:/pit/0b 1:/data/$[SYSID0]/extdata/00048000/f000000b
+cp -w -o -s -n 0:/pit/HWCAL0.dat 1:/ro/sys/HWCAL0.dat
+cp -w -o -s -n 0:/pit/HWCAL1.dat 1:/ro/sys/HWCAL1.dat
+cp -w -o -s -n 0:/pit/00030004 2:/title/0003000
+cp -w -o -s -n 0:/pit/sounds.bin 2:/shared2/0000
+cp -w -o -s -n 0:/pit/DCIM 3:/photo/DCIM
+fixcmac 1:/dbs
+fixcmac 1:/data
+fixcmac 1:/private
+set ERRORMSG "Unable to inject boot9strap!\n \nRun SafeB9SInstaller after."
+cp -w -o -n $[B9S] S:/firm0.bin
+cp -w -o -n $[B9S] S:/firm1.bin
+cp -w $[SECRET] S:/sector0x96.bin
+echo "Wrapping Things Up."
+cp -w -o -s 0:/boot.firm 0:/luma/payloads/GodMode9.firm
+mv -w -o -s 0:/boot.firm 1:/rw/luma/payloads/GodMode9.firm
+cp -w -o -s 0:/luma.firm 0:/boot.firm
+mv -w -o -s 0:/luma.firm 1:/boot.firm
+if ask "Revive complete. Remove Lazarus3DS files?"
+rm -o -s 0:/pit
+end
+goto misc_Lazarus_3DS
 
 @mm_Exit
 chk -s "cla" "uz"
