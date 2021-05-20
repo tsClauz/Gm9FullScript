@@ -86,12 +86,17 @@ labelsel -s -o "Select an option." bo_*
 goto mm_NAND_Management_Options
 
 
+
 @bo_SysNAND_Backup
 set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nBackup options \nSysNAND Backup" 
 if not ask "Backup sysNAND to $[GM9OUT]?"
 goto a_Backup_Options
 end
-if cp -w -h S:/nand_minsize.bin 0:/gm9/out/$[DATESTAMP]_$[SERIAL]_sysnand_00.bin
+if not find S:/nand_minsize.bin NANDMIN
+echo "Nand_minsize not found. Can't proceed!"
+goto a_Backup_Options
+end
+if cp -w -h $[NANDMIN] 0:/gm9/out/$[DATESTAMP]_$[SERIAL]_sysnand_00.bin
 echo "SysNAND backup success!"
 goto a_Backup_Options
 end
@@ -103,7 +108,11 @@ set PREVIEW_MODE "GM9FULLSCRIPT \nNAND Management Options \nBackup options \nEmu
 if not ask "Backup emuNAND to $[GM9OUT]?"
 goto a_Backup_Options
 end
-if cp -w -h E:/nand_minsize.bin 0:/gm9/out/$[DATESTAMP]_$[SERIAL]_emunand_00.bin
+if not find E:/nand_minsize.bin EMUMIN
+echo "EmuNAND not found! Aborting!"
+goto a_Backup_Options
+end
+if cp -w -h $[EMUMIN] 0:/gm9/out/$[DATESTAMP]_$[SERIAL]_emunand_00.bin
 echo "EmuNAND backup success!"
 goto a_Backup_Options
 end
@@ -154,7 +163,7 @@ if not allow S:/nand_hdr.bin
 echo "Permissions denied. Aborting!"
 goto a_Restore_Options
 end
-inject -n I:/nand_hdr.bin S:/nand_hdr.bin
+cp -w -n I:/nand_hdr.bin S:/nand_hdr.bin
 end
 if not cp -w I:/ctrnand_full.bin S:/ctrnand_full.bin
 imgumount
@@ -199,6 +208,10 @@ echo "User aborted"
 
 goto a_Restore_Options
 
+end
+if not find S:/nand.bin SYSNAND
+echo "EMMC/NAND chip not found!"
+goto a_Restore_Options
 end
 
 if not allow S:/nand.bin
@@ -295,6 +308,10 @@ if not find E:/nand.bin NULL
 echo "EmuNAND not found! Aborting!"
 goto mm_NAND_Management_Options
 end
+if not find S:/nand_minsize.bin NANDMIN
+echo "Nand_minsize.bin not found! Can't proceed!"
+goto mm_NAND_Management_Options
+end
 if not allow E:/nand.bin
 echo "Permissions denied. Aborting!"
 goto mm_NAND_Management_Options
@@ -329,6 +346,10 @@ echo "EmuNAND not found! Aborting!"
 
 goto mm_NAND_Management_Options
 
+end
+if not find S:/nand.bin SYSNAND
+echo "EMMC/NAND chip not found!"
+goto mm_NAND_Management_Options
 end
 
 if not allow S:/ctrnand_full.bin
@@ -972,6 +993,18 @@ set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nInstall Boot9Strap"
 if not ask "This will install Boot9Strap on your device. \nProceed?"
 goto mm_Boot9Strap_Options
 end
+if not find S:/firm0.bin FIRM0
+echo "FIRM0 not found! Can't proceed"
+goto mm_Boot9Strap_Options
+end
+if not find S:/firm1.bin FIRM1
+echo "FIRM1 not found! Can't proceed"
+goto mm_Boot9Strap_Options
+end
+if not find S:/sector0x96.bin SYSEC
+echo "Sector0x96 not found! Can't proceed!"
+goto mm_Boot9Strap_Options
+end
 if not find 0:/boot9strap/boot9strap.firm BOOT9STRAP
 echo "Boot9Strap FIRM not found. \nAborting!"
 goto mm_Boot9Strap_Options
@@ -1007,6 +1040,10 @@ if not allow S:/firm0.bin
 echo "Permissions denied. Aborting!"
 goto mm_Boot9Strap_Options
 end
+labelsel -s -o -k "Confirmation" b9si_*
+@b9si_B_Return_Back
+goto mm_Boot9Strap_Options
+@b9si_START_Proceed
 if not cp -w -n S:/firm0.bin 0:/boot9strap/firm0_backup.bin
 echo "FIRM partitions backup failed! Aborting!"
 goto mm_Boot9Strap_Options
@@ -1147,6 +1184,18 @@ end
 @b9s_Uninstall_Boot9Strap
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nUninstall Boot9Strap"
 if not ask "WARNING: \nby proceeding, you will completely uninstall \nthe Boot9strap \nfrom your console reverting it to stock. \nMake sure you ran the Safety test to ensure \nthat your console won't \nbrick after running this. \nProceed?"
+goto mm_Boot9Strap_Options
+end
+if not find S:/firm0.bin FIRM0
+echo "FIRM0 not found! Can't proceed"
+goto mm_Boot9Strap_Options
+end
+if not find S:/firm1.bin FIRM1
+echo "FIRM1 not found! Can't proceed"
+goto mm_Boot9Strap_Options
+end
+if not find S:/sector0x96.bin SYSEC
+echo "Sector0x96 not found! Can't proceed!"
 goto mm_Boot9Strap_Options
 end
 if chk $[HAX] "ntrboot"
@@ -1902,8 +1951,10 @@ if not ask "WARNING: \nby proceeding you'll format your console \nlike the syste
 goto mm_Console_Options
 
 end
-
-if not allow 1:/private/movable.sed
+if not find 1:/private/movable.sed MOVABLE
+echo "Movable.sed not found! Can't proceed!"
+goto mm_Console_Options
+endif not allow 1:/private/movable.sed
 echo "Permissions denied. Aborting!"
 
 goto mm_Console_Options
@@ -1913,7 +1964,6 @@ labelsel -s -o -k "Confirmation" formatcons_*
 @formatcons_B_Return_Back
 goto mm_Console_Options
 @formatcons_START_Proceed
-
 if not fget 1:/private/movable.sed@118:01 GREENPRE
 echo "Unable to retrieve data from Movable.sed! \nAborting!"
 goto mm_Console_Options
@@ -3591,7 +3641,7 @@ if chk $[REDPRE] "a2"
 set REDPOST "a3"
 goto redpostset
 end
-if chk $[REDPRE] "9a3"
+if chk $[REDPRE] "a3"
 set REDPOST "a4"
 goto redpostset
 end
@@ -4127,7 +4177,7 @@ if not ask "Continue with finding the correct 'KeyY'?"
 goto mm_Console_Options
 end
 if findnot "1:/private/movable.sed" NULL
-echo "1:/private/movable.sed\nFile is missing."
+echo "Movable.sed not found! Aborting!."
 goto mm_Console_Options
 elif findnot "0:/Nintendo 3DS" NULL
 echo "0:/Nintendo 3DS\nFolder is missing."
@@ -7343,9 +7393,11 @@ fset "S:/nand.bin@106" "28"
 fset "S:/nand.bin@118" "0102020203"
 fset "S:/nand.bin@144" "80F620"
 end
+echo "Rebuid success!"
+gotomm_Miscellaneous_Options
 
 @misc_Incognito_Mode_Options
-set PREVIEW_MODE "GM9FULLSCRIPT /nMiscellaneous Options \nIncognito Mode Options"
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nIncognito Mode Options"
 labelsel -s -o "Select an option" inc_*
 goto beginning
 
@@ -7397,6 +7449,530 @@ end
 mv -w -k -n 1:/data/$[SYSID0]/sysdata/00010022/00000001 1:/data/$[SYSID0]/sysdata/00010022/00000000
 echo "Incognito mode disabled."
 goto misc_Incognito_Mode_Options
+
+@misc_Essential.exefs_Options
+if not find S:/essential.exefs ESS
+echo "Essential.exefs not found! \nCreate it before using this function"
+goto mm_Miscellaneous_Options
+end
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options"
+labelsel -s -o "Select an option" ess_*
+goto mm_Miscellaneous_Options
+
+@ess_Update_Files
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files"
+labelsel -s -o "Select an option" essup_*
+goto misc_Essentials.exefs_Options
+
+@essup_Update_LocalFriendCodeSeed-B
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate LocalFriendCodeSeed_B"
+if not ask "Update LocalFriendCodeSeed_B \nin essential.exefs?"
+goto ess_Update_Files
+end
+if not allow S:/essential.exefs
+echo "Permissions denied! Aborting!"
+goto ess_Update_Files
+end
+if not find 1:/rw/sys/LocalFriendCodeSeed_B FRNDSEED
+echo "File not found!"
+goto ess_Update_Options
+end
+if not fget $[FRNDSEED]@00:110 FRNDVAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@800 $[FRNDVAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+echo "Update success!"
+goto ess_Update_Files
+
+@essup_Update_HWCAL0.dat
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate HWCAL0.dat"
+if not ask "Update HWCAL0.dat \nin essential.exefs?"
+goto ess_Update_Files
+end
+if not allow S:/essential.exefs
+echo "Permissions denied! Aborting!"
+goto ess_Update_Files
+end
+if not find 1:/ro/sys/HWCAL0.dat HWCAL0
+echo "File not found!"
+goto ess_Update_Options
+end
+if not fget $[HWCAL0]@00:770 HW0VAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@e00 $[HW0VAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+echo "Update success!"
+goto ess_Update_Files
+
+@essup_Update_HWCAL1.dat
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate HWCAL1.dat"
+if not ask "Update HWCAL1.dat \nin essential.exefs?"
+goto ess_Update_Files
+end
+if not allow S:/essential.exefs
+echo "Permissions denied! Aborting!"
+goto ess_Update_Files
+end
+if not find 1:/ro/sys/HWCAL1.dat HWCAL1
+echo "File not found!"
+goto ess_Update_Options
+end
+if not fget $[HWCAL1]@00:770 HW1VAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@1800 $[HW1VAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+echo "Update success!"
+goto ess_Update_Files
+
+@essup_Update_nand-cid.mem
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate nand_cid.mem"
+if not ask "Update nand_cid.mem \nin essential.exefs?"
+goto ess_Update_Files
+end
+if not allow S:/essential.exefs 
+echo "Permissions denied! Aborting!"
+goto ess_Update_Files
+end
+if not find M:/nand_cid.mem CID
+echo "File not found!"
+goto ess_Update_Options
+end
+if not fget $[CID]@00:10 CIDVAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@a00 $[CIDVAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+echo "Update success!"
+goto ess_Update_Files
+
+@essup_Update_nand-hdr.bin
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate nand_hdr.bin"
+if not ask "Update nand_hdr.bin \nin essential.exefs?"
+goto ess_Update_Files
+end
+if not allow S:/essential.exefs 
+echo "Permissions denied! Aborting!"
+goto ess_Update_Files
+end
+if not find S:/nand_hdr.bin HDR
+echo "File not found!"
+goto ess_Update_Options
+end
+if not fget $[HDR]@00:250 HDRVAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@100 $[HDRVAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+echo "Update success!"
+goto ess_Update_Files
+
+@essup_Update_Movable.sed
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate movable.sed"
+if not ask "Update movable.sed \nin essential.exefs?"
+goto ess_Update_Files
+end
+if not allow S:/essential.exefs 
+echo "Permissions denied! Aborting!"
+goto ess_Update_Files
+end
+if not find 1:/private/movable.sed MOVABLE
+echo "File not found!"
+goto ess_Update_Options
+end
+if not fget $[MOVABLE]@00:140 MOVABLEVAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@600 $[MOVABLEVAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+echo "Update success!"
+goto ess_Update_Files
+
+@essup_Update_otp.mem
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate otp.mem"
+if not ask "Update otp.mem \nin essential.exefs?"
+goto ess_Update_Files
+end
+if not allow S:/essential.exefs 
+echo "Permissions denied! Aborting!"
+goto ess_Update_Files
+end
+if not find M:/otp.mem OTP
+echo "File not found!"
+goto ess_Update_Options
+end
+if not fget $[OTP]@00:100 OTPVAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@c00 $[OTPVAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+echo "Update success!"
+goto ess_Update_Files
+
+@essup_Update_SecureInfo_-A.mem
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate SecureInfo_A"
+if not ask "Update SecureInfo_A \nin essential.exefs?"
+goto ess_Update_Files
+end
+if not allow S:/essential.exefs 
+echo "Permissions denied! Aborting!"
+goto ess_Update_Files
+end
+if not find 1:/rw/sys/SecureInfo_A SECINFO
+echo "File not found!"
+goto ess_Update_Options
+end
+if not fget $[SECINFO]@00:152 SECVAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@3be $[SECVAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+echo "Update success!"
+goto ess_Update_Files
+
+essup_Update_whole_File
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate whole File"
+if not ask "This will update the essential.exefs file \(all files in it) \nProceed?"
+goto ess_Update_Files
+end
+if not find S:/nand_hdr.bin HDR
+echo "Required files not found! Aborting!"
+goto ess_Update_Files
+end
+if not find 1:/rw/sys/SecureInfo_A SECINFO
+echo "Required files not found! Aborting!"
+goto ess_Update_Files
+end
+if not find 1:/private/movable.sed MOVABLE
+echo "Required files not found! Aborting!"
+goto ess_Update_Files
+end
+if not find 1:/rw/sys/LocalFriendCodeSeed_B FRNDSEED
+echo "Required files not found! Aborting!"
+goto ess_Update_Files
+end
+if not find M:/nand_cid.mem CID
+echo "Required files not found! Aborting!"
+goto ess_Update_Files
+end
+if not find M:/otp.mem OTP
+echo "Required files not found! Aborting!"
+goto ess_Update_Files
+end
+if not find 1:/ro/sys/HWCAL0.dat HWCAL0
+echo "Required files not found! Aborting!"
+goto ess_Update_Files
+end
+if not find 1:/ro/sys/HWCAL1.dat HWCAL1
+echo "Required files not found! Aborting!"
+goto ess_Update_Files
+end
+if not fget $[FRNDSEED]@00:110 FRNDVAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@800 $[FRNDVAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+if not fget $[HWCAL0]@00:770 HW0VAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@e00 $[HW0VAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+if not fget $[HWCAL1]@00:770 HW1VAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@1800 $[HW1VAL]
+echo "Update failed!"
+if not fget $[CID]@00:10 CIDVAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@a00 $[CIDVAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+if not fget $[HDR]@00:250 HDRVAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@100 $[HDRVAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+if not fget $[MOVABLE]@00:140 MOVABLEVAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@600 $[MOVABLEVAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+if not fget $[OTP]@00:100 OTPVAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@c00 $[OTPVAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+if not fget $[SECINFO]@00:152 SECVAL
+echo "Failed to retrieve data from file!"
+goto ess_Update_Files
+end
+if not fset S:/essential.exefs@3be $[SECVAL]
+echo "Update failed!"
+goto ess_Update_Files
+end
+echo "Update success!"
+goto ess_Update_Files
+
+@ess_Restore_Files
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nRestore Files"
+labelsel -s -o "Select an option" essres_*
+goto misc_Essential.exefs_Options
+
+@essres_Restore_LocalFriendCodeSeed-B
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nRestore Files \nRestore LocalFriendCodeSeed_B"
+if not ask "Restore LocalFriendCodeSeed_B \nfrom essential.exefs?"
+goto ess_Restore_Files
+if not allow 1:/rw/LocalFriendCodeSeed_B
+echo "Permissions denied! Aborting!"
+goto ess_Restore_Files
+end
+labelsel -s -o -k "Confirmation" frndres_*
+@frndres_B_Return_Back
+goto ess_Restore_Files
+@frndres_START_Proceed
+imgmount S:/essential.exefs
+if not cp -w -n G:/frndseed 1:/rw/sys/LocalFriendCodeSeed_B
+imgumount 
+echo "Restore failed!"
+goto ess_Restore_Files
+end
+imgumount
+echo "Restore success!"
+goto ess_Restore_Files
+
+@essres_Restore_HWCAL0.dat
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nRestore Files \nRestore HWCAL0.dat"
+if not ask "Restore HWCAL0.dat \nfrom essential.exefs?"
+goto ess_Restore_Files
+if not allow 1:/ro/sys/HWCAL0.dat
+echo "Permissions denied! Aborting!"
+goto ess_Restore_Files
+end
+labelsel -s -o -k "Confirmation" hw0res_*
+@hw0res_B_Return_Back
+goto ess_Restore_Files
+@hw0res_START_Proceed
+imgmount S:/essential.exefs
+if not cp -w -n G:/hwcal0 1:/ro/sys/HWCAL0.dat
+imgumount 
+echo "Restore failed!"
+goto ess_Restore_Files
+end
+imgumount
+echo "Restore success!"
+goto ess_Restore_Files
+
+@essres_Restore_HWCAL1.dat
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nRestore Files \nRestore HWCAL1.dat"
+if not ask "Restore HWCAL1.dat \nfrom essential.exefs?"
+goto ess_Restore_Files
+if not allow 1:/ro/sys/HWCAL1.dat
+echo "Permissions denied! Aborting!"
+goto ess_Restore_Files
+end
+labelsel -s -o -k "Confirmation" hw1res_*
+@hw1res_B_Return_Back
+goto ess_Restore_Files
+@hw1res_START_Proceed
+imgmount S:/essential.exefs
+if not cp -w -n G:/hwcal1 1:/ro/sys/HWCAL1.dat
+imgumount 
+echo "Restore failed!"
+goto ess_Restore_Files
+end
+imgumount
+echo "Restore success!"
+goto ess_Restore_Files
+
+@essres_Restore_nand-cid.mem
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nRestore Files \nRestore nand_cid.mem"
+if not ask "Restore nand_cid.mem \nfrom essential.exefs?"
+goto ess_Restore_Files
+if not allow M:/nand_cid.mem
+echo "Permissions denied! Aborting!"
+goto ess_Restore_Files
+end
+labelsel -s -o -k "Confirmation" cidres_*
+@cidres_B_Return_Back
+goto ess_Restore_Files
+@cidres_START_Proceed
+imgmount S:/essential.exefs
+if not cp -w -n G:/nand_cid M:/nand_cid.mem
+imgumount 
+echo "Restore failed!"
+goto ess_Restore_Files
+end
+imgumount
+echo "Restore success!"
+goto ess_Restore_Files
+
+@essres_Restore_nand-hdr.bin
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nRestore Files \nRestore nand_hdr.bin"
+if not ask "Restore nand_hdr.bin \nfrom essential.exefs?"
+goto ess_Restore_Files
+if not allow S:/nand_hdr.bin
+echo "Permissions denied! Aborting!"
+goto ess_Restore_Files
+end
+labelsel -s -o -k "Confirmation" hdres_*
+@hdres_B_Return_Back
+goto ess_Restore_Files
+@hdres_START_Proceed
+imgmount S:/essential.exefs
+if not cp -w -n G:/nand_hdr S:/nand_hdr.bin
+imgumount 
+echo "Restore failed!"
+goto ess_Restore_Files
+end
+imgumount
+echo "Restore success!"
+goto ess_Restore_Files
+
+@essres_Restore_movable.sed
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nRestore Files \nRestore movable.sed"
+if not ask "Restore movable.sed \nfrom essential.exefs?"
+goto ess_Restore_Files
+if not allow 1:/private/movable.sed
+echo "Permissions denied! Aborting!"
+goto ess_Restore_Files
+end
+labelsel -s -o -k "Confirmation" movres_*
+@movres_B_Return_Back
+goto ess_Restore_Files
+@movres_START_Proceed
+imgmount S:/essential.exefs
+if not cp -w -n G:/movable 1:/private/movable.sed
+imgumount 
+echo "Restore failed!"
+goto ess_Restore_Files
+end
+imgumount
+echo "Restore success!"
+goto ess_Restore_Files
+
+@essres_Restore_SecureInfo-A
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nRestore Files \nRestore SecureInfo_A"
+if not ask "Restore SecureInfo_A \nfrom essential.exefs?"
+goto ess_Restore_Files
+if not allow 1:/rw/sys/SecureInfo_A
+echo "Permissions denied! Aborting!"
+goto ess_Restore_Files
+end
+labelsel -s -o -k "Confirmation" secres_*
+@secres_B_Return_Back
+goto ess_Restore_Files
+@secres_START_Proceed
+imgmount S:/essential.exefs
+if not cp -w -n G:/secinfo 1:/rw/sys/SecureInfo_A
+imgumount 
+echo "Restore failed!"
+goto ess_Restore_Files
+end
+imgumount
+echo "Restore success!"
+goto ess_Restore_Files
+
+@essres_Restore_whole_File
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nRestore Files \nRestore whole File"
+if not ask "Restore essential.exefs to sysNAND? \n(injects all the files in it)"
+goto ess_Restore_Options
+end
+if not allow S:/nand.bin 
+echo "Permissions denied! Aborting!"
+goto ess_Restore_Files
+end
+if not allow M:/nand_cid.mem
+echo "Permissions denied! Aborting!"
+goto ess_Restore_Files
+end
+labelsel -s -o -k "Confirmation" allres_*
+@allres_B_Return_Back
+goto ess_Restore_Files
+@allres_START_Proceed
+imgmount S:/essential.exefs
+if not cp -w -n G:/frndseed 1:/rw/sys/LocalFriendCodeSeed_B
+imgumount 
+echo "Restore failed!"
+goto ess_Restore_Files
+end
+if not cp -w -n G:/hwcal0 1:/ro/sys/HWCAL0.dat
+imgumount 
+echo "Restore failed!"
+goto ess_Restore_Files
+end
+if not cp -w -n G:/hwcal1 1:/ro/sys/HWCAL1.dat
+imgumount 
+echo "Restore failed!"
+goto ess_Restore_Files
+end
+if not cp -w -n G:/nand_cid M:/nand_cid.mem
+imgumount 
+echo "Restore failed!"
+goto ess_Restore_Files
+end
+if not cp -w -n G:/nand_hdr S:/nand_hdr.bin
+imgumount 
+echo "Restore failed!"
+goto ess_Restore_Files
+end
+if not cp -w -n G:/movable 1:/private/movable.sed
+imgumount 
+echo "Restore failed!"
+goto ess_Restore_Files
+end
+if not cp -w -n G:/secinfo 1:/rw/sys/SecureInfo_A
+imgumount 
+echo "Restore failed!"
+goto ess_Restore_Files
+end
+imgumount
+echo "Restore success!"
+goto ess_Restore_Files
 
 @misc_Lazarus_3DS
 set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nLazarus 3DS"
@@ -7655,4 +8231,4 @@ end
 goto misc_Lazarus_3DS
 
 @mm_Exit
-chk -s "cla" "uz"
+chk -s "made" "by" "clauz"
