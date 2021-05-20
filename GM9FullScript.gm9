@@ -7394,7 +7394,9 @@ fset "S:/nand.bin@118" "0102020203"
 fset "S:/nand.bin@144" "80F620"
 end
 echo "Rebuid success!"
-gotomm_Miscellaneous_Options
+goto mm_Miscellaneous_Options
+
+
 
 @misc_Incognito_Mode_Options
 set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nIncognito Mode Options"
