@@ -4,7 +4,14 @@ set SCRIPTGIT "https://github.com/clauz07/Gm9FullScript"
 set GM9IN "0:/gm9/in"
 if not chk $[RDTYPE] "retail"
 goto devkit
+elif chk $[RDTYPE] "retail"
+set oktheconsoleisnotshitty "^"
+else
+goto rdtypeunk
 end
+if chk $[HAX] "a9lh"
+goto a9lh
+end 
 if chk $[GM9VER] "v1.9.0"
 goto gm9ver 
 elif chk $[GM9VER] "v1.8.0"
@@ -53,6 +60,13 @@ goto gm9ver
 elif chk $[GM9VER] "v1.2.7"
 goto gm9ver
 end
+if chk $[ONTYPE] "O3DS"
+set ortype "O3DS"
+elif chk $[ONTYPE] "N3DS"
+set ortype "N3DS"
+else
+goto odtypeunk
+end
 goto beginning
 
 @devkit
@@ -61,10 +75,25 @@ set PREVIEW_MODE "GM9FULLSCRIPT \nRead the message below."
 echo "Console is a developer unit. \nScript is intended to run on stock units only. \nAborting."
 goto mm_Exit
 
+@rdtypeunk
+set PREVIEW_MODE "GM9FULLSCRIPT \nRead the message below."
+echo "Script could not determine if console is retail or devkit. \nAborting!"
+goto mm_Exit
+
+@a9lh 
+set PREVIEW_MODE "GM9FULLSCRIPT \nRead the message below."
+echo "The console is running from Arm9LoaderHax entrypoint. \nScript is intended to run on SigHax consoles only. \nPlease follow \nhttps://3ds.guide/a9lh-to-b9s \nTo upgrade to Boot9Strap"
+goto mm_Exit
+
 @gm9ver
 set PREVIEW_MODE "GM9FULLSCRIPT \nRead the message below."
 echo "GodMode9 1.9.1 or higher is required. For safety reasons,\nif the running GodMode9 version is lower than 1.9.1, \nthe script will prevent himself \nfrom running \nto avoid unexptected errors \ndue to missing commands. \nPlease download the latest GodMode9 \nversion to use this script."
 echo "HOW TO UPDATE GODMODE9: \nDownload the latest GodMode9 version at \nhttps://github.com/d0k3/GodMode9/releases/latest \nOpen the archive and extract \nthe gm9 folder \nto the SDCARD root \nreplacing existing files. \nEntre folder Luma/payloads on SDCARD and extract here the \nGodMode9.firm file. \nInsert the SDCARD into the console \nand boot up GodMode9. \nYou won't see this error message anymore."
+goto mm_Exit
+
+@odtypeunk
+set PREVIEW_MODE "GM9FULLSCRIPT \nRead the message below."
+echo "Console type is unknown. Aborting!"
 goto mm_Exit
 
 @beginning
@@ -743,6 +772,14 @@ if not filesel "Choose a CTRTransfer Image." $[CTRIMAGE] CTRIMAGE
 goto mm_CTRNAND_Options
 end
 imgmount $[CTRIMAGE]
+if not find 7:/title NULL
+echo "CTRNAND Image is incomplete! Aborting!"
+goto mm_CTRNAND_Options
+end
+if not find 7:/title/?0000002 NULL
+echo "CTRNAND Image is incomplete! Aborting!"
+goto mm_CTRNAND_Options
+end
 if not find 7:/title/00000002/content/????????.app NULL
 set IMGOLDNEW "N3DS" 
 else
@@ -856,6 +893,14 @@ goto mm_CTRNAND_Options
 end
 
 imgmount $[CTRD9IMAGE]
+if not find 7:/title NULL
+echo "CTRNAND Image is incomplete! Aborting!"
+goto mm_CTRNAND_Options
+end
+if not find 7:/title/?0000002 NULL
+echo "CTRNAND Image is incomplete! Aborting!"
+goto mm_CTRNAND_Options
+end
 if not find 7:/title/00000002/content/????????.app NULL
 set IMGD9OLDNEW "N3DS" 
 else
@@ -1124,29 +1169,28 @@ goto mm_Boot9Strap_Options
 
 @b9s_Check_Boot9Strap_Version
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nCheck Boot9Strap Version"
+if not chk $[HAX] "sighax"
+echo "You do not have Boot9Strap. \nIf you think you have it, \nreinstall it now."
+goto mm_Boot9Strap_Options
+end
 imgmount S:/firm0.bin
 if sha G:/header.bin 5C3B0CD4FE0C4987AF764B9FEFAD8B8ED39929E6EA9A8F6D782C2409BB16930A
 echo "Boot9Strap 1.0 \nIt's better to update it."
 goto b9sverdone
-end
-if sha G:/header.bin 893A8A5B9B87FD1869AAA0BAE9BCAA3C9102DFEC1FFACB2561321F53B6091884
+elif sha G:/header.bin 893A8A5B9B87FD1869AAA0BAE9BCAA3C9102DFEC1FFACB2561321F53B6091884
 echo "Boot9Strap 1.1 \nIt's better to update it."
 goto b9sverdone
-end
-if sha G:/header.bin 9DDE2F7258FD1EE88EDE335ED781053F8925269D8720FE87BE4E2BD35B5990D3
+elif sha G:/header.bin 9DDE2F7258FD1EE88EDE335ED781053F8925269D8720FE87BE4E2BD35B5990D3
 echo "Boot9Strap 1.2 \nIt's better to update it."
 goto b9sverdone
-end
-if sha G:/header.bin 7C2E1DC860858BF9C7285915957FE64AF3B1B812C57FCB2C417881D31EE4246C
+elif sha G:/header.bin 7C2E1DC860858BF9C7285915957FE64AF3B1B812C57FCB2C417881D31EE4246C
 echo "Boot9Strap 1.3 \nYou have the latest version."
 goto b9sverdone
-end
-imgumount 
-echo "You do not have Boot9Strap. \nIf you think you have it, \nreinstall it now."
-goto mm_Boot9Strap_Options
+echo "Boot9Strap version is unknown!"
 @b9sverdone
 imgumount
 goto mm_Boot9Strap_Options
+end
 
 @b9s_Safety_test
 set PREVIEW_MODE "GM9FULLSCRIPT \nBoot9Strap Options \nSafety test"
@@ -7464,26 +7508,22 @@ goto mm_Miscellaneous_Options
 @ess_Update_Files
 set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files"
 labelsel -s -o "Select an option" essup_*
-goto misc_Essentials.exefs_Options
+goto misc_Essential.exefs_Options
 
 @essup_Update_LocalFriendCodeSeed-B
 set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate LocalFriendCodeSeed_B"
-if not ask "Update LocalFriendCodeSeed_B \nin essential.exefs?"
-goto ess_Update_Files
-end
-if not allow S:/essential.exefs
-echo "Permissions denied! Aborting!"
+if not ask "Update LocalFriendCodeSeed_B in essential.exefs?"
 goto ess_Update_Files
 end
 if not find 1:/rw/sys/LocalFriendCodeSeed_B FRNDSEED
 echo "File not found!"
-goto ess_Update_Options
-end
-if not fget $[FRNDSEED]@00:110 FRNDVAL
-echo "Failed to retrieve data from file!"
 goto ess_Update_Files
 end
-if not fset S:/essential.exefs@800 $[FRNDVAL]
+if not allow ESS
+echo "Permissions denied! Aborting!"
+goto ess_Update_Files
+end
+if not inject -n FRNDSEED S:/essential.exefs@800
 echo "Update failed!"
 goto ess_Update_Files
 end
@@ -7492,22 +7532,18 @@ goto ess_Update_Files
 
 @essup_Update_HWCAL0.dat
 set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate HWCAL0.dat"
-if not ask "Update HWCAL0.dat \nin essential.exefs?"
-goto ess_Update_Files
-end
-if not allow S:/essential.exefs
-echo "Permissions denied! Aborting!"
+if not ask "Update HWCAL0.dat in essential.exefs?"
 goto ess_Update_Files
 end
 if not find 1:/ro/sys/HWCAL0.dat HWCAL0
 echo "File not found!"
-goto ess_Update_Options
-end
-if not fget $[HWCAL0]@00:770 HW0VAL
-echo "Failed to retrieve data from file!"
 goto ess_Update_Files
 end
-if not fset S:/essential.exefs@e00 $[HW0VAL]
+if not allow ESS
+echo "Permissions denied! Aborting!"
+goto ess_Update_Files
+end
+if not inject -n HWCAL0 S:/essential.exefs@e00
 echo "Update failed!"
 goto ess_Update_Files
 end
@@ -7516,22 +7552,18 @@ goto ess_Update_Files
 
 @essup_Update_HWCAL1.dat
 set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate HWCAL1.dat"
-if not ask "Update HWCAL1.dat \nin essential.exefs?"
-goto ess_Update_Files
-end
-if not allow S:/essential.exefs
-echo "Permissions denied! Aborting!"
+if not ask "Update HWCAL1.dat in essential.exefs?"
 goto ess_Update_Files
 end
 if not find 1:/ro/sys/HWCAL1.dat HWCAL1
 echo "File not found!"
-goto ess_Update_Options
-end
-if not fget $[HWCAL1]@00:770 HW1VAL
-echo "Failed to retrieve data from file!"
 goto ess_Update_Files
 end
-if not fset S:/essential.exefs@1800 $[HW1VAL]
+if not allow ESS
+echo "Permissions denied! Aborting!"
+goto ess_Update_Files
+end
+if not inject -n HWCAL1 S:/essential.exefs@1800
 echo "Update failed!"
 goto ess_Update_Files
 end
@@ -7540,22 +7572,18 @@ goto ess_Update_Files
 
 @essup_Update_nand-cid.mem
 set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate nand_cid.mem"
-if not ask "Update nand_cid.mem \nin essential.exefs?"
+if not ask "Update nand_cid.mem in essential.exefs?"
 goto ess_Update_Files
 end
-if not allow S:/essential.exefs 
+if not find M:/nand_cid.mem NANDCID
+echo "File not found!"
+goto ess_Update_Files
+end
+if not allow ESS
 echo "Permissions denied! Aborting!"
 goto ess_Update_Files
 end
-if not find M:/nand_cid.mem CID
-echo "File not found!"
-goto ess_Update_Options
-end
-if not fget $[CID]@00:10 CIDVAL
-echo "Failed to retrieve data from file!"
-goto ess_Update_Files
-end
-if not fset S:/essential.exefs@a00 $[CIDVAL]
+if not inject -n NANDCID S:/essential.exefs@a00
 echo "Update failed!"
 goto ess_Update_Files
 end
@@ -7564,46 +7592,18 @@ goto ess_Update_Files
 
 @essup_Update_nand-hdr.bin
 set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate nand_hdr.bin"
-if not ask "Update nand_hdr.bin \nin essential.exefs?"
+if not ask "Update nand_hdr.bin in essential.exefs?"
 goto ess_Update_Files
 end
-if not allow S:/essential.exefs 
+if not find S:/nand_hdr.bin NANDHDR
+echo "File not found!"
+goto ess_Update_Files
+end
+if not allow ESS
 echo "Permissions denied! Aborting!"
 goto ess_Update_Files
 end
-if not find S:/nand_hdr.bin HDR
-echo "File not found!"
-goto ess_Update_Options
-end
-if not fget $[HDR]@00:250 HDRVAL
-echo "Failed to retrieve data from file!"
-goto ess_Update_Files
-end
-if not fset S:/essential.exefs@100 $[HDRVAL]
-echo "Update failed!"
-goto ess_Update_Files
-end
-echo "Update success!"
-goto ess_Update_Files
-
-@essup_Update_Movable.sed
-set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate movable.sed"
-if not ask "Update movable.sed \nin essential.exefs?"
-goto ess_Update_Files
-end
-if not allow S:/essential.exefs 
-echo "Permissions denied! Aborting!"
-goto ess_Update_Files
-end
-if not find 1:/private/movable.sed MOVABLE
-echo "File not found!"
-goto ess_Update_Options
-end
-if not fget $[MOVABLE]@00:140 MOVABLEVAL
-echo "Failed to retrieve data from file!"
-goto ess_Update_Files
-end
-if not fset S:/essential.exefs@600 $[MOVABLEVAL]
+if not inject -n NANDHDR S:/essential.exefs@100
 echo "Update failed!"
 goto ess_Update_Files
 end
@@ -7612,148 +7612,130 @@ goto ess_Update_Files
 
 @essup_Update_otp.mem
 set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate otp.mem"
-if not ask "Update otp.mem \nin essential.exefs?"
-goto ess_Update_Files
-end
-if not allow S:/essential.exefs 
-echo "Permissions denied! Aborting!"
+if not ask "Update otp.mem in essential.exefs?"
 goto ess_Update_Files
 end
 if not find M:/otp.mem OTP
 echo "File not found!"
-goto ess_Update_Options
-end
-if not fget $[OTP]@00:100 OTPVAL
-echo "Failed to retrieve data from file!"
 goto ess_Update_Files
 end
-if not fset S:/essential.exefs@c00 $[OTPVAL]
-echo "Update failed!"
-goto ess_Update_Files
-end
-echo "Update success!"
-goto ess_Update_Files
-
-@essup_Update_SecureInfo_-A.mem
-set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate SecureInfo_A"
-if not ask "Update SecureInfo_A \nin essential.exefs?"
-goto ess_Update_Files
-end
-if not allow S:/essential.exefs 
+if not allow ESS
 echo "Permissions denied! Aborting!"
 goto ess_Update_Files
 end
-if not find 1:/rw/sys/SecureInfo_A SECINFO
-echo "File not found!"
-goto ess_Update_Options
-end
-if not fget $[SECINFO]@00:152 SECVAL
-echo "Failed to retrieve data from file!"
-goto ess_Update_Files
-end
-if not fset S:/essential.exefs@3be $[SECVAL]
+if not inject -n OTP S:/essential.exefs@c00
 echo "Update failed!"
 goto ess_Update_Files
 end
 echo "Update success!"
 goto ess_Update_Files
 
-essup_Update_whole_File
-set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate whole File"
-if not ask "This will update the essential.exefs file \(all files in it) \nProceed?"
-goto ess_Update_Files
-end
-if not find S:/nand_hdr.bin HDR
-echo "Required files not found! Aborting!"
-goto ess_Update_Files
-end
-if not find 1:/rw/sys/SecureInfo_A SECINFO
-echo "Required files not found! Aborting!"
+@essup_Update_movable.sed
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate movable.sed"
+if not ask "Update movable.sed in essential.exefs?"
 goto ess_Update_Files
 end
 if not find 1:/private/movable.sed MOVABLE
-echo "Required files not found! Aborting!"
+echo "File not found!"
+goto ess_Update_Files
+end
+if not allow ESS
+echo "Permissions denied! Aborting!"
+goto ess_Update_Files
+end
+if not inject -n MOVABLE S:/essential.exefs@600
+echo "Update failed!"
+goto ess_Update_Files
+end
+echo "Update success!"
+goto ess_Update_Files
+
+@essup_Update_SecureInfo-A
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate SecureInfo_A"
+if not ask "Update SecureInfo_A in essential.exefs?"
+goto ess_Update_Files
+end
+if not find 1:/rw/sys/SecureInfo_A SECINFO
+echo "File not found!"
+goto ess_Update_Files
+end
+if not allow ESS
+echo "Permissions denied! Aborting!"
+goto ess_Update_Files
+end
+if not inject -n SECINFO S:/essential.exefs@3be
+echo "Update failed!"
+goto ess_Update_Files
+end
+echo "Update success!"
+goto ess_Update_Files
+
+@essup_Update_whole_File
+set PREVIEW_MODE "GM9FULLSCRIPT \nMiscellaneous Options \nEssentials.exefs Options \nUpdate Files \nUpdate whole File"
+if not ask "Update essential.exefs (all the files in it)?"
 goto ess_Update_Files
 end
 if not find 1:/rw/sys/LocalFriendCodeSeed_B FRNDSEED
-echo "Required files not found! Aborting!"
-goto ess_Update_Files
-end
-if not find M:/nand_cid.mem CID
-echo "Required files not found! Aborting!"
-goto ess_Update_Files
-end
-if not find M:/otp.mem OTP
-echo "Required files not found! Aborting!"
+echo "Files not found!"
 goto ess_Update_Files
 end
 if not find 1:/ro/sys/HWCAL0.dat HWCAL0
-echo "Required files not found! Aborting!"
+echo "Files not found!"
 goto ess_Update_Files
 end
 if not find 1:/ro/sys/HWCAL1.dat HWCAL1
-echo "Required files not found! Aborting!"
+echo "Files not found!"
 goto ess_Update_Files
 end
-if not fget $[FRNDSEED]@00:110 FRNDVAL
-echo "Failed to retrieve data from file!"
+if not find M:/nand_cid.mem NANDCID
+echo "Files not found!"
 goto ess_Update_Files
 end
-if not fset S:/essential.exefs@800 $[FRNDVAL]
+if not find S:/nand_hdr.bin NANDHDR
+echo "Files not found!"
+goto ess_Update_Files
+end
+if not find M:/otp.mem OTP
+echo "Files not found!"
+goto ess_Update_Files
+end
+if not find 1:/private/movable.sed MOVABLE
+echo "Files not found!"
+goto ess_Update_Files
+end
+if not find 1:/rw/sys/SecureInfo_A SECINFO
+echo "Files not found!"
+goto ess_Update_Files
+end
+if not inject -n FRNDSEED S:/essential.exefs@800
 echo "Update failed!"
 goto ess_Update_Files
 end
-if not fget $[HWCAL0]@00:770 HW0VAL
-echo "Failed to retrieve data from file!"
-goto ess_Update_Files
-end
-if not fset S:/essential.exefs@e00 $[HW0VAL]
+if not inject -n HWCAL0 S:/essential.exefs@e00
 echo "Update failed!"
 goto ess_Update_Files
 end
-if not fget $[HWCAL1]@00:770 HW1VAL
-echo "Failed to retrieve data from file!"
-goto ess_Update_Files
-end
-if not fset S:/essential.exefs@1800 $[HW1VAL]
-echo "Update failed!"
-if not fget $[CID]@00:10 CIDVAL
-echo "Failed to retrieve data from file!"
-goto ess_Update_Files
-end
-if not fset S:/essential.exefs@a00 $[CIDVAL]
+if not inject -n HWCAL1 S:/essential.exefs@1800
 echo "Update failed!"
 goto ess_Update_Files
 end
-if not fget $[HDR]@00:250 HDRVAL
-echo "Failed to retrieve data from file!"
-goto ess_Update_Files
-end
-if not fset S:/essential.exefs@100 $[HDRVAL]
+if not inject -n NANDCID S:/essential.exefs@a00
 echo "Update failed!"
 goto ess_Update_Files
 end
-if not fget $[MOVABLE]@00:140 MOVABLEVAL
-echo "Failed to retrieve data from file!"
-goto ess_Update_Files
-end
-if not fset S:/essential.exefs@600 $[MOVABLEVAL]
+if not inject -n NANDHDR S:/essential.exefs@100
 echo "Update failed!"
 goto ess_Update_Files
 end
-if not fget $[OTP]@00:100 OTPVAL
-echo "Failed to retrieve data from file!"
-goto ess_Update_Files
-end
-if not fset S:/essential.exefs@c00 $[OTPVAL]
+if not inject -n OTP S:/essential.exefs@c00
 echo "Update failed!"
 goto ess_Update_Files
 end
-if not fget $[SECINFO]@00:152 SECVAL
-echo "Failed to retrieve data from file!"
+if not inject -n MOVABLE S:/essential.exefs@600
+echo "Update failed!"
 goto ess_Update_Files
 end
-if not fset S:/essential.exefs@3be $[SECVAL]
+if not inject -n SECINFO S:/essential.exefs@3be
 echo "Update failed!"
 goto ess_Update_Files
 end
