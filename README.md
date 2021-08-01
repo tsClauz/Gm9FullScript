@@ -1,6 +1,8 @@
 # Gm9FullScript
 3DS GodMode9 script that does nearly everything you can do with GodMode9
 
+W.I.P; This script is not finished and not completely tested.
+
 IMPORTANT: Some of this script's functions, are inspired from other scripts.
 
 I recommend reading this before using the script.
